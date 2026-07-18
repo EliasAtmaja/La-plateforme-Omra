@@ -87,11 +87,6 @@ const navLinks = [
             <a href={link.href} class="header__mobile-link">{link.label}</a>
           </li>
         ))}
-        <li>
-          <a href={getLocalePath(lang, '/panier/')} class="header__mobile-link">
-            Panier
-          </a>
-        </li>
       </ul>
     </nav>
   </div>
@@ -105,7 +100,6 @@ const navLinks = [
       const expanded = toggle.getAttribute('aria-expanded') === 'true';
       toggle.setAttribute('aria-expanded', String(!expanded));
       menu.hidden = expanded;
-      document.body.style.overflow = expanded ? '' : 'hidden';
     });
   }
 
@@ -493,12 +487,11 @@ const navLinks = [
     top: 100%;
     left: 0;
     right: 0;
-    height: calc(100vh - 76px);
-    height: calc(100dvh - 76px);
     background: #FFFFFF;
-    padding: var(--space-8) var(--space-6);
+    padding: var(--space-6) var(--space-6) var(--space-8);
     z-index: 9999;
-    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    border-radius: 0 0 18px 18px;
   }
 
   .header__mobile-menu:not([hidden]) {
