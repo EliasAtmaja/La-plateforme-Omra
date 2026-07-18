@@ -50,7 +50,7 @@ import '../../../styles/global.css';
         <span class="adm-side__badge" id="pending-count" hidden>0</span>
       </a>
     </nav>
-    <button class="adm-side__logout" id="logout-btn">Deconnexion</button>
+    <button class="adm-side__logout" id="logout-btn">D&eacute;connexion</button>
   </aside>
 
   <!-- Main -->
@@ -443,7 +443,7 @@ import '../../../styles/global.css';
 
   function escG(s: string) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-  const admMonthNames = ['Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+  const admMonthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
   const admDayLabels = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
 
   function renderAdmMiniCal(container: HTMLElement, guideId: string, month: number, year: number) {
@@ -556,7 +556,7 @@ import '../../../styles/global.css';
             <div class="adm-g__bk-detail is-hidden">
               <div class="adm-g__bk-detail-grid">
                 <div class="adm-g__bk-detail-item">
-                  <span class="adm-g__bk-label">Telephone</span>
+                  <span class="adm-g__bk-label">T&eacute;l&eacute;phone</span>
                   <span class="adm-g__bk-value">${escG(b.clientPhone || 'Non renseigne')}</span>
                 </div>
                 <div class="adm-g__bk-detail-item">
@@ -634,7 +634,7 @@ import '../../../styles/global.css';
                       <div class="adm-cal__legend">
                         <span class="adm-cal__legend-item"><span class="adm-cal__dot adm-cal__dot--avail"></span>Disponible</span>
                         <span class="adm-cal__legend-item"><span class="adm-cal__dot adm-cal__dot--busy"></span>Indisponible</span>
-                        <span class="adm-cal__legend-item"><span class="adm-cal__dot adm-cal__dot--booked"></span>Reserve</span>
+                        <span class="adm-cal__legend-item"><span class="adm-cal__dot adm-cal__dot--booked"></span>R&eacute;serv&eacute;</span>
                       </div>
                     </div>
                     <div class="adm-cal__grid"></div>

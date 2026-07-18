@@ -11,7 +11,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 <script>
   import { supabase, mapGuide, mapReview, mapBooking, isAdmin, ALL_SLOTS } from '../../lib/supabase';
 
-  const MONTHS = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+  const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
   const LANG_FLAGS: Record<string, string> = {
     'Français': '🇫🇷', 'Arabe': '🇸🇦', 'Anglais': '🇬🇧', 'Espagnol': '🇪🇸',
@@ -243,7 +243,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           </h1>
           <p class="gpr__subtitle">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C5 1.5 2.5 4 2.5 7c0 4 5.5 7.5 5.5 7.5s5.5-3.5 5.5-7.5c0-3-2.5-5.5-5.5-5.5z" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="7" r="2" stroke="currentColor" stroke-width="1.2"/></svg>
-            Guide certifie${guide.diploma ? `  &middot;  ${esc(guide.diploma)}` : ''}
+            Guide certifié${guide.diploma ? `  &middot;  ${esc(guide.diploma)}` : ''}
           </p>
         </div>
       </div>
@@ -268,7 +268,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           <div class="gpr__card-icon">
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9" stroke="currentColor" stroke-width="1.4"/><ellipse cx="11" cy="11" rx="4" ry="9" stroke="currentColor" stroke-width="1.2"/><path d="M2.5 8.5h17M2.5 13.5h17" stroke="currentColor" stroke-width="1.1"/></svg>
           </div>
-          <h2 class="gpr__card-title">Langues parlees</h2>
+          <h2 class="gpr__card-title">Langues parlées</h2>
           <div class="gpr__langs">${langsHtml}</div>
         </div>
         ` : ''}
@@ -304,8 +304,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
               <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="5" width="22" height="20" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M3 11h22M9 2v5M19 2v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="17" r="1.5" fill="currentColor"/><circle cx="14" cy="17" r="1.5" fill="currentColor"/><circle cx="18" cy="17" r="1.5" fill="currentColor"/></svg>
             </div>
             <div>
-              <h2 class="gpr__cta-title">Voir les disponibilites</h2>
-              <p class="gpr__cta-sub">Consultez les dates disponibles et reservez votre guide en quelques clics.</p>
+              <h2 class="gpr__cta-title">Voir les disponibilités</h2>
+              <p class="gpr__cta-sub">Consultez les dates disponibles et réservez votre guide en quelques clics.</p>
             </div>
           </div>
           <button type="button" class="gpr__cta-btn" id="scroll-to-cal">
@@ -339,7 +339,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           <div class="gpr__cal-legend">
             <span class="gpr__cal-legend-item"><span class="gpr__cal-dot gpr__cal-dot--avail"></span> Disponible</span>
             <span class="gpr__cal-legend-item"><span class="gpr__cal-dot gpr__cal-dot--busy"></span> Indisponible</span>
-            ${isGuideLogin ? '<span class="gpr__cal-legend-item"><span class="gpr__cal-dot gpr__cal-dot--booked"></span> Reserve</span>' : ''}
+            ${isGuideLogin ? '<span class="gpr__cal-legend-item"><span class="gpr__cal-dot gpr__cal-dot--booked"></span> Réservé</span>' : ''}
           </div>
           ${isGuideLogin ? `
           <div class="gpr__slot-editor is-hidden" id="slot-editor">
@@ -742,7 +742,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   function renderBookings(guide: any, container: HTMLElement) {
     const bookings = getGuideBookings(guide.id);
     if (bookings.length === 0) {
-      container.innerHTML = '<p class="gpr__no-reviews">Aucune reservation pour le moment.</p>';
+      container.innerHTML = '<p class="gpr__no-reviews">Aucune réservation pour le moment.</p>';
       return;
     }
     const sorted = bookings.sort((a: any, b: any) => a.date.localeCompare(b.date));

@@ -10,7 +10,7 @@ const lang = getLangFromUrl(Astro.url);
   <div class="gp-hero">
     <div class="gp-container">
       <h1 class="gp-hero__title reveal">Nos guides</h1>
-      <p class="gp-hero__sub reveal">Choisissez votre guide certifie et reservez en quelques clics</p>
+      <p class="gp-hero__sub reveal">Choisissez votre guide certifi&eacute; et r&eacute;servez en quelques clics</p>
     </div>
   </div>
 
@@ -35,7 +35,7 @@ const lang = getLangFromUrl(Astro.url);
 <script>
   import { supabase, mapGuide, mapReview, ALL_SLOTS } from '../../lib/supabase';
 
-  const MONTH_NAMES = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+  const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const calStates: Record<string, { year: number; month: number; selectedDate: string | null; selectedSlot: string | null }> = {};
 
   const ACTIVITY_NAMES: Record<string, string> = {
@@ -197,6 +197,10 @@ const lang = getLangFromUrl(Astro.url);
               ${randomReview
                 ? `<p class="gp-profile__rv-text">&ldquo;${esc(randomReview.text)}&rdquo;</p><span class="gp-profile__rv-author">&ndash; ${esc(randomReview.name || 'Anonyme')}</span>`
                 : `<p class="gp-profile__rv-text gp-profile__rv-text--empty">Aucun commentaire d&eacute;taill&eacute; pour le moment.</p>`}
+              <button type="button" class="gp-profile__rv-all" data-all-reviews="${g.id}">
+                Voir tous les avis
+                <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
             </div>
           </div>`
         : `
@@ -265,23 +269,29 @@ const lang = getLangFromUrl(Astro.url);
             <h3 class="gp-cal__title">Choisissez quand effectuer votre Omra</h3>
             <p class="gp-cal__guide-name">avec ${esc(g.firstName)} ${esc(g.lastName)}</p>
           </div>
-          <div class="gp-cal__nav">
-            <button type="button" class="gp-cal__arrow" data-cal-prev="${g.id}" aria-label="Mois precedent">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9L11 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <span class="gp-cal__month" id="cal-month-${g.id}"></span>
-            <button type="button" class="gp-cal__arrow" data-cal-next="${g.id}" aria-label="Mois suivant">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 4L12 9L7 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
+          <div class="gp-cal__calwrap" id="cal-wrap-${g.id}">
+            <div class="gp-cal__nav">
+              <button type="button" class="gp-cal__arrow" data-cal-prev="${g.id}" aria-label="Mois pr&eacute;c&eacute;dent">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9L11 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span class="gp-cal__month" id="cal-month-${g.id}"></span>
+              <button type="button" class="gp-cal__arrow" data-cal-next="${g.id}" aria-label="Mois suivant">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 4L12 9L7 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="gp-cal__weekdays">
+              <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+            </div>
+            <div class="gp-cal__grid" id="cal-grid-${g.id}"></div>
+            <div class="gp-cal__legend">
+              <span class="gp-cal__legend-item"><span class="gp-cal__dot gp-cal__dot--available"></span> Disponible</span>
+              <span class="gp-cal__legend-item"><span class="gp-cal__dot gp-cal__dot--unavailable"></span> Indisponible</span>
+            </div>
           </div>
-          <div class="gp-cal__weekdays">
-            <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
-          </div>
-          <div class="gp-cal__grid" id="cal-grid-${g.id}"></div>
-          <div class="gp-cal__legend">
-            <span class="gp-cal__legend-item"><span class="gp-cal__dot gp-cal__dot--available"></span> Disponible</span>
-            <span class="gp-cal__legend-item"><span class="gp-cal__dot gp-cal__dot--unavailable"></span> Indisponible</span>
-          </div>
+          <button type="button" class="gp-cal__reopen is-hidden" id="cal-reopen-${g.id}" data-cal-reopen="${g.id}">
+            <svg class="gp-cal__reopen-icon" width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M4 7l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Rouvrir le calendrier
+          </button>
           <div class="gp-cal__selection is-hidden" id="cal-sel-${g.id}">
             <p class="gp-cal__selected-date" id="cal-date-${g.id}"></p>
             <div class="gp-cal__slots">
@@ -306,8 +316,8 @@ const lang = getLangFromUrl(Astro.url);
               </div>
             </div>
             <div class="gp-cal__actions">
-              <button type="button" class="gp-cal__action gp-cal__action--secondary" data-action="browse" data-guide-id="${g.id}" disabled>Reserver et continuer de surfer</button>
-              <button type="button" class="gp-cal__action gp-cal__action--primary" data-action="pay" data-guide-id="${g.id}" disabled>Proceder au paiement</button>
+              <button type="button" class="gp-cal__action gp-cal__action--secondary" data-action="browse" data-guide-id="${g.id}" disabled>R&eacute;server et continuer de surfer</button>
+              <button type="button" class="gp-cal__action gp-cal__action--primary" data-action="pay" data-guide-id="${g.id}" disabled>Proc&eacute;der au paiement</button>
             </div>
           </div>
           </div>
@@ -366,8 +376,16 @@ const lang = getLangFromUrl(Astro.url);
           const dateEl = document.getElementById(`cal-date-${guideId}`);
           if (sel && dateEl) {
             const [y,m2,d2] = dateStr.split('-').map(Number);
-            dateEl.textContent = `Date selectionnee : ${new Date(y,m2-1,d2).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}`;
+            dateEl.textContent = `Date sélectionnée : ${new Date(y,m2-1,d2).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}`;
             sel.classList.remove('is-hidden');
+            // Replie le calendrier pour laisser la place aux créneaux
+            const wrap = document.getElementById(`cal-wrap-${guideId}`);
+            const reopen = document.getElementById(`cal-reopen-${guideId}`);
+            if (wrap && reopen) {
+              wrap.classList.add('is-hidden');
+              reopen.classList.remove('is-hidden');
+              reopen.classList.remove('is-open');
+            }
             // Seuls les créneaux encore libres de cette date sont cliquables
             const freeNow = freeSlotsFor(guideId, dateStr);
             sel.querySelectorAll('.gp-cal__slot').forEach(b => {
@@ -385,7 +403,50 @@ const lang = getLangFromUrl(Astro.url);
     }
   }
 
+  function openReviewsModal(guideId: string) {
+    const g = getGuides().find((x: any) => x.id === guideId);
+    if (!g) return;
+    const reviews = getApprovedReviews(guideId);
+    const itemsHtml = reviews.map((r: any) => `
+      <article class="gp-rvmodal__item">
+        <div class="gp-rvmodal__item-head">
+          <span class="gp-rvmodal__stars">${starsRowHtml(r.stars || 5)}</span>
+          <span class="gp-rvmodal__author">${esc(r.name || 'Anonyme')}</span>
+        </div>
+        ${(r.text || '').trim() ? `<p class="gp-rvmodal__text">&ldquo;${esc(r.text)}&rdquo;</p>` : ''}
+      </article>`).join('');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'gp-rvmodal';
+    overlay.innerHTML = `
+      <div class="gp-rvmodal__panel">
+        <button type="button" class="gp-rvmodal__close" aria-label="Fermer">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <h3 class="gp-rvmodal__title">Tous les avis</h3>
+        <p class="gp-rvmodal__guide">sur ${esc(g.firstName)} ${esc(g.lastName)} &middot; ${reviews.length} avis</p>
+        <div class="gp-rvmodal__list">${itemsHtml}</div>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+
+    function close() {
+      overlay.remove();
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') close(); }
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    overlay.querySelector('.gp-rvmodal__close')?.addEventListener('click', close);
+    document.addEventListener('keydown', onKey);
+  }
+
   function wireUpEvents() {
+    document.querySelectorAll('[data-all-reviews]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openReviewsModal((btn as HTMLElement).dataset.allReviews!);
+      });
+    });
     document.querySelectorAll('[data-toggle-profile]').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = (btn as HTMLElement).dataset.toggleProfile!;
@@ -411,8 +472,22 @@ const lang = getLangFromUrl(Astro.url);
           calStates[id] = { year: now.getFullYear(), month: now.getMonth(), selectedDate: null, selectedSlot: null };
         }
         renderCalendar(id);
+        // Réinitialise : calendrier visible, bouton de réouverture masqué
+        const wrap = document.getElementById(`cal-wrap-${id}`);
+        const reopen = document.getElementById(`cal-reopen-${id}`);
+        wrap?.classList.remove('is-hidden');
+        reopen?.classList.add('is-hidden');
         cal.classList.remove('is-hidden');
         document.body.style.overflow = 'hidden';
+      });
+    });
+    document.querySelectorAll('[data-cal-reopen]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = (btn as HTMLElement).dataset.calReopen!;
+        const wrap = document.getElementById(`cal-wrap-${id}`);
+        if (!wrap) return;
+        const nowHidden = wrap.classList.toggle('is-hidden');
+        btn.classList.toggle('is-open', !nowHidden);
       });
     });
     function closeCal(cal: Element) {
@@ -485,7 +560,7 @@ const lang = getLangFromUrl(Astro.url);
           if (!card.querySelector('.gp-card__booked')) {
             const badge = document.createElement('span');
             badge.className = 'gp-card__booked';
-            badge.textContent = 'Reserve';
+            badge.textContent = 'Réservé';
             card.querySelector('.gp-card__right')?.prepend(badge);
           }
         }
@@ -497,7 +572,7 @@ const lang = getLangFromUrl(Astro.url);
         const s = calStates[id]; if (!s?.selectedDate || !s.selectedSlot) return;
         const ok = await createBooking(id, s.selectedDate, s.selectedSlot);
         if (!ok) return;
-        alert(`Reservation confirmee pour le ${s.selectedDate} (${s.selectedSlot}).\n(Page de paiement a venir)`);
+        alert(`Réservation confirmée pour le ${s.selectedDate} (${s.selectedSlot}).\n(Page de paiement à venir)`);
         s.selectedDate = null;
         s.selectedSlot = null;
         renderCalendar(id);
@@ -914,6 +989,96 @@ const lang = getLangFromUrl(Astro.url);
     font-family: 'Jost', sans-serif;
     font-size: 0.8rem; font-weight: 500; color: #6B6B63;
   }
+  .gp-profile__rv-all {
+    display: inline-flex; align-items: center; gap: 7px;
+    align-self: flex-start;
+    margin-top: 10px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid #14513A;
+    border-radius: 20px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.74rem; font-weight: 500; color: #14513A;
+    cursor: pointer;
+    transition: background 0.25s var(--ease-out-quart), color 0.25s var(--ease-out-quart), transform 0.25s var(--ease-out-quart);
+  }
+  .gp-profile__rv-all:hover {
+    background: #14513A; color: #FAF8F4;
+    transform: translateY(-1px);
+  }
+
+  /* ---- POP-UP TOUS LES AVIS ---- */
+  .gp-rvmodal {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(10, 26, 18, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: gpCalFade 0.3s var(--ease-out-quart);
+  }
+  .gp-rvmodal__panel {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    max-height: calc(100vh - 40px);
+    display: flex; flex-direction: column;
+    background: #FFFFFF;
+    border-radius: 22px;
+    padding: 36px 28px 24px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.3);
+    animation: gpCalPop 0.45s var(--ease-out-expo);
+  }
+  .gp-rvmodal__close {
+    position: absolute;
+    top: 16px; right: 16px;
+    display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px;
+    border: none; border-radius: 50%;
+    background: #F4F3EE; color: #1C1C1A;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .gp-rvmodal__close:hover { background: #EBE8E0; transform: rotate(90deg); }
+  .gp-rvmodal__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.35rem; font-weight: 600; color: #1C1C1A;
+    margin: 0 0 4px; text-align: center;
+  }
+  .gp-rvmodal__guide {
+    font-family: 'Jost', sans-serif; font-size: 0.8rem;
+    color: #9C9C93; margin: 0 0 20px; text-align: center;
+  }
+  .gp-rvmodal__list {
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 12px;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(20,81,58,0.25) transparent;
+  }
+  .gp-rvmodal__item {
+    background: #F6F4EF;
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .gp-rvmodal__item-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 6px;
+  }
+  .gp-rvmodal__stars { font-size: 0.85rem; letter-spacing: 2px; }
+  .gp-rvmodal__author {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; font-weight: 500; color: #6B6B63;
+  }
+  .gp-rvmodal__text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; font-weight: 300; color: #4A4A42;
+    line-height: 1.65; margin: 0;
+  }
 
   /* ---- CALENDAR ---- */
   .gp-cal {
@@ -1042,6 +1207,24 @@ const lang = getLangFromUrl(Astro.url);
   }
   .gp-cal__dot--available { background: #ECFDF5; border: 1px solid #86EFAC; }
   .gp-cal__dot--unavailable { background: #F9F9F6; border: 1px solid #E5E5E0; }
+
+  /* -- Bouton rouvrir le calendrier -- */
+  .gp-cal__reopen {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 16px;
+    background: #FAF9F5;
+    border: 1px dashed #D8D5CB;
+    border-radius: 12px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; font-weight: 500; color: #6B6B63;
+    cursor: pointer;
+    transition: background 0.25s var(--ease-out-quart), color 0.25s var(--ease-out-quart), border-color 0.25s var(--ease-out-quart);
+  }
+  .gp-cal__reopen:hover { background: #F2F1EC; color: #14513A; border-color: #14513A; }
+  .gp-cal__reopen-icon { transition: transform 0.4s var(--ease-in-out-smooth); }
+  .gp-cal__reopen.is-open .gp-cal__reopen-icon { transform: rotate(180deg); }
 
   .gp-cal__selection {
     text-align: center;
