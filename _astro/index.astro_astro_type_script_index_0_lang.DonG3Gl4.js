@@ -32,7 +32,7 @@ import{c as e,l as t,s as n,t as r}from"./supabase.B7wVJYeJ.js";var i=[`Janvier`
               ${t.pricePerDay?`<div class="gp-card__price"><span class="gp-card__amount">${u(String(t.pricePerDay))}&euro;</span><span class="gp-card__unit">Frais inclus</span></div>`:``}
               <button class="gp-card__avail-btn" type="button" data-open-cal="${t.id}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="4" y="5.5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 10h16M8.5 3.5v3.5M15.5 3.5v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                Voir les disponibilit&eacute;s
+                Les disponibilit&eacute;s
               </button>
             </div>
           </div>
