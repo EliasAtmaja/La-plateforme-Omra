@@ -89,6 +89,9 @@ const navLinks = [
         ))}
       </ul>
     </nav>
+    <a href={getLocalePath(lang, '/guides/')} class="header__mobile-cta">
+      R&eacute;server
+    </a>
   </div>
 </header>
 
@@ -100,6 +103,7 @@ const navLinks = [
       const expanded = toggle.getAttribute('aria-expanded') === 'true';
       toggle.setAttribute('aria-expanded', String(!expanded));
       menu.hidden = expanded;
+      document.body.style.overflow = expanded ? '' : 'hidden';
     });
   }
 
@@ -488,10 +492,9 @@ const navLinks = [
     left: 0;
     right: 0;
     background: #FFFFFF;
-    padding: var(--space-6) var(--space-6) var(--space-8);
+    padding: var(--space-8) var(--space-6) var(--space-8);
     z-index: 9999;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-    border-radius: 0 0 18px 18px;
+    border-top: 1px solid #EFEDE6;
   }
 
   .header__mobile-menu:not([hidden]) {
