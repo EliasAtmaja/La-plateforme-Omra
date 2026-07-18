@@ -1,0 +1,2253 @@
+---
+import '../../../styles/global.css';
+---
+
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — La plateforme Omra</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="adm-body">
+
+<!-- ====== LOGIN ====== -->
+<div id="login-gate" class="adm-login">
+  <div class="adm-login__card">
+    <div class="adm-login__icon">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="5" y="12" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M9 12V9a5 5 0 0110 0v3" stroke="currentColor" stroke-width="1.6"/><circle cx="14" cy="18" r="2" fill="currentColor"/></svg>
+    </div>
+    <h1>Administration</h1>
+    <p>Connectez-vous pour acceder au tableau de bord</p>
+    <form id="login-form">
+      <input type="email" id="login-email" placeholder="Email" autocomplete="username" required />
+      <input type="password" id="login-pass" placeholder="Mot de passe" autocomplete="current-password" required />
+      <button type="submit">Se connecter</button>
+      <p class="adm-login__error is-hidden" id="login-error">Identifiants incorrects</p>
+    </form>
+  </div>
+</div>
+
+<!-- ====== DASHBOARD ====== -->
+<div id="dashboard" class="adm is-hidden">
+
+  <!-- Sidebar -->
+  <aside class="adm-side">
+    <div class="adm-side__brand">
+      <svg width="18" height="18" viewBox="0 0 32 32" fill="none"><path d="M16 2L18.8 8.2L25.9 6.1L23.8 13.2L30 16L23.8 18.8L25.9 25.9L18.8 23.8L16 30L13.2 23.8L6.1 25.9L8.2 18.8L2 16L8.2 13.2L6.1 6.1L13.2 8.2L16 2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      <span>Admin</span>
+    </div>
+    <nav class="adm-side__nav">
+      <a href="#" class="adm-side__link adm-side__link--active" data-nav-tab="guides">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M2.5 14c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.4"/></svg>
+        Guides
+        <span class="adm-side__badge adm-side__badge--red" id="refusal-count" hidden>0</span>
+      </a>
+      <a href="#" class="adm-side__link" data-nav-tab="reviews">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 6.5l-3.5 3.5-1.5-1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 3h12v10H2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2 6h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Avis
+        <span class="adm-side__badge" id="pending-count" hidden>0</span>
+      </a>
+    </nav>
+    <button class="adm-side__logout" id="logout-btn">Deconnexion</button>
+  </aside>
+
+  <!-- Main -->
+  <main class="adm-main">
+    <div id="panel-guides-header">
+      <header class="adm-top">
+        <div>
+          <h1 class="adm-top__title">Gestion des guides</h1>
+          <p class="adm-top__sub">0 guides enregistres</p>
+        </div>
+        <button class="adm-add-btn" id="open-add-guide">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Ajouter
+        </button>
+      </header>
+    </div>
+
+    <!-- ====== REVIEWS PANEL ====== -->
+    <div class="adm-reviews is-hidden" id="panel-reviews">
+      <header class="adm-top">
+        <div>
+          <h1 class="adm-top__title">Gestion des avis</h1>
+          <p class="adm-top__sub" id="reviews-sub"></p>
+        </div>
+      </header>
+
+      <div class="adm-reviews__tabs">
+        <button class="adm-reviews__tab adm-reviews__tab--active" data-rtab="pending">En attente <span id="rtab-pending-count"></span></button>
+        <button class="adm-reviews__tab" data-rtab="approved">Approuvés <span id="rtab-approved-count"></span></button>
+        <button class="adm-reviews__tab" data-rtab="rejected">Refusés <span id="rtab-rejected-count"></span></button>
+      </div>
+
+      <div class="adm-reviews__list" id="reviews-list"></div>
+    </div>
+
+    <!-- Guides list (rendered client-side from localStorage) -->
+    <div class="adm-guides" id="panel-guides"></div>
+  </main>
+</div>
+
+<!-- ====== ADD GUIDE MODAL ====== -->
+<div class="adm-modal-overlay is-hidden" id="modal-overlay">
+  <div class="adm-modal">
+    <div class="adm-modal__header">
+      <h2 id="modal-title">Ajouter un guide</h2>
+      <button class="adm-modal__close" id="close-modal">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <form id="add-guide-form">
+      <div class="adm-modal__body">
+        <div class="adm-form-photo">
+          <!-- State 1: empty placeholder -->
+          <div class="adm-form-photo__empty" id="photo-empty">
+            <div class="adm-form-photo__placeholder" id="photo-placeholder">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="2" y="5" width="24" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="12" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M26 19l-6-5.5-4 3.5-3.5-2.5L2 21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Photo du guide</span>
+            </div>
+            <button type="button" class="adm-form-photo__btn" id="photo-btn">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Choisir une photo
+            </button>
+          </div>
+          <input type="file" id="photo-input" accept="image/*" class="adm-form-photo__input" />
+
+          <!-- State 2: crop editor -->
+          <div class="adm-form-photo__editor is-hidden" id="photo-editor">
+            <p class="adm-form-photo__editor-hint">Deplacez et zoomez pour ajuster</p>
+            <div class="adm-form-photo__crop" id="photo-crop">
+              <img id="photo-crop-img" src="" alt="" draggable="false" />
+            </div>
+            <div class="adm-form-photo__zoom">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M4 6h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              <input type="range" id="photo-zoom" min="100" max="300" value="100" />
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M4 6h4M6 4v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </div>
+            <div class="adm-form-photo__editor-actions">
+              <button type="button" class="adm-form-photo__editor-cancel" id="photo-crop-cancel">Annuler</button>
+              <button type="button" class="adm-form-photo__editor-confirm" id="photo-crop-confirm">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7.5L5.5 10L11 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Valider
+              </button>
+            </div>
+          </div>
+
+          <!-- State 3: validated result -->
+          <div class="adm-form-photo__result is-hidden" id="photo-result">
+            <div class="adm-form-photo__result-circle" id="photo-result-circle"></div>
+            <button type="button" class="adm-form-photo__btn" id="photo-change-btn">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10 7.5L7 4.5 4 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 4.5v7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              Changer la photo
+            </button>
+          </div>
+        </div>
+        <div class="adm-form-row">
+          <div class="adm-form-field">
+            <label>Prenom</label>
+            <input type="text" name="prenom" required placeholder="Ahmed" />
+          </div>
+          <div class="adm-form-field">
+            <label>Nom</label>
+            <input type="text" name="nom" required placeholder="Al-Harbi" />
+          </div>
+        </div>
+        <div class="adm-form-row">
+          <div class="adm-form-field">
+            <label>Ville</label>
+            <select name="ville" required>
+              <option value="">Choisir...</option>
+              <option value="medina">Medine</option>
+              <option value="mecca">La Mecque</option>
+            </select>
+          </div>
+          <div class="adm-form-field">
+            <label>Prix (€)</label>
+            <input type="number" name="prix" min="1" required placeholder="150" />
+          </div>
+        </div>
+        <div class="adm-form-field">
+          <label>Diplome</label>
+          <input type="text" name="diplome" placeholder="Licence en Histoire islamique" />
+        </div>
+        <div class="adm-form-field">
+          <label>Langues (separees par des virgules)</label>
+          <input type="text" name="langues" placeholder="Arabe, Francais, Anglais" />
+        </div>
+        <div class="adm-form-field">
+          <label>Description</label>
+          <textarea name="description" rows="4" placeholder="Presentez le guide en quelques lignes..."></textarea>
+        </div>
+        <div class="adm-form-separator"></div>
+        <p class="adm-form-section-title">Identifiants de connexion</p>
+        <div class="adm-form-row">
+          <div class="adm-form-field">
+            <label>Identifiant</label>
+            <input type="text" name="identifiant" required placeholder="prenom.nom" />
+          </div>
+          <div class="adm-form-field">
+            <label>Mot de passe</label>
+            <input type="text" name="mdp" required placeholder="mot de passe" />
+          </div>
+        </div>
+      </div>
+      <div class="adm-modal__footer">
+        <button type="button" class="adm-modal__cancel" id="cancel-modal">Annuler</button>
+        <button type="submit" class="adm-modal__submit">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+  import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY, GUIDE_EMAIL_SUFFIX, isAdmin, mapGuide, mapBooking, mapReview } from '../../../lib/supabase';
+
+  // Client secondaire : sert uniquement à créer les comptes guides
+  // sans écraser la session admin en cours.
+  const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const gate = document.getElementById('login-gate')!;
+  const dash = document.getElementById('dashboard')!;
+
+  // ===== CACHES DE DONNÉES (chargés après connexion admin) =====
+  let DB_GUIDES: any[] = [];
+  let DB_BOOKINGS: any[] = [];
+  let DB_REVIEWS: any[] = [];
+  let DB_AVAIL: Record<string, string[]> = {};
+
+  async function loadAll() {
+    const [g, b, r, a] = await Promise.all([
+      supabase.from('guides').select('*').order('created_at'),
+      supabase.from('bookings').select('*').order('date'),
+      supabase.from('reviews').select('*').order('created_at', { ascending: false }),
+      supabase.from('availability').select('guide_id, date'),
+    ]);
+    DB_GUIDES = (g.data || []).map(mapGuide);
+    DB_BOOKINGS = (b.data || []).map(mapBooking);
+    DB_REVIEWS = (r.data || []).map(mapReview);
+    DB_AVAIL = {};
+    (a.data || []).forEach((row: any) => {
+      (DB_AVAIL[row.guide_id] = DB_AVAIL[row.guide_id] || []).push(row.date);
+    });
+  }
+
+  async function enterDashboard() {
+    await loadAll();
+    gate.classList.add('is-hidden');
+    dash.classList.remove('is-hidden');
+    reloadAllCards();
+    updatePendingBadge();
+    updateRefusalBadge();
+  }
+
+  // Session admin déjà active ?
+  (async () => {
+    if (await isAdmin()) await enterDashboard();
+  })();
+
+  document.getElementById('login-form')!.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = (document.getElementById('login-email') as HTMLInputElement).value.trim();
+    const pass = (document.getElementById('login-pass') as HTMLInputElement).value;
+    const errorEl = document.getElementById('login-error')!;
+    errorEl.classList.add('is-hidden');
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    if (error || !(await isAdmin())) {
+      await supabase.auth.signOut();
+      errorEl.classList.remove('is-hidden');
+      return;
+    }
+    await enterDashboard();
+  });
+
+  document.getElementById('logout-btn')!.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    gate.classList.remove('is-hidden');
+    dash.classList.add('is-hidden');
+  });
+
+  // (All event handlers for guide cards are now wired in createAdminGuideCard)
+
+  // Modal
+  const overlay = document.getElementById('modal-overlay')!;
+
+  // Photo crop editor
+  const photoInput = document.getElementById('photo-input') as HTMLInputElement;
+  const photoEmpty = document.getElementById('photo-empty')!;
+  const photoEditor = document.getElementById('photo-editor')!;
+  const photoResult = document.getElementById('photo-result')!;
+  const photoCropImg = document.getElementById('photo-crop-img') as HTMLImageElement;
+  const photoCrop = document.getElementById('photo-crop')!;
+  const photoZoom = document.getElementById('photo-zoom') as HTMLInputElement;
+  const photoResultCircle = document.getElementById('photo-result-circle')!;
+
+  let cropState = { x: 0, y: 0, scale: 1, dragging: false, startX: 0, startY: 0, origX: 0, origY: 0, imgSrc: '' };
+
+  function showPhotoState(state: 'empty' | 'editor' | 'result') {
+    photoEmpty.classList.toggle('is-hidden', state !== 'empty');
+    photoEditor.classList.toggle('is-hidden', state !== 'editor');
+    photoResult.classList.toggle('is-hidden', state !== 'result');
+  }
+
+  function updateCropTransform() {
+    photoCropImg.style.transform = `translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`;
+  }
+
+  function clampPosition() {
+    const cropSize = 160;
+    const imgW = photoCropImg.naturalWidth * cropState.scale;
+    const imgH = photoCropImg.naturalHeight * cropState.scale;
+    const minX = cropSize - imgW;
+    const minY = cropSize - imgH;
+    cropState.x = Math.min(0, Math.max(minX, cropState.x));
+    cropState.y = Math.min(0, Math.max(minY, cropState.y));
+  }
+
+  document.getElementById('photo-btn')!.addEventListener('click', () => photoInput.click());
+  document.getElementById('photo-placeholder')!.addEventListener('click', () => photoInput.click());
+  document.getElementById('photo-change-btn')!.addEventListener('click', () => photoInput.click());
+
+  photoInput.addEventListener('change', () => {
+    const file = photoInput.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      cropState.imgSrc = e.target?.result as string;
+      photoCropImg.src = cropState.imgSrc;
+      photoCropImg.onload = () => {
+        const cropSize = 160;
+        const minDim = Math.min(photoCropImg.naturalWidth, photoCropImg.naturalHeight);
+        cropState.scale = cropSize / minDim;
+        cropState.x = (cropSize - photoCropImg.naturalWidth * cropState.scale) / 2;
+        cropState.y = (cropSize - photoCropImg.naturalHeight * cropState.scale) / 2;
+        photoZoom.min = String(Math.round(cropState.scale * 100));
+        photoZoom.max = String(Math.round(cropState.scale * 100 * 3));
+        photoZoom.value = String(Math.round(cropState.scale * 100));
+        updateCropTransform();
+        showPhotoState('editor');
+      };
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Drag to move
+  photoCrop.addEventListener('mousedown', (e: MouseEvent) => {
+    e.preventDefault();
+    cropState.dragging = true;
+    cropState.startX = e.clientX;
+    cropState.startY = e.clientY;
+    cropState.origX = cropState.x;
+    cropState.origY = cropState.y;
+    photoCrop.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mousemove', (e: MouseEvent) => {
+    if (!cropState.dragging) return;
+    cropState.x = cropState.origX + (e.clientX - cropState.startX);
+    cropState.y = cropState.origY + (e.clientY - cropState.startY);
+    clampPosition();
+    updateCropTransform();
+  });
+  window.addEventListener('mouseup', () => {
+    cropState.dragging = false;
+    photoCrop.style.cursor = 'grab';
+  });
+
+  // Touch support
+  photoCrop.addEventListener('touchstart', (e: TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    cropState.dragging = true;
+    cropState.startX = e.touches[0].clientX;
+    cropState.startY = e.touches[0].clientY;
+    cropState.origX = cropState.x;
+    cropState.origY = cropState.y;
+  }, { passive: true });
+  window.addEventListener('touchmove', (e: TouchEvent) => {
+    if (!cropState.dragging || e.touches.length !== 1) return;
+    cropState.x = cropState.origX + (e.touches[0].clientX - cropState.startX);
+    cropState.y = cropState.origY + (e.touches[0].clientY - cropState.startY);
+    clampPosition();
+    updateCropTransform();
+  }, { passive: true });
+  window.addEventListener('touchend', () => { cropState.dragging = false; });
+
+  // Zoom slider
+  photoZoom.addEventListener('input', () => {
+    const centerX = 80; const centerY = 80;
+    const oldScale = cropState.scale;
+    cropState.scale = parseInt(photoZoom.value) / 100;
+    const ratio = cropState.scale / oldScale;
+    cropState.x = centerX - (centerX - cropState.x) * ratio;
+    cropState.y = centerY - (centerY - cropState.y) * ratio;
+    clampPosition();
+    updateCropTransform();
+  });
+
+  // Scroll to zoom
+  photoCrop.addEventListener('wheel', (e: WheelEvent) => {
+    e.preventDefault();
+    const minScale = parseInt(photoZoom.min) / 100;
+    const maxScale = parseInt(photoZoom.max) / 100;
+    const delta = e.deltaY > 0 ? -0.05 : 0.05;
+    const oldScale = cropState.scale;
+    cropState.scale = Math.min(maxScale, Math.max(minScale, cropState.scale + delta));
+    const ratio = cropState.scale / oldScale;
+    cropState.x = 80 - (80 - cropState.x) * ratio;
+    cropState.y = 80 - (80 - cropState.y) * ratio;
+    clampPosition();
+    photoZoom.value = String(Math.round(cropState.scale * 100));
+    updateCropTransform();
+  }, { passive: false });
+
+  // Cancel crop
+  document.getElementById('photo-crop-cancel')!.addEventListener('click', () => {
+    showPhotoState('empty');
+    photoInput.value = '';
+  });
+
+  // Confirm crop
+  document.getElementById('photo-crop-confirm')!.addEventListener('click', () => {
+    const canvas = document.createElement('canvas');
+    const size = 320;
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+    const displayScale = size / 160;
+    ctx.drawImage(
+      photoCropImg,
+      cropState.x * displayScale,
+      cropState.y * displayScale,
+      photoCropImg.naturalWidth * cropState.scale * displayScale,
+      photoCropImg.naturalHeight * cropState.scale * displayScale
+    );
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    photoResultCircle.style.backgroundImage = `url(${dataUrl})`;
+    showPhotoState('result');
+  });
+
+  // ===== GUIDES & BOOKINGS (servis depuis les caches Supabase) =====
+  function getStoredGuides(): any[] {
+    return DB_GUIDES;
+  }
+  function getBookings(): any[] {
+    return DB_BOOKINGS;
+  }
+  function getAvail(guideId: string): string[] {
+    return DB_AVAIL[guideId] || [];
+  }
+
+  function escG(s: string) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  const admMonthNames = ['Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+  const admDayLabels = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
+
+  function renderAdmMiniCal(container: HTMLElement, guideId: string, month: number, year: number) {
+    const avail = new Set(getAvail(guideId));
+    const bookedDates = new Set(getBookings().filter((b: any) => b.guideId === guideId && b.status !== 'reassigned').map((b: any) => b.date));
+    const firstDay = new Date(year, month, 1).getDay();
+    const offset = firstDay === 0 ? 6 : firstDay - 1;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+
+    let html = admDayLabels.map(d => `<span class="adm-cal__day-label">${d}</span>`).join('');
+    for (let i = 0; i < offset; i++) html += '<span class="adm-cal__empty"></span>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const isBooked = bookedDates.has(dateStr);
+      const isAvail = avail.has(dateStr);
+      const isPast = new Date(year, month, d) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      let cls = 'adm-cal__day';
+      if (isPast) cls += ' adm-cal__day--past';
+      else if (isBooked) cls += ' adm-cal__day--booked';
+      else if (isAvail) cls += ' adm-cal__day--avail';
+      else cls += ' adm-cal__day--busy';
+      html += `<span class="${cls}">${d}</span>`;
+    }
+
+    const grid = container.querySelector('.adm-cal__grid') as HTMLElement;
+    const title = container.querySelector('.adm-cal__title') as HTMLElement;
+    if (grid) grid.innerHTML = html;
+    if (title) title.textContent = `${admMonthNames[month]} ${year}`;
+
+    const nav = container.querySelector('[data-cal-nav]') as HTMLElement;
+    if (nav) {
+      nav.dataset.month = month.toString();
+      nav.dataset.year = year.toString();
+    }
+  }
+
+  function reloadAllCards() {
+    const panel = document.getElementById('panel-guides')!;
+    panel.innerHTML = '';
+    getStoredGuides().forEach((g: any) => panel.appendChild(createAdminGuideCard(g)));
+    updateGuideCount();
+    updateRefusalBadge();
+  }
+
+  function createAdminGuideCard(g: any): HTMLElement {
+    const villeLabel = g.city === 'medina' ? 'Medine' : 'La Mecque';
+    const initials = (g.firstName?.[0] || '') + (g.lastName?.[0] || '');
+    const avatarHtml = g.photo
+      ? `<div class="adm-g__avatar adm-g__avatar--photo" style="background-image:url(${g.photo})"></div>`
+      : `<div class="adm-g__avatar adm-g__avatar--${g.city}">${escG(initials)}</div>`;
+
+    const allBookings = getBookings();
+    const guideBookings = allBookings.filter((b: any) => b.guideId === g.id && b.status !== 'reassigned');
+    const pendingRefusals = guideBookings.filter((b: any) => b.status === 'pending-refusal');
+    const hasRefusal = pendingRefusals.length > 0;
+    const hasBookings = guideBookings.length > 0;
+
+    const card = document.createElement('div');
+    card.className = 'adm-g';
+    card.dataset.guideId = g.id;
+
+    let notifHtml = '';
+    if (hasRefusal) {
+      notifHtml = `<div class="adm-g__notif">
+        <button class="adm-g__dot adm-g__dot--red" data-toggle-refusal="${g.id}" title="Mission refusee — cliquez pour voir le motif">
+          <span class="adm-g__dot-pulse"></span>
+        </button>
+      </div>`;
+    } else {
+      notifHtml = `<div class="adm-g__notif">
+        <span class="adm-g__dot adm-g__dot--green" title="Aucun probleme"></span>
+      </div>`;
+    }
+
+    let bookingBtnHtml = '';
+    if (hasBookings) {
+      bookingBtnHtml = `<button class="adm-g__booking-btn" data-toggle-bookings="${g.id}">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1.1"/><path d="M3.5 1v2M8.5 1v2M1 5h10" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+        Reservations
+        <span class="adm-g__booking-count">${guideBookings.length}</span>
+      </button>`;
+    } else {
+      bookingBtnHtml = `<span class="adm-g__status adm-g__status--free">Libre</span>`;
+    }
+
+    let bookingsPanelHtml = '';
+    if (hasBookings) {
+      const rows = guideBookings.map((b: any) => {
+        const dateStr = b.date ? new Date(b.date + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : b.dates || '';
+        const statusLabel = b.status === 'pending-refusal'
+          ? `<span class="adm-g__bk-status adm-g__bk-status--refused">Refus en attente</span>`
+          : b.replacementOf
+            ? `<span class="adm-g__bk-status adm-g__bk-status--replaced">En remplacement de ${escG(b.replacementOf)}</span>`
+            : '';
+        return `
+          <div class="adm-g__bk-row" data-bk-row>
+            <button class="adm-g__bk-summary" data-toggle-bk-detail>
+              <div class="adm-g__bk-summary-left">
+                <span class="adm-g__bk-client">${escG(b.clientName || b.client || 'Client')}</span>
+                <span class="adm-g__bk-dates">${escG(dateStr)}${b.slot ? ' &middot; ' + escG(b.slot) : ''}</span>
+                ${b.seen
+                  ? '<span class="adm-g__bk-status adm-g__bk-status--seen">✓ Vu par le guide</span>'
+                  : '<span class="adm-g__bk-status adm-g__bk-status--unseen">Non vu</span>'}
+                ${b.activityName ? `<span class="adm-g__bk-status adm-g__bk-status--activity">${escG(b.activityName)}</span>` : ''}
+                ${statusLabel}
+              </div>
+              <svg class="adm-g__bk-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 5.5L7 8.5L10 5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="adm-g__bk-detail is-hidden">
+              <div class="adm-g__bk-detail-grid">
+                <div class="adm-g__bk-detail-item">
+                  <span class="adm-g__bk-label">Telephone</span>
+                  <span class="adm-g__bk-value">${escG(b.clientPhone || 'Non renseigne')}</span>
+                </div>
+                <div class="adm-g__bk-detail-item">
+                  <span class="adm-g__bk-label">Email</span>
+                  <span class="adm-g__bk-value">${escG(b.clientEmail || 'Non renseigne')}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      bookingsPanelHtml = `
+        <div class="adm-g__bookings is-hidden" id="bookings-${g.id}">
+          <div class="adm-g__bookings-header">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="11.5" rx="2" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 1v3M11.5 1v3M1.5 6.5h13" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            <span>Reservations (${guideBookings.length})</span>
+          </div>
+          ${rows}
+        </div>
+      `;
+    }
+
+    let refusalPanelHtml = '';
+    if (hasRefusal) {
+      // Guides de remplacement : même ville, et tarif égal ou inférieur (jamais supérieur)
+      const otherGuides = getStoredGuides().filter((og: any) =>
+        og.id !== g.id
+        && og.city === g.city
+        && (og.pricePerDay || 0) <= (g.pricePerDay || 0)
+      );
+      const now = new Date();
+      const curMonth = now.getMonth();
+      const curYear = now.getFullYear();
+
+      const refusalRows = pendingRefusals.map((refBooking: any, idx: number) => {
+        const refDateStr = refBooking.date ? new Date(refBooking.date + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+        const reason = refBooking.refusalReason || '';
+        const radioName = `replace-${g.id}-${refBooking.id}`;
+
+        let replacementCards = '';
+        if (otherGuides.length > 0) {
+          replacementCards = otherGuides.map((r: any) => {
+            const rInitials = (r.firstName?.[0] || '') + (r.lastName?.[0] || '');
+            const rLangs = (r.languages || []).join(', ');
+            const ogAvail = new Set(getAvail(r.id));
+            const ogBooked = new Set(getBookings().filter((b: any) => b.guideId === r.id && b.status !== 'reassigned').map((b: any) => b.date));
+            const isAvailable = refBooking.date ? (ogAvail.has(refBooking.date) && !ogBooked.has(refBooking.date)) : true;
+            return `
+              <div class="adm-g__rcard ${!isAvailable ? 'adm-g__rcard--unavailable' : ''}" data-rcard data-rcard-guide-id="${r.id}">
+                <div class="adm-g__rcard-header" data-toggle-rcard>
+                  <input type="radio" name="${radioName}" value="${r.id}" class="adm-g__rcard-radio" ${!isAvailable ? 'disabled' : ''} />
+                  ${r.photo
+                    ? `<div class="adm-g__replace-av adm-g__replace-av--photo" style="background-image:url(${r.photo})"></div>`
+                    : `<div class="adm-g__replace-av adm-g__replace-av--${r.city}">${escG(rInitials)}</div>`}
+                  <div class="adm-g__rcard-info">
+                    <span class="adm-g__replace-name">${escG(r.firstName)} ${escG(r.lastName)}</span>
+                    <span class="adm-g__replace-info">${r.pricePerDay ? r.pricePerDay + '€' : ''} ${rLangs ? '— ' + escG(rLangs) : ''}
+                      ${!isAvailable ? '<span class="adm-g__rcard-unavail">Indisponible a cette date</span>' : '<span class="adm-g__rcard-avail">Disponible</span>'}
+                    </span>
+                  </div>
+                  <svg class="adm-g__rcard-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 5.5L7 8.5L10 5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div class="adm-g__rcard-body is-hidden">
+                  <div class="adm-g__rcard-profile">
+                    ${r.diploma ? `<div class="adm-g__rcard-detail"><span class="adm-g__rcard-label">Diplome</span><span class="adm-g__rcard-value">${escG(r.diploma)}</span></div>` : ''}
+                    <a href="/guides/profil/?id=${r.id}" class="adm-g__rcard-profile-link">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 6s2-4 5-4 5 4 5 4-2 4-5 4-5-4-5-4z" stroke="currentColor" stroke-width="1.1"/><circle cx="6" cy="6" r="1.5" stroke="currentColor" stroke-width="1.1"/></svg>
+                      Voir le profil complet
+                    </a>
+                  </div>
+                  <div class="adm-cal">
+                    <div class="adm-cal__header">
+                      <span class="adm-cal__title">${admMonthNames[curMonth]} ${curYear}</span>
+                      <div class="adm-cal__legend">
+                        <span class="adm-cal__legend-item"><span class="adm-cal__dot adm-cal__dot--avail"></span>Disponible</span>
+                        <span class="adm-cal__legend-item"><span class="adm-cal__dot adm-cal__dot--busy"></span>Indisponible</span>
+                        <span class="adm-cal__legend-item"><span class="adm-cal__dot adm-cal__dot--booked"></span>Reserve</span>
+                      </div>
+                    </div>
+                    <div class="adm-cal__grid"></div>
+                    <div class="adm-cal__nav" data-cal-nav data-guide-id="${r.id}" data-month="${curMonth}" data-year="${curYear}">
+                      <button class="adm-cal__nav-btn" data-cal-prev>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L4 6l3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </button>
+                      <button class="adm-cal__nav-btn" data-cal-next>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          replacementCards = `<p class="adm-g__no-replace">Aucun autre guide dans cette ville.</p>`;
+        }
+
+        return `
+          <div class="adm-g__ref-row" data-ref-row>
+            <button class="adm-g__ref-summary" data-toggle-ref-detail>
+              <span class="adm-g__ref-dot"></span>
+              <div class="adm-g__ref-summary-left">
+                <span class="adm-g__ref-date">${escG(refDateStr)}</span>
+                <span class="adm-g__ref-client">${escG(refBooking.clientName || 'Client non renseigne')}</span>
+              </div>
+              <svg class="adm-g__ref-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 5.5L7 8.5L10 5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="adm-g__ref-detail is-hidden">
+              <div class="adm-g__ref-reason">
+                <span class="adm-g__ref-reason-label">Motif du refus :</span>
+                <blockquote class="adm-g__refusal-msg">"${escG(reason)}"</blockquote>
+              </div>
+              <div class="adm-g__replace">
+                <p class="adm-g__replace-label">Reassigner a un autre guide (optionnel) :</p>
+                <div class="adm-g__replace-list">${replacementCards}</div>
+              </div>
+              <div class="adm-g__refusal-actions">
+                <button class="adm-g__refusal-confirm" data-confirm-refusal="${g.id}" data-booking-id="${refBooking.id}" data-radio-name="${radioName}">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7.5L5.5 10L11 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Confirmer le refus
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      refusalPanelHtml = `
+        <div class="adm-g__refusal" id="refusal-${g.id}">
+          <div class="adm-g__refusal-header">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.4"/><path d="M9 5.5v4M9 12.5v.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span>Refus en attente (${pendingRefusals.length})</span>
+          </div>
+          ${refusalRows}
+        </div>
+      `;
+    }
+
+    card.innerHTML = `
+      ${notifHtml}
+      ${avatarHtml}
+      <div class="adm-g__info">
+        <h3 class="adm-g__name">${escG(g.firstName)} ${escG(g.lastName)}</h3>
+        <div class="adm-g__meta">
+          <span class="adm-g__city adm-g__city--${g.city}">${escG(villeLabel)}</span>
+          ${bookingBtnHtml}
+        </div>
+      </div>
+      <div class="adm-g__actions">
+        <button class="adm-g__btn adm-g__btn--outline" data-open-creds="${g.id}">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="6" width="10" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" stroke="currentColor" stroke-width="1.2"/></svg>
+          Identifiants
+        </button>
+        <button class="adm-g__btn adm-g__btn--outline" data-edit-guide="${g.id}">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 2.5l3 3M2 8.5L9.5 1l3 3L5 11.5 1.5 12l.5-3.5z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Modifier
+        </button>
+        <a href="/guides/profil/?id=${g.id}&login=1" class="adm-g__btn adm-g__btn--outline">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7s2.5-5 6-5 6 5 6 5-2.5 5-6 5-6-5-6-5z" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.2"/></svg>
+          Voir le profil
+        </a>
+        <button class="adm-g__btn adm-g__btn--outline adm-g__btn--danger" data-delete-guide="${g.id}">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 4h8M5.5 4V3a1 1 0 011-1h1a1 1 0 011 1v1M4.5 4v7a1.5 1.5 0 001.5 1.5h2a1.5 1.5 0 001.5-1.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Supprimer
+        </button>
+      </div>
+      ${bookingsPanelHtml}
+      ${refusalPanelHtml}
+      <div class="adm-g__creds is-hidden" id="creds-${g.id}">
+        <h4>Identifiants de ${escG(g.firstName)} ${escG(g.lastName)}</h4>
+        <div class="adm-g__creds-form">
+          <div class="adm-g__creds-field">
+            <label>Identifiant</label>
+            <input type="text" value="${escG(g.login || '')}" readonly />
+          </div>
+          <p class="adm-g__creds-note">Le mot de passe est chiffr&eacute; et n'est plus visible.<br/>Pour le r&eacute;initialiser : Supabase &rarr; Authentication &rarr; Users.</p>
+        </div>
+      </div>
+    `;
+
+    // Wire up event handlers
+    card.querySelector(`[data-open-creds="${g.id}"]`)!.addEventListener('click', () => {
+      document.getElementById(`creds-${g.id}`)?.classList.toggle('is-hidden');
+    });
+    card.querySelector(`[data-delete-guide="${g.id}"]`)!.addEventListener('click', async () => {
+      if (!confirm(`Supprimer ${g.firstName} ${g.lastName} ?`)) return;
+      const { error } = await supabase.from('guides').delete().eq('id', g.id);
+      if (error) { alert('Erreur lors de la suppression. Réessayez.'); return; }
+      DB_GUIDES = DB_GUIDES.filter((x: any) => x.id !== g.id);
+      card.remove();
+      updateGuideCount();
+    });
+    card.querySelector(`[data-edit-guide="${g.id}"]`)!.addEventListener('click', () => {
+      openEditModal(g.id);
+    });
+
+    // Toggle bookings
+    const bookingsBtn = card.querySelector(`[data-toggle-bookings="${g.id}"]`);
+    if (bookingsBtn) {
+      bookingsBtn.addEventListener('click', () => {
+        document.getElementById(`bookings-${g.id}`)?.classList.toggle('is-hidden');
+      });
+    }
+
+    // Toggle booking detail rows
+    card.querySelectorAll('[data-toggle-bk-detail]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('[data-bk-row]') as HTMLElement;
+        if (!row) return;
+        const detail = row.querySelector('.adm-g__bk-detail') as HTMLElement;
+        const arrow = btn.querySelector('.adm-g__bk-arrow') as HTMLElement;
+        if (detail) {
+          const isOpen = !detail.classList.contains('is-hidden');
+          detail.classList.toggle('is-hidden');
+          if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+        }
+      });
+    });
+
+    // Toggle refusal panel
+    const refusalDot = card.querySelector(`[data-toggle-refusal="${g.id}"]`);
+    if (refusalDot) {
+      refusalDot.addEventListener('click', () => {
+        document.getElementById(`refusal-${g.id}`)?.classList.toggle('is-hidden');
+      });
+    }
+
+    // Replacement card toggles
+    card.querySelectorAll('[data-toggle-rcard]').forEach(header => {
+      header.addEventListener('click', () => {
+        const rcard = header.closest('[data-rcard]') as HTMLElement;
+        if (!rcard) return;
+        const body = rcard.querySelector('.adm-g__rcard-body') as HTMLElement;
+        const arrow = header.querySelector('.adm-g__rcard-arrow') as HTMLElement;
+        if (body) {
+          const isOpen = !body.classList.contains('is-hidden');
+          body.classList.toggle('is-hidden');
+          if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+        }
+      });
+    });
+
+    // Render mini calendars for replacement guides
+    card.querySelectorAll('.adm-cal').forEach(cal => {
+      const nav = cal.querySelector('[data-cal-nav]') as HTMLElement;
+      if (!nav) return;
+      const rGuideId = nav.dataset.guideId!;
+      const m = parseInt(nav.dataset.month!);
+      const y = parseInt(nav.dataset.year!);
+      renderAdmMiniCal(cal as HTMLElement, rGuideId, m, y);
+
+      const prevBtn = cal.querySelector('[data-cal-prev]');
+      const nextBtn = cal.querySelector('[data-cal-next]');
+      if (prevBtn) prevBtn.addEventListener('click', () => {
+        let cm = parseInt(nav.dataset.month!);
+        let cy = parseInt(nav.dataset.year!);
+        cm--; if (cm < 0) { cm = 11; cy--; }
+        renderAdmMiniCal(cal as HTMLElement, rGuideId, cm, cy);
+      });
+      if (nextBtn) nextBtn.addEventListener('click', () => {
+        let cm = parseInt(nav.dataset.month!);
+        let cy = parseInt(nav.dataset.year!);
+        cm++; if (cm > 11) { cm = 0; cy++; }
+        renderAdmMiniCal(cal as HTMLElement, rGuideId, cm, cy);
+      });
+    });
+
+    // Toggle refusal row accordions
+    card.querySelectorAll('[data-toggle-ref-detail]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('[data-ref-row]') as HTMLElement;
+        if (!row) return;
+        const detail = row.querySelector('.adm-g__ref-detail') as HTMLElement;
+        const arrow = btn.querySelector('.adm-g__ref-arrow') as HTMLElement;
+        if (detail) {
+          const isOpen = !detail.classList.contains('is-hidden');
+          detail.classList.toggle('is-hidden');
+          if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+        }
+      });
+    });
+
+    // Radio selection on replacement cards
+    card.querySelectorAll('.adm-g__rcard-radio').forEach(radio => {
+      radio.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    });
+
+    // Confirm refusal buttons (one per refusal row)
+    card.querySelectorAll('[data-confirm-refusal]').forEach(confirmBtn => {
+      confirmBtn.addEventListener('click', async () => {
+        const el = confirmBtn as HTMLElement;
+        const bookingId = el.dataset.bookingId!;
+        const radioName = el.dataset.radioName!;
+        const selectedRadio = card.querySelector(`input[name="${radioName}"]:checked`) as HTMLInputElement | null;
+        const toId = selectedRadio ? selectedRadio.value : null;
+
+        const booking = getBookings().find((b: any) => b.id === bookingId);
+        if (!booking) return;
+
+        (el as HTMLButtonElement).disabled = true;
+
+        const { error } = await supabase.from('bookings')
+          .update({ status: 'reassigned' })
+          .eq('id', bookingId);
+        if (error) {
+          (el as HTMLButtonElement).disabled = false;
+          alert('Une erreur est survenue. Réessayez.');
+          return;
+        }
+
+        if (toId) {
+          const fromGuide = getStoredGuides().find((x: any) => x.id === g.id);
+          const { error: insErr } = await supabase.from('bookings').insert({
+            guide_id: toId,
+            date: booking.date,
+            slot: booking.slot || null,
+            activity_slug: booking.activitySlug || null,
+            activity_name: booking.activityName || null,
+            client_name: booking.clientName || null,
+            client_email: booking.clientEmail || null,
+            client_phone: booking.clientPhone || null,
+            status: 'confirmed',
+            replacement_of: fromGuide ? `${fromGuide.firstName} ${fromGuide.lastName}` : null,
+          });
+          if (insErr) alert("Le refus a été confirmé, mais la réassignation a échoué (date déjà prise ?).");
+        }
+
+        await loadAll();
+        reloadAllCards();
+      });
+    });
+
+    return card;
+  }
+
+  function updateGuideCount() {
+    const countEl = document.querySelector('.adm-top__sub');
+    if (countEl) {
+      const n = getStoredGuides().length;
+      countEl.textContent = `${n} guide${n !== 1 ? 's' : ''} enregistre${n !== 1 ? 's' : ''}`;
+    }
+  }
+
+  // ===== EDIT / CREATE MODE =====
+  let editingGuideId: string | null = null;
+  const modalTitle = document.getElementById('modal-title')!;
+  const addGuideForm = document.getElementById('add-guide-form') as HTMLFormElement;
+
+  function openEditModal(guideId: string) {
+    const guide = getStoredGuides().find((g: any) => g.id === guideId);
+    if (!guide) return;
+    editingGuideId = guideId;
+    modalTitle.textContent = 'Modifier le guide';
+
+    (addGuideForm.querySelector('[name="prenom"]') as HTMLInputElement).value = guide.firstName || '';
+    (addGuideForm.querySelector('[name="nom"]') as HTMLInputElement).value = guide.lastName || '';
+    (addGuideForm.querySelector('[name="ville"]') as HTMLSelectElement).value = guide.city || '';
+    (addGuideForm.querySelector('[name="prix"]') as HTMLInputElement).value = guide.pricePerDay ? String(guide.pricePerDay) : '';
+    (addGuideForm.querySelector('[name="diplome"]') as HTMLInputElement).value = guide.diploma || '';
+    (addGuideForm.querySelector('[name="langues"]') as HTMLInputElement).value = (guide.languages || []).join(', ');
+    (addGuideForm.querySelector('[name="description"]') as HTMLTextAreaElement).value = guide.description || '';
+    // Identifiants gérés par Supabase Auth : non modifiables après création
+    const loginInput = addGuideForm.querySelector('[name="identifiant"]') as HTMLInputElement;
+    const mdpInput = addGuideForm.querySelector('[name="mdp"]') as HTMLInputElement;
+    loginInput.value = guide.login || '';
+    loginInput.disabled = true;
+    mdpInput.value = '';
+    mdpInput.placeholder = 'Non modifiable ici';
+    mdpInput.disabled = true;
+
+    if (guide.photo) {
+      photoResultCircle.style.backgroundImage = `url(${guide.photo})`;
+      showPhotoState('result');
+    } else {
+      showPhotoState('empty');
+    }
+
+    overlay.classList.remove('is-hidden');
+  }
+
+  function resetModal() {
+    editingGuideId = null;
+    modalTitle.textContent = 'Ajouter un guide';
+    addGuideForm.reset();
+    const loginInput = addGuideForm.querySelector('[name="identifiant"]') as HTMLInputElement;
+    const mdpInput = addGuideForm.querySelector('[name="mdp"]') as HTMLInputElement;
+    loginInput.disabled = false;
+    mdpInput.disabled = false;
+    mdpInput.placeholder = 'mot de passe (6 caractères min.)';
+    showPhotoState('empty');
+    photoResultCircle.style.backgroundImage = '';
+  }
+
+  document.getElementById('open-add-guide')!.addEventListener('click', () => {
+    resetModal();
+    overlay.classList.remove('is-hidden');
+  });
+  document.getElementById('close-modal')!.addEventListener('click', () => { overlay.classList.add('is-hidden'); resetModal(); });
+  document.getElementById('cancel-modal')!.addEventListener('click', () => { overlay.classList.add('is-hidden'); resetModal(); });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) { overlay.classList.add('is-hidden'); resetModal(); } });
+
+  addGuideForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = addGuideForm;
+    const prenom = (form.querySelector('[name="prenom"]') as HTMLInputElement).value.trim();
+    const nom = (form.querySelector('[name="nom"]') as HTMLInputElement).value.trim();
+    const ville = (form.querySelector('[name="ville"]') as HTMLSelectElement).value;
+    const prix = (form.querySelector('[name="prix"]') as HTMLInputElement).value;
+    const diplome = (form.querySelector('[name="diplome"]') as HTMLInputElement).value.trim();
+    const langues = (form.querySelector('[name="langues"]') as HTMLInputElement).value.trim();
+    const description = (form.querySelector('[name="description"]') as HTMLTextAreaElement).value.trim();
+    const identifiant = (form.querySelector('[name="identifiant"]') as HTMLInputElement).value.trim().toLowerCase();
+    const mdp = (form.querySelector('[name="mdp"]') as HTMLInputElement).value;
+
+    if (!prenom || !nom) return;
+
+    const submitBtn = form.querySelector('.adm-modal__submit') as HTMLButtonElement;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enregistrement...';
+    const restoreBtn = () => { submitBtn.disabled = false; submitBtn.textContent = 'Enregistrer'; };
+
+    const photoUrl = photoResultCircle.style.backgroundImage;
+    const photoMatch = photoUrl.match(/url\("?([^"]*)"?\)/);
+    let photoDataUrl = photoMatch ? photoMatch[1] : '';
+
+    const fields = {
+      first_name: prenom,
+      last_name: nom,
+      city: ville || 'medina',
+      diploma: diplome || null,
+      description: description || null,
+      languages: langues ? langues.split(',').map((l: string) => l.trim()).filter(Boolean) : [],
+      price_per_day: prix ? parseInt(prix) : 0,
+    };
+
+    if (editingGuideId) {
+      // === UPDATE ===
+      const existing = getStoredGuides().find((g: any) => g.id === editingGuideId);
+      if (!existing) { restoreBtn(); return; }
+      if (!photoDataUrl && existing.photo) photoDataUrl = existing.photo;
+
+      const { data, error } = await supabase.from('guides')
+        .update({ ...fields, photo: photoDataUrl || null })
+        .eq('id', editingGuideId)
+        .select()
+        .single();
+      restoreBtn();
+      if (error || !data) { alert('Erreur lors de la mise à jour. Réessayez.'); return; }
+
+      const updated = mapGuide(data);
+      const idx = DB_GUIDES.findIndex((g: any) => g.id === editingGuideId);
+      if (idx !== -1) DB_GUIDES[idx] = updated;
+
+      const oldCard = document.querySelector(`[data-guide-id="${editingGuideId}"]`);
+      if (oldCard) {
+        const newCard = createAdminGuideCard(updated);
+        oldCard.replaceWith(newCard);
+        newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } else {
+      // === CREATE : compte Auth (mot de passe chiffré) + fiche guide ===
+      if (!identifiant || !/^[a-z0-9._-]+$/.test(identifiant)) {
+        restoreBtn();
+        alert("Identifiant invalide : lettres minuscules, chiffres, points, tirets uniquement (sans espaces ni accents).");
+        return;
+      }
+      if (!mdp || mdp.length < 6) {
+        restoreBtn();
+        alert('Le mot de passe doit contenir au moins 6 caractères.');
+        return;
+      }
+
+      const { data: signUpData, error: signUpErr } = await authClient.auth.signUp({
+        email: identifiant + GUIDE_EMAIL_SUFFIX,
+        password: mdp,
+      });
+      if (signUpErr || !signUpData.user) {
+        restoreBtn();
+        alert(`Impossible de créer le compte du guide : ${signUpErr?.message || 'erreur inconnue'}.\n(Identifiant déjà utilisé ?)`);
+        return;
+      }
+
+      const { data, error } = await supabase.from('guides')
+        .insert({
+          ...fields,
+          photo: photoDataUrl || null,
+          login: identifiant,
+          auth_user_id: signUpData.user.id,
+        })
+        .select()
+        .single();
+      restoreBtn();
+      if (error || !data) { alert("Le compte a été créé mais l'enregistrement du guide a échoué. Réessayez."); return; }
+
+      const created = mapGuide(data);
+      DB_GUIDES.push(created);
+
+      const panel = document.getElementById('panel-guides')!;
+      const card = createAdminGuideCard(created);
+      panel.appendChild(card);
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    updateGuideCount();
+    overlay.classList.add('is-hidden');
+    resetModal();
+  });
+
+  // ===== TAB NAVIGATION (Guides / Avis) =====
+  const navTabs = document.querySelectorAll('[data-nav-tab]');
+  const guidesHeader = document.getElementById('panel-guides-header')!;
+  const guidesPanel = document.getElementById('panel-guides')!;
+  const reviewsPanel = document.getElementById('panel-reviews')!;
+
+  navTabs.forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = (tab as HTMLElement).dataset.navTab;
+      navTabs.forEach(t => t.classList.remove('adm-side__link--active'));
+      tab.classList.add('adm-side__link--active');
+      if (target === 'reviews') {
+        guidesHeader.classList.add('is-hidden');
+        guidesPanel.classList.add('is-hidden');
+        reviewsPanel.classList.remove('is-hidden');
+        renderAdminReviews();
+      } else {
+        guidesHeader.classList.remove('is-hidden');
+        guidesPanel.classList.remove('is-hidden');
+        reviewsPanel.classList.add('is-hidden');
+      }
+    });
+  });
+
+  // ===== REVIEWS ADMIN =====
+  let activeRTab = 'pending';
+
+  function getReviews() {
+    return DB_REVIEWS;
+  }
+
+  async function setReviewStatus(id: string, status: string): Promise<boolean> {
+    const { error } = await supabase.from('reviews').update({ status }).eq('id', id);
+    if (error) { alert('Erreur, réessayez.'); return false; }
+    const r = DB_REVIEWS.find((x: any) => x.id === id);
+    if (r) r.status = status;
+    return true;
+  }
+
+  function escHtml(s: string) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function updatePendingBadge() {
+    const pending = getReviews().filter((r: any) => r.status === 'pending');
+    const badge = document.getElementById('pending-count');
+    if (badge) {
+      badge.textContent = String(pending.length);
+      badge.hidden = pending.length === 0;
+    }
+  }
+
+  function updateRefusalBadge() {
+    const refusals = getBookings().filter((b: any) => b.status === 'pending-refusal');
+    const badge = document.getElementById('refusal-count');
+    if (badge) {
+      badge.textContent = String(refusals.length);
+      badge.hidden = refusals.length === 0;
+    }
+  }
+
+  function renderAdminReviews() {
+    const all = getReviews();
+    const pending = all.filter((r: any) => r.status === 'pending');
+    const approved = all.filter((r: any) => r.status === 'approved');
+    const rejected = all.filter((r: any) => r.status === 'rejected');
+
+    const sub = document.getElementById('reviews-sub');
+    if (sub) sub.textContent = `${all.length} avis au total — ${pending.length} en attente`;
+
+    const pc = document.getElementById('rtab-pending-count');
+    const ac = document.getElementById('rtab-approved-count');
+    const rc = document.getElementById('rtab-rejected-count');
+    if (pc) pc.textContent = pending.length > 0 ? `(${pending.length})` : '';
+    if (ac) ac.textContent = approved.length > 0 ? `(${approved.length})` : '';
+    if (rc) rc.textContent = rejected.length > 0 ? `(${rejected.length})` : '';
+
+    const filtered = activeRTab === 'pending' ? pending : activeRTab === 'approved' ? approved : rejected;
+    const list = document.getElementById('reviews-list');
+    if (!list) return;
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="adm-reviews__empty">Aucun avis ${activeRTab === 'pending' ? 'en attente' : activeRTab === 'approved' ? 'approuvé' : 'refusé'}.</div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map((r: any) => {
+      const starStr = '★'.repeat(r.stars || 5) + '☆'.repeat(5 - (r.stars || 5));
+      const date = r.date ? new Date(r.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+      let actions = '';
+      if (r.status === 'pending') {
+        actions = `
+          <button class="adm-rv__btn adm-rv__btn--approve" data-rv-approve="${r.id}">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7.5L5.5 10L11 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Approuver
+          </button>
+          <button class="adm-rv__btn adm-rv__btn--reject" data-rv-reject="${r.id}">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 4l6 6M10 4l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            Refuser
+          </button>
+        `;
+      } else if (r.status === 'approved') {
+        actions = `
+          <button class="adm-rv__btn adm-rv__btn--reject" data-rv-reject="${r.id}">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 4l6 6M10 4l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            Retirer
+          </button>
+        `;
+      } else {
+        actions = `
+          <button class="adm-rv__btn adm-rv__btn--approve" data-rv-approve="${r.id}">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7.5L5.5 10L11 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Approuver
+          </button>
+          <button class="adm-rv__btn adm-rv__btn--delete" data-rv-delete="${r.id}">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 4h8M5.5 4V3a1 1 0 011-1h1a1 1 0 011 1v1M4.5 4v7a1.5 1.5 0 001.5 1.5h2a1.5 1.5 0 001.5-1.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Supprimer
+          </button>
+        `;
+      }
+
+      return `
+        <div class="adm-rv">
+          <div class="adm-rv__stars">${starStr}</div>
+          <div class="adm-rv__body">
+            <p class="adm-rv__text">${escHtml(r.text)}</p>
+            <div class="adm-rv__meta">
+              <span class="adm-rv__name">${escHtml(r.name)}</span>
+              <span class="adm-rv__sep">·</span>
+              <span class="adm-rv__service">${escHtml(r.service)}</span>
+              ${date ? `<span class="adm-rv__sep">·</span><span class="adm-rv__date">${date}</span>` : ''}
+            </div>
+          </div>
+          <div class="adm-rv__actions">${actions}</div>
+        </div>
+      `;
+    }).join('');
+
+    // Wire up buttons
+    list.querySelectorAll('[data-rv-approve]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = (btn as HTMLElement).dataset.rvApprove!;
+        if (!(await setReviewStatus(id, 'approved'))) return;
+        renderAdminReviews();
+        updatePendingBadge();
+      });
+    });
+    list.querySelectorAll('[data-rv-reject]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = (btn as HTMLElement).dataset.rvReject!;
+        if (!(await setReviewStatus(id, 'rejected'))) return;
+        renderAdminReviews();
+        updatePendingBadge();
+      });
+    });
+    list.querySelectorAll('[data-rv-delete]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = (btn as HTMLElement).dataset.rvDelete!;
+        const { error } = await supabase.from('reviews').delete().eq('id', id);
+        if (error) { alert('Erreur, réessayez.'); return; }
+        DB_REVIEWS = DB_REVIEWS.filter((x: any) => x.id !== id);
+        renderAdminReviews();
+        updatePendingBadge();
+      });
+    });
+  }
+
+  // Review tabs
+  document.querySelectorAll('[data-rtab]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      activeRTab = (tab as HTMLElement).dataset.rtab!;
+      document.querySelectorAll('[data-rtab]').forEach(t => t.classList.remove('adm-reviews__tab--active'));
+      tab.classList.add('adm-reviews__tab--active');
+      renderAdminReviews();
+    });
+  });
+
+  updatePendingBadge();
+  updateRefusalBadge();
+</script>
+
+<style is:global>
+  .is-hidden { display: none !important; }
+
+  * { box-sizing: border-box; }
+
+  .adm-body {
+    margin: 0;
+    font-family: 'Jost', system-ui, sans-serif;
+    background: #F3F1EB;
+    color: #1C1C1A;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============================================================
+     LOGIN
+     ============================================================ */
+  .adm-login {
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(ellipse 80% 60% at 70% -10%, rgba(185,151,82,0.18), transparent 60%),
+      linear-gradient(150deg, #0D3B2A 0%, #082818 100%);
+    padding: 20px;
+  }
+  .adm-login__card {
+    background: #FFFFFF;
+    border-radius: 22px;
+    padding: 52px 42px 44px;
+    width: 100%; max-width: 390px;
+    text-align: center;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.35);
+    animation: admRise 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes admRise {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .adm-login__icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 56px; height: 56px; border-radius: 18px;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+    color: #E8C987; margin-bottom: 22px;
+    box-shadow: 0 12px 28px rgba(20,81,58,0.35);
+  }
+  .adm-login__card h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem; font-weight: 700; margin: 0 0 6px;
+    color: #14513A; letter-spacing: 0.01em;
+  }
+  .adm-login__card > p { font-size: 0.82rem; font-weight: 300; color: #9C9C93; margin: 0 0 30px; }
+  .adm-login__card input {
+    width: 100%; padding: 14px 18px;
+    border: 1.5px solid #E7E4DB; border-radius: 12px;
+    font-size: 0.9rem; font-family: inherit;
+    margin-bottom: 12px;
+    background: #FAF9F5;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .adm-login__card input:focus {
+    outline: none; border-color: #14513A;
+    box-shadow: 0 0 0 4px rgba(20,81,58,0.1);
+  }
+  .adm-login__card button[type="submit"] {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+    color: #FAF8F4;
+    border: none; border-radius: 12px;
+    font-size: 0.85rem; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    cursor: pointer; font-family: inherit;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .adm-login__card button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(20,81,58,0.3);
+  }
+  .adm-login__error { color: #DC2626; font-size: 0.78rem; margin: 12px 0 0; }
+  .adm-login__hint { color: #9C9C93; font-size: 0.72rem; margin: 22px 0 0; }
+  .adm-login__hint code { background: #F3F0EA; padding: 2px 8px; border-radius: 5px; color: #14513A; font-weight: 600; }
+
+  /* ============================================================
+     LAYOUT
+     ============================================================ */
+  .adm { display: flex; min-height: 100vh; }
+
+  /* ---- Sidebar (desktop) ---- */
+  .adm-side {
+    width: 232px;
+    background:
+      radial-gradient(ellipse 90% 40% at 50% -5%, rgba(185,151,82,0.14), transparent 65%),
+      linear-gradient(170deg, #0D3B2A 0%, #082818 100%);
+    color: #FAF8F4;
+    padding: 28px 16px 20px;
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; bottom: 0; left: 0; z-index: 60;
+  }
+  .adm-side__brand {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700; font-size: 1.15rem;
+    color: #E8C987; letter-spacing: 0.03em;
+    margin-bottom: 36px; padding: 0 10px;
+  }
+  .adm-side__nav { flex-grow: 1; display: flex; flex-direction: column; gap: 6px; }
+  .adm-side__link {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px; border-radius: 12px;
+    color: rgba(250,248,244,0.55);
+    font-size: 0.85rem; font-weight: 500;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    position: relative;
+    transition: background 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .adm-side__link:hover { color: #FAF8F4; background: rgba(250,248,244,0.06); }
+  .adm-side__link--active {
+    background: rgba(250,248,244,0.1);
+    color: #FAF8F4;
+  }
+  .adm-side__link--active::before {
+    content: '';
+    position: absolute; left: -16px; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; height: 22px;
+    background: #B99752;
+    border-radius: 0 3px 3px 0;
+  }
+  .adm-side__logout {
+    padding: 10px 14px;
+    background: none;
+    border: 1px solid rgba(250,248,244,0.14);
+    border-radius: 12px;
+    color: rgba(250,248,244,0.45);
+    font-size: 0.74rem; font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: pointer; font-family: inherit;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .adm-side__logout:hover {
+    border-color: rgba(250,248,244,0.4);
+    color: #FAF8F4;
+    background: rgba(250,248,244,0.05);
+  }
+
+  .adm-side__badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 19px; height: 19px; padding: 0 5px;
+    border-radius: 10px;
+    background: #B99752; color: #16130B;
+    font-size: 0.62rem; font-weight: 700;
+    margin-left: auto; line-height: 1;
+  }
+  .adm-side__badge--red { background: #EF4444; color: #FFF; }
+
+  /* ---- Main ---- */
+  .adm-main {
+    flex: 1;
+    margin-left: 232px;
+    padding: 40px 48px 60px;
+    max-width: 1060px;
+  }
+
+  .adm-top {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .adm-top__title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem; font-weight: 700; margin: 0;
+    color: #14513A; letter-spacing: -0.01em;
+  }
+  .adm-top__sub { font-size: 0.8rem; font-weight: 300; color: #9C9C93; margin: 4px 0 0; }
+
+  .adm-add-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 22px;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+    color: #FAF8F4;
+    border: none; border-radius: 12px;
+    font-size: 0.78rem; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    cursor: pointer; font-family: inherit;
+    flex-shrink: 0;
+    box-shadow: 0 8px 20px rgba(20,81,58,0.2);
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .adm-add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(20,81,58,0.3);
+  }
+  .adm-add-btn:active { transform: scale(0.97); }
+
+  /* ============================================================
+     GUIDE CARDS
+     ============================================================ */
+  .adm-guides { display: flex; flex-direction: column; gap: 14px; }
+
+  .adm-g {
+    display: grid; grid-template-columns: 26px 56px 1fr auto;
+    align-items: center; gap: 16px;
+    background: #FFFFFF;
+    border: 1px solid #ECE9E1;
+    border-radius: 18px;
+    padding: 20px 24px;
+    transition: box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.35s;
+  }
+  .adm-g:hover {
+    transform: translateY(-2px);
+    border-color: rgba(20,81,58,0.18);
+    box-shadow: 0 16px 40px rgba(20,81,58,0.08);
+  }
+
+  /* Notification dot */
+  .adm-g__notif { display: flex; align-items: center; justify-content: center; }
+  .adm-g__dot {
+    width: 11px; height: 11px; border-radius: 50%;
+    display: block; position: relative; border: none; padding: 0;
+    cursor: default;
+  }
+  .adm-g__dot--green { background: #22C55E; box-shadow: 0 0 0 4px rgba(34,197,94,0.12); }
+  .adm-g__dot--red {
+    background: #EF4444; cursor: pointer;
+    animation: dotGlow 2s ease-in-out infinite;
+  }
+  .adm-g__dot-pulse {
+    position: absolute; inset: -4px; border-radius: 50%;
+    border: 2px solid #EF4444; opacity: 0;
+    animation: pulseRing 2s ease-out infinite;
+  }
+  @keyframes dotGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+  }
+  @keyframes pulseRing {
+    0% { transform: scale(0.8); opacity: 0.8; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  /* Avatar */
+  .adm-g__avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.55);
+    box-shadow: 0 0 0 3px #FFFFFF, 0 0 0 4px #E7E4DB;
+  }
+  .adm-g__avatar--medina { background: linear-gradient(135deg, #14513A, #0C3A28); }
+  .adm-g__avatar--mecca { background: linear-gradient(135deg, #1A1A2E, #2D2D4A); }
+  .adm-g__avatar--photo { background-size: cover; background-position: center; color: transparent; }
+
+  /* Info */
+  .adm-g__info { min-width: 0; }
+  .adm-g__name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem; font-weight: 700; margin: 0 0 5px;
+    color: #1C1C1A;
+  }
+  .adm-g__meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .adm-g__city {
+    font-size: 0.6rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.1em; padding: 3px 10px; border-radius: 20px;
+  }
+  .adm-g__city--medina { background: #EDF5F0; color: #14513A; }
+  .adm-g__city--mecca { background: #F5F3E8; color: #1A1A2E; }
+
+  .adm-g__status { font-size: 0.72rem; font-weight: 300; }
+  .adm-g__status--free { color: #9C9C93; }
+  .adm-g__status--replaced { color: #B99752; font-weight: 600; font-size: 0.72rem; }
+
+  /* Booking button */
+  .adm-g__booking-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 20px;
+    background: #EDF5F0; border: 1px solid #C8DFD1;
+    color: #14513A; font-size: 0.72rem; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .adm-g__booking-btn:hover { background: #D5ECDF; border-color: #14513A; }
+  .adm-g__booking-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; border-radius: 9px;
+    background: #14513A; color: #FAF8F4;
+    font-size: 0.6rem; font-weight: 700; padding: 0 4px;
+    margin-left: 2px;
+  }
+
+  /* Actions */
+  .adm-g__actions { display: flex; align-items: center; gap: 8px; position: relative; }
+
+  .adm-g__btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 15px; border-radius: 10px;
+    font-family: 'Jost', sans-serif; font-size: 0.72rem; font-weight: 500;
+    text-decoration: none; cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+    white-space: nowrap;
+  }
+  .adm-g__btn--outline {
+    background: transparent; border: 1px solid #E7E4DB; color: #6B6B64;
+  }
+  .adm-g__btn--outline:hover { border-color: #14513A; color: #14513A; background: #EDF5F0; }
+  .adm-g__btn--danger { color: #9C9C93; }
+  .adm-g__btn--danger:hover { border-color: #DC2626; color: #DC2626; background: #FEF2F2; }
+
+  .adm-g__flash {
+    position: absolute; top: -6px; right: 0;
+    background: #14513A; color: #FAF8F4; padding: 4px 12px; border-radius: 8px;
+    font-size: 0.68rem; font-weight: 500; white-space: nowrap;
+    animation: flashIn 0.3s ease, flashOut 0.3s ease 2s forwards;
+    z-index: 5;
+  }
+  @keyframes flashIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes flashOut { from { opacity: 1; } to { opacity: 0; } }
+
+  /* ============================================================
+     BOOKINGS PANEL
+     ============================================================ */
+  .adm-g__bookings {
+    grid-column: 1 / -1;
+    margin-top: 12px;
+    background: #F0F7F3; border: 1px solid #C8DFD1; border-radius: 14px;
+    overflow: hidden;
+    animation: panelIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes panelIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .adm-g__bookings-header {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.75rem; font-weight: 600; color: #14513A;
+    padding: 14px 18px; border-bottom: 1px solid #C8DFD1;
+  }
+
+  .adm-g__bk-row { border-bottom: 1px solid #D8EBE0; }
+  .adm-g__bk-row:last-child { border-bottom: none; }
+
+  .adm-g__bk-summary {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; padding: 12px 18px;
+    background: transparent; border: none; cursor: pointer;
+    font-family: inherit; transition: background 0.15s;
+    text-align: left;
+  }
+  .adm-g__bk-summary:hover { background: rgba(20,81,58,0.04); }
+
+  .adm-g__bk-summary-left {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .adm-g__bk-client { font-size: 0.82rem; font-weight: 600; color: #1C1C1A; }
+  .adm-g__bk-dates { font-size: 0.72rem; color: #14513A; font-weight: 500; }
+  .adm-g__bk-persons {
+    font-size: 0.65rem; color: #9C9C93; font-weight: 500;
+    background: #E8F0EC; padding: 1px 8px; border-radius: 4px;
+  }
+  .adm-g__bk-arrow { color: #9C9C93; transition: transform 0.25s ease; flex-shrink: 0; }
+
+  .adm-g__bk-detail { padding: 0 18px 16px; animation: panelIn 0.2s ease; }
+  .adm-g__bk-detail-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px 24px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.7); border-radius: 10px;
+  }
+  .adm-g__bk-detail-item--full { grid-column: 1 / -1; }
+  .adm-g__bk-label {
+    display: block; font-size: 0.6rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: #6B8F7A; margin-bottom: 1px;
+  }
+  .adm-g__bk-value { font-size: 0.78rem; font-weight: 500; color: #1C1C1A; }
+  .adm-g__bk-value--link { color: #14513A; text-decoration: none; }
+  .adm-g__bk-value--link:hover { text-decoration: underline; }
+
+  .adm-g__bk-replacement {
+    margin-top: 10px; padding: 10px 16px;
+    background: rgba(185,151,82,0.08); border-radius: 10px; border: 1px solid rgba(185,151,82,0.2);
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.72rem; color: #B99752; font-weight: 500;
+  }
+  .adm-g__bk-replacement strong { color: #1C1C1A; }
+
+  .adm-g__bk-status {
+    font-size: 0.62rem; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+  }
+  .adm-g__bk-status--refused { background: rgba(230,126,34,0.12); color: #E67E22; }
+  .adm-g__bk-status--seen { background: #E8F5EE; color: #16A34A; }
+  .adm-g__bk-status--unseen { background: #F5F4F0; color: #9C9C93; }
+  .adm-g__bk-status--replaced { background: rgba(185,151,82,0.12); color: #B99752; }
+  .adm-g__bk-status--activity { background: #EDF5F0; color: #14513A; }
+
+  /* ============================================================
+     REFUSAL PANEL
+     ============================================================ */
+  .adm-g__refusal {
+    grid-column: 1 / -1;
+    margin-top: 12px; padding: 20px;
+    background: #FEF2F2; border: 1px solid #FECACA; border-radius: 14px;
+  }
+  .adm-g__refusal-header {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.78rem; font-weight: 600; color: #DC2626; margin-bottom: 10px;
+  }
+  .adm-g__refusal-msg {
+    margin: 0 0 12px; padding: 0 0 0 16px;
+    border-left: 3px solid #FECACA;
+    font-size: 0.82rem; color: #7F1D1D; line-height: 1.6; font-style: italic;
+  }
+  .adm-g__refusal-date { font-size: 0.75rem; color: #9C9C93; margin: 0 0 8px; }
+  .adm-g__refusal-date strong { color: #1C1C1A; }
+  .adm-g__refusal-client { font-size: 0.75rem; color: #9C9C93; margin: 0 0 16px; }
+  .adm-g__refusal-client strong { color: #1C1C1A; }
+  .adm-g__no-replace { font-size: 0.78rem; color: #9C9C93; font-style: italic; margin: 8px 0 0; }
+
+  .adm-g__ref-row { border-bottom: 1px solid #F5CDCD; }
+  .adm-g__ref-row:last-child { border-bottom: none; }
+
+  .adm-g__ref-summary {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 14px 18px;
+    background: transparent; border: none; cursor: pointer;
+    font-family: inherit; text-align: left;
+    transition: background 0.12s;
+  }
+  .adm-g__ref-summary:hover { background: rgba(220,38,38,0.04); }
+  .adm-g__ref-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #EF4444; flex-shrink: 0;
+  }
+  .adm-g__ref-summary-left {
+    flex: 1; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .adm-g__ref-date { font-size: 0.82rem; font-weight: 600; color: #1C1C1A; }
+  .adm-g__ref-client { font-size: 0.72rem; color: #9C9C93; }
+  .adm-g__ref-arrow { color: #9C9C93; transition: transform 0.25s ease; flex-shrink: 0; }
+
+  .adm-g__ref-detail { padding: 0 18px 18px; animation: panelIn 0.2s ease; }
+  .adm-g__ref-reason { margin-bottom: 16px; }
+  .adm-g__ref-reason-label {
+    display: block; font-size: 0.68rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: #9C9C93; margin-bottom: 6px;
+  }
+
+  .adm-g__refusal-actions {
+    margin-top: 20px; padding-top: 16px;
+    border-top: 1px solid #FECACA;
+    display: flex; justify-content: flex-end;
+  }
+  .adm-g__refusal-confirm {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+    color: #FAF8F4;
+    border: none; border-radius: 12px;
+    font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; font-family: 'Jost', sans-serif;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .adm-g__refusal-confirm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(20,81,58,0.25);
+  }
+
+  .adm-g__rcard-radio {
+    width: 18px; height: 18px; accent-color: #14513A; cursor: pointer; flex-shrink: 0;
+  }
+  .adm-g__rcard-radio:disabled { cursor: not-allowed; opacity: 0.3; }
+
+  .adm-g__rcard--unavailable { opacity: 0.55; }
+  .adm-g__rcard--unavailable .adm-g__rcard-header { cursor: default; }
+
+  .adm-g__rcard-avail {
+    display: inline-block; font-size: 0.6rem; font-weight: 600;
+    color: #14513A; background: #E6F2EC; padding: 1px 8px; border-radius: 20px;
+    margin-left: 4px;
+  }
+  .adm-g__rcard-unavail {
+    display: inline-block; font-size: 0.6rem; font-weight: 600;
+    color: #DC2626; background: #FEF2F2; padding: 1px 8px; border-radius: 20px;
+    margin-left: 4px;
+  }
+
+  .adm-g__replace-label {
+    font-size: 0.72rem; font-weight: 600; color: #6B6B64;
+    margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .adm-g__replace-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .adm-g__replace-av {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.55);
+    flex-shrink: 0;
+  }
+  .adm-g__replace-av--medina { background: linear-gradient(135deg, #14513A, #0C3A28); }
+  .adm-g__replace-av--mecca { background: linear-gradient(135deg, #1A1A2E, #2D2D4A); }
+  .adm-g__replace-av--photo { background-size: cover; background-position: center; color: transparent; }
+
+  .adm-g__replace-name { display: block; font-size: 0.78rem; font-weight: 600; color: #1C1C1A; }
+  .adm-g__replace-info { display: block; font-size: 0.65rem; color: #9C9C93; }
+
+  /* Replacement cards */
+  .adm-g__rcard {
+    border: 1px solid #E7E4DB; border-radius: 12px; background: #FFF;
+    overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .adm-g__rcard:hover { border-color: rgba(20,81,58,0.25); box-shadow: 0 6px 18px rgba(20,81,58,0.06); }
+  .adm-g__rcard-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px; cursor: pointer; user-select: none;
+  }
+  .adm-g__rcard-info { flex: 1; min-width: 0; }
+  .adm-g__rcard-arrow { color: #9C9C93; transition: transform 0.25s ease; flex-shrink: 0; }
+  .adm-g__rcard-body { padding: 0 14px 14px; }
+  .adm-g__rcard-profile {
+    padding: 10px 0; border-top: 1px solid #F0EDE6;
+    font-size: 0.75rem; color: #6B6B64;
+  }
+  .adm-g__rcard-detail { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 8px; }
+  .adm-g__rcard-detail span { white-space: nowrap; }
+  .adm-g__rcard-detail strong { color: #1C1C1A; font-weight: 600; }
+  .adm-g__rcard-label {
+    font-size: 0.62rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #9C9C93; margin-right: 6px;
+  }
+  .adm-g__rcard-value { font-size: 0.75rem; color: #1C1C1A; }
+  .adm-g__rcard-profile-link {
+    display: inline-flex; align-items: center; gap: 5px;
+    margin-top: 6px; font-size: 0.7rem;
+    color: #14513A; text-decoration: underline; text-underline-offset: 2px;
+  }
+  .adm-g__rcard-profile-link:hover { color: #1E6B4E; }
+
+  /* Mini calendar */
+  .adm-cal {
+    margin: 8px 0 12px; padding: 14px;
+    background: #FAF9F5;
+    border: 1px solid #ECE9E1; border-radius: 12px;
+  }
+  .adm-cal__header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 6px;
+    margin-bottom: 8px;
+  }
+  .adm-cal__title { font-size: 0.78rem; font-weight: 600; color: #1C1C1A; }
+  .adm-cal__legend { display: flex; gap: 10px; font-size: 0.6rem; color: #9C9C93; flex-wrap: wrap; }
+  .adm-cal__legend-item { display: flex; align-items: center; gap: 4px; }
+  .adm-cal__dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+  .adm-cal__dot--avail { background: #14513A; }
+  .adm-cal__dot--busy { background: #D64545; }
+  .adm-cal__dot--booked { background: #C0392B; }
+
+  .adm-cal__grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
+    text-align: center;
+  }
+  .adm-cal__day-label {
+    font-size: 0.58rem; font-weight: 600; color: #9C9C93;
+    padding: 4px 0; text-transform: uppercase;
+  }
+  .adm-cal__empty { padding: 4px 0; }
+  .adm-cal__day {
+    font-size: 0.68rem; padding: 5px 0; border-radius: 6px;
+    font-weight: 500;
+  }
+  .adm-cal__day--avail { background: #E6F2EC; color: #14513A; }
+  .adm-cal__day--busy { background: #FDE8E8; color: #D64545; }
+  .adm-cal__day--booked { background: #C0392B; color: #FFF; font-weight: 700; }
+  .adm-cal__day--past { background: transparent; color: #D5D5CE; }
+
+  .adm-cal__nav {
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; margin-top: 8px;
+  }
+  .adm-cal__nav-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1px solid #E7E4DB; background: #FFF;
+    cursor: pointer; color: #6B6B64;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .adm-cal__nav-btn:hover { border-color: #14513A; color: #14513A; }
+
+  .adm-g__rcard-select {
+    display: block; width: 100%; padding: 10px;
+    background: #14513A; color: #FAF8F4; border: none; border-radius: 10px;
+    font-size: 0.78rem; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: background 0.2s;
+  }
+  .adm-g__rcard-select:hover { background: #1E6B4E; }
+
+  /* ============================================================
+     CREDENTIALS PANEL
+     ============================================================ */
+  .adm-g__creds {
+    grid-column: 1 / -1;
+    margin-top: 12px; padding: 20px;
+    background: #FAF9F5; border: 1px solid #ECE9E1; border-radius: 14px;
+    animation: panelIn 0.25s ease;
+  }
+  .adm-g__creds h4 {
+    font-size: 0.82rem; font-weight: 600; margin: 0 0 14px; color: #1C1C1A;
+  }
+  .adm-g__creds-form { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .adm-g__creds-field { flex: 1; min-width: 160px; }
+  .adm-g__creds-field label {
+    display: block; font-size: 0.65rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: #9C9C93; margin-bottom: 4px;
+  }
+  .adm-g__creds-field input {
+    width: 100%; padding: 10px 14px;
+    border: 1px solid #E7E4DB; border-radius: 10px;
+    font-size: 0.82rem; font-family: inherit; background: #FFF;
+    transition: border-color 0.2s;
+  }
+  .adm-g__creds-field input:focus { outline: none; border-color: #14513A; }
+  .adm-g__creds-save {
+    padding: 10px 20px; background: #14513A; color: #FAF8F4;
+    border: none; border-radius: 10px; font-size: 0.75rem; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: background 0.2s;
+  }
+  .adm-g__creds-save:hover { background: #1E6B4E; }
+  .adm-g__creds-note {
+    font-size: 0.72rem; color: #9C9C93; line-height: 1.6;
+    margin: 0; align-self: center;
+  }
+
+  /* ============================================================
+     MODAL
+     ============================================================ */
+  .adm-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(8,40,24,0.5); backdrop-filter: blur(5px);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .adm-modal {
+    background: #FFF; border-radius: 20px;
+    width: 100%; max-width: 520px;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.3);
+    animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 90vh; max-height: 90dvh;
+    overflow-y: auto;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .adm-modal__header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 22px 26px; border-bottom: 1px solid #F3F0EA;
+    position: sticky; top: 0; background: #FFF; z-index: 2;
+    border-radius: 20px 20px 0 0;
+  }
+  .adm-modal__header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.35rem; font-weight: 700; margin: 0; color: #14513A;
+  }
+  .adm-modal__close {
+    width: 34px; height: 34px; border-radius: 10px; border: none;
+    background: #F3F0EA; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #6B6B64; transition: background 0.15s, color 0.15s;
+  }
+  .adm-modal__close:hover { background: #FEE2E2; color: #DC2626; }
+
+  .adm-modal__body { padding: 26px; }
+
+  /* Photo upload */
+  .adm-form-photo {
+    display: flex; flex-direction: column; align-items: center;
+    margin-bottom: 24px; gap: 12px;
+  }
+  .adm-form-photo__input { display: none; }
+  .adm-form-photo__btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 18px; border: 1px solid #E7E4DB; border-radius: 20px;
+    background: #FFF; color: #6B6B64; font-size: 0.72rem; font-weight: 500;
+    cursor: pointer; font-family: inherit;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .adm-form-photo__btn:hover { border-color: #14513A; color: #14513A; background: #EDF5F0; }
+
+  .adm-form-photo__empty { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .adm-form-photo__placeholder {
+    width: 104px; height: 104px; border-radius: 50%;
+    background: #F6F4EE; border: 2px dashed #D5D0C7;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; color: #9C9C93; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .adm-form-photo__placeholder:hover { border-color: #14513A; background: #EDF5F0; }
+  .adm-form-photo__placeholder span { font-size: 0.58rem; text-align: center; line-height: 1.2; }
+
+  .adm-form-photo__editor {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    animation: panelIn 0.2s ease;
+  }
+  .adm-form-photo__editor-hint { font-size: 0.7rem; color: #9C9C93; margin: 0; font-weight: 500; }
+  .adm-form-photo__crop {
+    width: 160px; height: 160px; border-radius: 50%;
+    overflow: hidden; position: relative; cursor: grab;
+    border: 3px solid #14513A;
+    box-shadow: 0 0 0 4px rgba(20,81,58,0.1), 0 4px 20px rgba(0,0,0,0.1);
+    background: #1C1C1A;
+  }
+  .adm-form-photo__crop img {
+    position: absolute; top: 0; left: 0;
+    width: auto; height: auto;
+    max-width: none; max-height: none;
+    transform-origin: 0 0;
+    pointer-events: none; user-select: none;
+    -webkit-user-drag: none;
+    display: block;
+  }
+  .adm-form-photo__zoom {
+    display: flex; align-items: center; gap: 8px; color: #9C9C93;
+    width: 180px;
+  }
+  .adm-form-photo__zoom input[type="range"] {
+    flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+    background: #E7E4DB; border-radius: 2px; outline: none;
+  }
+  .adm-form-photo__zoom input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 15px; height: 15px;
+    border-radius: 50%; background: #14513A; cursor: pointer;
+    border: 2px solid #FFF; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .adm-form-photo__zoom input[type="range"]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%; background: #14513A;
+    cursor: pointer; border: 2px solid #FFF; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .adm-form-photo__editor-actions { display: flex; gap: 8px; }
+  .adm-form-photo__editor-cancel {
+    padding: 8px 18px; background: #F3F0EA; border: none; border-radius: 20px;
+    font-size: 0.72rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    color: #6B6B64; transition: background 0.15s;
+  }
+  .adm-form-photo__editor-cancel:hover { background: #E8E5DE; }
+  .adm-form-photo__editor-confirm {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 8px 20px; background: #14513A; color: #FAF8F4;
+    border: none; border-radius: 20px;
+    font-size: 0.72rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .adm-form-photo__editor-confirm:hover { background: #0C3A28; }
+
+  .adm-form-photo__result { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .adm-form-photo__result-circle {
+    width: 104px; height: 104px; border-radius: 50%;
+    background-size: cover; background-position: center;
+    border: 3px solid #14513A;
+    box-shadow: 0 0 0 3px rgba(20,81,58,0.1);
+  }
+
+  .adm-form-separator { height: 1px; background: #ECE9E1; margin: 8px 0 16px; }
+  .adm-form-section-title {
+    font-size: 0.72rem; font-weight: 600; color: #14513A;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin: 0 0 12px;
+  }
+  .adm-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .adm-form-field { margin-bottom: 14px; }
+  .adm-form-field label {
+    display: block; font-size: 0.68rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    color: #9C9C93; margin-bottom: 5px;
+  }
+  .adm-form-field input,
+  .adm-form-field select,
+  .adm-form-field textarea {
+    width: 100%; padding: 11px 14px;
+    border: 1.5px solid #E7E4DB; border-radius: 10px;
+    font-size: 0.85rem; font-family: inherit;
+    background: #FAF9F5;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .adm-form-field textarea { resize: vertical; min-height: 80px; }
+  .adm-form-field input:focus,
+  .adm-form-field select:focus,
+  .adm-form-field textarea:focus {
+    outline: none; border-color: #14513A;
+    box-shadow: 0 0 0 3px rgba(20,81,58,0.08);
+  }
+
+  .adm-modal__footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 16px 26px; border-top: 1px solid #F3F0EA;
+    position: sticky; bottom: 0; background: #FFF;
+    border-radius: 0 0 20px 20px;
+  }
+  .adm-modal__cancel {
+    padding: 11px 22px; background: #F3F0EA; border: none; border-radius: 10px;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    color: #6B6B64; transition: background 0.15s;
+  }
+  .adm-modal__cancel:hover { background: #E8E5DE; }
+  .adm-modal__submit {
+    padding: 11px 24px;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+    color: #FAF8F4;
+    border: none; border-radius: 10px;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .adm-modal__submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(20,81,58,0.25);
+  }
+
+  /* ============================================================
+     REVIEWS
+     ============================================================ */
+  .adm-reviews__tabs {
+    display: flex; gap: 4px; margin-bottom: 24px;
+    border-bottom: 1px solid #ECE9E1;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .adm-reviews__tabs::-webkit-scrollbar { display: none; }
+  .adm-reviews__tab {
+    padding: 10px 20px; background: none; border: none;
+    font-family: 'Jost', sans-serif; font-size: 0.78rem; font-weight: 500;
+    color: #9C9C93; cursor: pointer; position: relative;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    white-space: nowrap; flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .adm-reviews__tab:hover { color: #1C1C1A; }
+  .adm-reviews__tab--active {
+    color: #14513A; border-bottom-color: #B99752; font-weight: 600;
+  }
+  .adm-reviews__tab span { font-weight: 400; color: #9C9C93; font-size: 0.72rem; }
+
+  .adm-reviews__list { display: flex; flex-direction: column; gap: 14px; }
+  .adm-reviews__empty {
+    text-align: center; padding: 56px 24px;
+    font-size: 0.85rem; font-weight: 300; color: #9C9C93;
+    background: #FFFFFF; border: 1px dashed #E0DCD2; border-radius: 18px;
+  }
+
+  .adm-rv {
+    display: grid; grid-template-columns: auto 1fr auto;
+    gap: 16px; align-items: start;
+    background: #FFF; border: 1px solid #ECE9E1; border-radius: 18px;
+    padding: 20px 24px;
+    transition: box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .adm-rv:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 36px rgba(20,81,58,0.07);
+  }
+
+  .adm-rv__stars {
+    font-size: 0.95rem; color: #B99752; letter-spacing: 2px;
+    padding-top: 2px;
+  }
+  .adm-rv__body { min-width: 0; }
+  .adm-rv__text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem; font-style: italic; color: #3A3A36;
+    line-height: 1.6; margin: 0 0 10px;
+    display: -webkit-box; -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .adm-rv__meta {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    font-size: 0.72rem; color: #9C9C93;
+  }
+  .adm-rv__name { font-weight: 600; color: #1C1C1A; }
+  .adm-rv__sep { color: #D4D0C8; }
+  .adm-rv__date { font-size: 0.68rem; }
+
+  .adm-rv__actions { display: flex; gap: 6px; flex-shrink: 0; align-items: flex-start; }
+  .adm-rv__btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 8px 15px; border-radius: 10px; border: none;
+    font-family: 'Jost', sans-serif; font-size: 0.7rem; font-weight: 600;
+    cursor: pointer; transition: background 0.2s, color 0.2s; white-space: nowrap;
+  }
+  .adm-rv__btn--approve { background: #EDF5F0; color: #14513A; }
+  .adm-rv__btn--approve:hover { background: #14513A; color: #FAF8F4; }
+  .adm-rv__btn--reject { background: #FEF2F2; color: #DC2626; }
+  .adm-rv__btn--reject:hover { background: #DC2626; color: #FFF; }
+  .adm-rv__btn--delete { background: #F5F4F0; color: #6B6B64; }
+  .adm-rv__btn--delete:hover { background: #DC2626; color: #FFF; }
+
+  /* ============================================================
+     RESPONSIVE — la sidebar devient une barre de navigation
+     en bas de l'écran, style application mobile
+     ============================================================ */
+  @media (max-width: 860px) {
+    .adm-side {
+      top: auto; bottom: 0; left: 0; right: 0;
+      width: auto; height: auto;
+      flex-direction: row; align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -10px 40px rgba(8,40,24,0.35);
+    }
+    .adm-side__brand { display: none; }
+    .adm-side__nav {
+      flex-direction: row; flex-grow: 1;
+      justify-content: center; gap: 8px;
+    }
+    .adm-side__link {
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+    }
+    .adm-side__link--active {
+      background: #FAF8F4;
+      color: #14513A;
+      font-weight: 600;
+    }
+    .adm-side__link--active::before { display: none; }
+    .adm-side__badge { margin-left: 6px; }
+    .adm-side__logout {
+      flex-shrink: 0;
+      font-size: 0.68rem;
+      padding: 9px 14px;
+      border-radius: 999px;
+    }
+
+    .adm-main {
+      margin-left: 0;
+      padding: 28px 16px 120px;
+    }
+
+    .adm-top { margin-bottom: 24px; }
+    .adm-top__title { font-size: 1.55rem; }
+    .adm-add-btn { padding: 10px 16px; font-size: 0.7rem; }
+
+    /* Carte guide compacte */
+    .adm-g {
+      grid-template-columns: 18px 48px 1fr;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 16px;
+    }
+    .adm-g__avatar {
+      width: 46px; height: 46px; font-size: 0.72rem;
+    }
+    .adm-g__name { font-size: 1.1rem; }
+    .adm-g__actions {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .adm-g__btn { width: 100%; padding: 10px 8px; }
+    .adm-g__flash { top: auto; bottom: calc(100% + 4px); }
+
+    .adm-form-row { grid-template-columns: 1fr; gap: 0; }
+    .adm-g__bk-detail-grid { grid-template-columns: 1fr; }
+    .adm-g__bk-summary-left { gap: 8px; }
+    .adm-g__creds-form { flex-direction: column; align-items: stretch; }
+    .adm-g__creds-save { width: 100%; }
+    .adm-g__refusal-actions { justify-content: stretch; }
+    .adm-g__refusal-confirm { width: 100%; justify-content: center; }
+
+    /* Avis en colonne */
+    .adm-rv {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 18px 16px;
+    }
+    .adm-rv__actions { justify-content: flex-start; flex-wrap: wrap; }
+
+    /* Modal plein écran confortable */
+    .adm-modal-overlay { padding: 0; align-items: flex-end; }
+    .adm-modal {
+      max-width: none;
+      max-height: 94vh; max-height: 94dvh;
+      border-radius: 20px 20px 0 0;
+    }
+    .adm-modal__header { border-radius: 20px 20px 0 0; }
+    .adm-modal__footer { border-radius: 0; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+  }
+
+  @media (max-width: 400px) {
+    .adm-side__link { padding: 10px 13px; font-size: 0.74rem; }
+    .adm-side__logout { font-size: 0.62rem; padding: 8px 10px; }
+  }
+</style>
+
+</body>
+</html>

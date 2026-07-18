@@ -1,0 +1,170 @@
+---
+import '../../../styles/global.css';
+---
+
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Espace guide — La plateforme Omra</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="gd-body">
+
+<div class="gd-login">
+  <div class="gd-login__card">
+    <div class="gd-login__icon">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="9" r="5" stroke="currentColor" stroke-width="1.6"/><path d="M4 25c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+    <h1>Espace guide</h1>
+    <p>Connectez-vous avec les identifiants fournis par l'administration</p>
+    <form id="guide-login-form">
+      <input type="text" id="guide-login-id" placeholder="Identifiant" autocomplete="username" required />
+      <input type="password" id="guide-login-pass" placeholder="Mot de passe" autocomplete="current-password" required />
+      <button type="submit">Acc&eacute;der &agrave; mon profil</button>
+      <p class="gd-login__error is-hidden" id="guide-login-error">Identifiant ou mot de passe incorrect</p>
+    </form>
+    <a href="/" class="gd-login__back">&larr; Retour au site</a>
+  </div>
+</div>
+
+<script>
+  import { supabase, GUIDE_EMAIL_SUFFIX } from '../../../lib/supabase';
+
+  async function findGuideForUser(userId: string): Promise<any | null> {
+    const { data } = await supabase
+      .from('guides')
+      .select('id')
+      .eq('auth_user_id', userId)
+      .maybeSingle();
+    return data;
+  }
+
+  // Déjà connecté en tant que guide → redirection directe vers sa fiche
+  (async () => {
+    const { data } = await supabase.auth.getSession();
+    const user = data.session?.user;
+    if (!user) return;
+    const guide = await findGuideForUser(user.id);
+    if (guide) window.location.replace(`/guides/profil/?id=${guide.id}&login=1`);
+  })();
+
+  document.getElementById('guide-login-form')!.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const login = (document.getElementById('guide-login-id') as HTMLInputElement).value.trim().toLowerCase();
+    const pass = (document.getElementById('guide-login-pass') as HTMLInputElement).value;
+    const errorEl = document.getElementById('guide-login-error')!;
+    const submitBtn = document.querySelector('#guide-login-form button[type="submit"]') as HTMLButtonElement;
+
+    errorEl.classList.add('is-hidden');
+    submitBtn.disabled = true;
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: login.includes('@') ? login : login + GUIDE_EMAIL_SUFFIX,
+      password: pass,
+    });
+
+    if (error || !data.user) {
+      submitBtn.disabled = false;
+      errorEl.classList.remove('is-hidden');
+      return;
+    }
+
+    const guide = await findGuideForUser(data.user.id);
+    if (!guide) {
+      await supabase.auth.signOut();
+      submitBtn.disabled = false;
+      errorEl.classList.remove('is-hidden');
+      return;
+    }
+    window.location.href = `/guides/profil/?id=${guide.id}&login=1`;
+  });
+</script>
+
+<style is:global>
+  .is-hidden { display: none !important; }
+
+  .gd-body {
+    margin: 0;
+    font-family: 'Jost', system-ui, sans-serif;
+    color: #1C1C1A;
+  }
+
+  .gd-login {
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(ellipse 80% 60% at 70% -10%, rgba(185,151,82,0.18), transparent 60%),
+      linear-gradient(150deg, #0D3B2A 0%, #082818 100%);
+    padding: 20px;
+  }
+  .gd-login__card {
+    background: #FFFFFF;
+    border-radius: 22px;
+    padding: 52px 42px 40px;
+    width: 100%; max-width: 390px;
+    text-align: center;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.35);
+    animation: gdRise 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes gdRise {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .gd-login__icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 56px; height: 56px; border-radius: 18px;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+    color: #E8C987; margin-bottom: 22px;
+    box-shadow: 0 12px 28px rgba(20,81,58,0.35);
+  }
+  .gd-login__card h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem; font-weight: 700; margin: 0 0 6px;
+    color: #14513A;
+  }
+  .gd-login__card > p {
+    font-size: 0.82rem; font-weight: 300; color: #9C9C93;
+    margin: 0 0 30px; line-height: 1.6;
+  }
+  .gd-login__card input {
+    width: 100%; padding: 14px 18px;
+    border: 1.5px solid #E7E4DB; border-radius: 12px;
+    font-size: 0.9rem; font-family: inherit;
+    margin-bottom: 12px;
+    background: #FAF9F5;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .gd-login__card input:focus {
+    outline: none; border-color: #14513A;
+    box-shadow: 0 0 0 4px rgba(20,81,58,0.1);
+  }
+  .gd-login__card button[type="submit"] {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+    color: #FAF8F4;
+    border: none; border-radius: 12px;
+    font-size: 0.85rem; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    cursor: pointer; font-family: inherit;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .gd-login__card button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(20,81,58,0.3);
+  }
+  .gd-login__error { color: #DC2626; font-size: 0.78rem; margin: 12px 0 0; }
+  .gd-login__back {
+    display: inline-block;
+    margin-top: 24px;
+    font-size: 0.75rem; font-weight: 400;
+    color: #9C9C93; text-decoration: none;
+    transition: color 0.2s;
+  }
+  .gd-login__back:hover { color: #14513A; }
+</style>
+
+</body>
+</html>

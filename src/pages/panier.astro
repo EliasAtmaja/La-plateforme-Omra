@@ -1,0 +1,388 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getLangFromUrl, getLocalePath } from '../i18n/ui';
+
+const lang = getLangFromUrl(Astro.url);
+---
+
+<BaseLayout title="Mon panier" description="Retrouvez vos réservations et procédez au paiement.">
+
+  <section class="cart-hero">
+    <div class="cart-container">
+      <h1 class="cart-hero__title load-rise" style="--load-delay: 100ms">Mon panier</h1>
+      <p class="cart-hero__sub load-rise" style="--load-delay: 250ms" id="cart-page-sub"></p>
+    </div>
+  </section>
+
+  <section class="cart-main">
+    <div class="cart-container">
+
+      <div class="cart-empty is-hidden" id="cart-page-empty">
+        <div class="cart-empty__icon">
+          <svg viewBox="0 0 48 48" fill="none" width="44" height="44"><path d="M12 4L6 12v28a4 4 0 004 4h28a4 4 0 004-4V12l-6-8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M6 12h36" stroke="currentColor" stroke-width="2"/><path d="M32 20a8 8 0 01-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <h2 class="cart-empty__title">Votre panier est vide</h2>
+        <p class="cart-empty__text">Parcourez nos guides et r&eacute;servez votre accompagnement.</p>
+        <a href={getLocalePath(lang, '/guides/')} class="cart-empty__btn">
+          D&eacute;couvrir nos guides
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+
+      <div class="cart-layout is-hidden" id="cart-page-content">
+        <div class="cart-list" id="cart-page-items"></div>
+
+        <aside class="cart-summary">
+          <h2 class="cart-summary__title">R&eacute;capitulatif</h2>
+          <div class="cart-summary__rows" id="cart-page-rows"></div>
+          <div class="cart-summary__total">
+            <span>Total</span>
+            <strong id="cart-page-total"></strong>
+          </div>
+          <button type="button" class="cart-summary__pay" id="cart-page-pay">
+            Proc&eacute;der au paiement
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <a href={getLocalePath(lang, '/guides/')} class="cart-summary__continue">Continuer mes r&eacute;servations</a>
+        </aside>
+      </div>
+
+    </div>
+  </section>
+
+</BaseLayout>
+
+<script>
+  import { supabase } from '../lib/supabase';
+
+  function esc(s: string) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function getItems(): any[] {
+    return JSON.parse(localStorage.getItem('omra-cart') || '[]');
+  }
+  function saveItems(items: any[]) {
+    localStorage.setItem('omra-cart', JSON.stringify(items));
+  }
+  function formatDate(d: string): string {
+    if (!d) return '';
+    const [y, m, day] = d.split('-').map(Number);
+    return new Date(y, m - 1, day).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  function renderCartPage() {
+    const items = getItems();
+    const sub = document.getElementById('cart-page-sub');
+    const empty = document.getElementById('cart-page-empty');
+    const content = document.getElementById('cart-page-content');
+    const list = document.getElementById('cart-page-items');
+    const rows = document.getElementById('cart-page-rows');
+    const total = document.getElementById('cart-page-total');
+    if (!empty || !content || !list || !rows || !total) return;
+
+    if (sub) sub.textContent = items.length === 0
+      ? ''
+      : `${items.length} réservation${items.length > 1 ? 's' : ''} en attente de paiement`;
+
+    if (items.length === 0) {
+      empty.classList.remove('is-hidden');
+      content.classList.add('is-hidden');
+      return;
+    }
+    empty.classList.add('is-hidden');
+    content.classList.remove('is-hidden');
+
+    let sum = 0;
+    list.innerHTML = items.map((b: any) => {
+      const price = b.price || 0;
+      sum += price;
+      const initials = (b.guideName || 'G').split(' ').map((p: string) => p[0] || '').join('').slice(0, 2);
+      const avatar = b.guidePhoto
+        ? `<span class="cart-item__av" style="background-image:url(${b.guidePhoto})"></span>`
+        : `<span class="cart-item__av cart-item__av--initials">${esc(initials)}</span>`;
+      return `
+        <article class="cart-item">
+          ${avatar}
+          <div class="cart-item__info">
+            <h3 class="cart-item__name">${esc(b.guideName || 'Guide')}</h3>
+            <div class="cart-item__details">
+              <span class="cart-item__detail">
+                <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><rect x="3" y="4.5" width="14" height="12.5" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M3 8.5h14M7 3v3M13 3v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                ${esc(formatDate(b.date))}
+              </span>
+              ${b.slot ? `<span class="cart-item__detail"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M10 6.5V10l3 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>${esc(b.slot)}</span>` : ''}
+              ${b.activityName ? `<span class="cart-item__detail"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M10 2l2.4 5 5.6.8-4 4 1 5.7-5-2.7-5 2.7 1-5.7-4-4L7.6 7 10 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>${esc(b.activityName)}</span>` : ''}
+            </div>
+          </div>
+          <div class="cart-item__right">
+            ${price ? `<span class="cart-item__price">${price}&euro;</span>` : ''}
+            <button type="button" class="cart-item__remove" data-remove="${esc(b.bookingId)}">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 4h8M5.5 4V3a1 1 0 011-1h1a1 1 0 011 1v1M4.5 4v7a1.5 1.5 0 001.5 1.5h2a1.5 1.5 0 001.5-1.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Retirer
+            </button>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    rows.innerHTML = items.map((b: any) => {
+      const price = b.price || 0;
+      return `<div class="cart-summary__row"><span>${esc(b.guideName || 'Guide')}</span><span>${price ? price + '€' : '—'}</span></div>`;
+    }).join('');
+    total.textContent = sum + '€';
+
+    list.querySelectorAll('[data-remove]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = (btn as HTMLElement).dataset.remove!;
+        const entry = getItems().find((b: any) => b.bookingId === id);
+        if (entry) {
+          try {
+            await supabase.rpc('cancel_booking', { p_booking_id: entry.bookingId, p_token: entry.cancelToken });
+          } catch (_) { /* on retire quand même localement */ }
+        }
+        saveItems(getItems().filter((b: any) => b.bookingId !== id));
+        window.dispatchEvent(new Event('cart-updated'));
+        renderCartPage();
+      });
+    });
+  }
+
+  document.getElementById('cart-page-pay')?.addEventListener('click', () => {
+    alert('Page de paiement à venir');
+  });
+
+  renderCartPage();
+  window.addEventListener('cart-updated', renderCartPage);
+</script>
+
+<style is:global>
+  .cart-container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---- HERO ---- */
+  .cart-hero {
+    background: radial-gradient(ellipse 120% 100% at 50% -20%, #14513A 0%, #0C3A28 60%, #082818 100%);
+    padding: 84px 0 56px;
+    text-align: center;
+  }
+  .cart-hero__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.8rem; font-weight: 600; color: #FAF8F4;
+    margin: 0 0 10px; letter-spacing: -0.01em;
+  }
+  .cart-hero__sub {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.92rem; font-weight: 300;
+    color: rgba(250,248,244,0.65); margin: 0;
+    min-height: 1.4em;
+  }
+
+  /* ---- MAIN ---- */
+  .cart-main {
+    background: #FFFFFF;
+    padding: 48px 0 88px;
+    min-height: 40vh;
+  }
+
+  /* ---- EMPTY ---- */
+  .cart-empty {
+    text-align: center;
+    padding: 56px 24px;
+    background: #FAF8F4;
+    border: 1px dashed #E3E0D6;
+    border-radius: 20px;
+  }
+  .cart-empty__icon { color: #B99752; margin-bottom: 16px; display: inline-block; }
+  .cart-empty__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.6rem; font-weight: 700; color: #14513A;
+    margin: 0 0 8px;
+  }
+  .cart-empty__text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.9rem; font-weight: 300; color: #6B6B63;
+    margin: 0 0 24px;
+  }
+  .cart-empty__btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 13px 28px;
+    background: #14513A; color: #FAF8F4;
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem; font-weight: 500;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
+  }
+  .cart-empty__btn:hover {
+    background: #0C3A28; color: #FAF8F4;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(20,81,58,0.25);
+  }
+
+  /* ---- LAYOUT ---- */
+  .cart-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 28px;
+    align-items: start;
+  }
+
+  /* ---- ITEMS ---- */
+  .cart-list { display: flex; flex-direction: column; gap: 14px; }
+
+  .cart-item {
+    display: flex; align-items: center; gap: 18px;
+    background: #FFFFFF;
+    border: 1px solid #ECE9E1;
+    border-radius: 16px;
+    padding: 18px 20px;
+    transition: box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.35s;
+  }
+  .cart-item:hover {
+    border-color: rgba(20,81,58,0.18);
+    box-shadow: 0 12px 32px rgba(20,81,58,0.07);
+  }
+  .cart-item__av {
+    width: 56px; height: 56px; border-radius: 50%;
+    background-size: cover; background-position: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px #FFFFFF, 0 0 0 4px #E7E4DB;
+  }
+  .cart-item__av--initials {
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+    color: rgba(255,255,255,0.6);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; font-weight: 700;
+  }
+  .cart-item__info { flex: 1; min-width: 0; }
+  .cart-item__name {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.2rem; font-weight: 700; color: #1C1C1A;
+    margin: 0 0 4px;
+  }
+  .cart-item__city {
+    display: inline-block;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.6rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    padding: 2px 10px; border-radius: 20px;
+    background: #EDF5F0; color: #14513A;
+    margin-bottom: 8px;
+  }
+  .cart-item__details {
+    display: flex; flex-wrap: wrap; gap: 6px 16px;
+  }
+  .cart-item__detail {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; font-weight: 400; color: #6B6B63;
+  }
+  .cart-item__detail svg { color: #B99752; flex-shrink: 0; }
+
+  .cart-item__right {
+    display: flex; flex-direction: column; align-items: flex-end;
+    gap: 10px; flex-shrink: 0;
+  }
+  .cart-item__price {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.6rem; font-weight: 700; color: #14513A;
+    line-height: 1;
+  }
+  .cart-item__remove {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px;
+    background: none; border: 1px solid #ECE9E1; border-radius: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.68rem; font-weight: 500; color: #9C9C93;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .cart-item__remove:hover { border-color: #DC2626; color: #DC2626; background: #FEF2F2; }
+
+  /* ---- SUMMARY ---- */
+  .cart-summary {
+    background: #FAF8F4;
+    border: 1px solid #EFEDE6;
+    border-radius: 18px;
+    padding: 26px 24px;
+    position: sticky;
+    top: 96px;
+  }
+  .cart-summary__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.3rem; font-weight: 700; color: #14513A;
+    margin: 0 0 16px;
+  }
+  .cart-summary__rows {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-bottom: 16px;
+  }
+  .cart-summary__row {
+    display: flex; justify-content: space-between; gap: 12px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.82rem; font-weight: 300; color: #4A4A42;
+  }
+  .cart-summary__row span:last-child { font-weight: 500; color: #1C1C1A; flex-shrink: 0; }
+  .cart-summary__total {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-top: 14px;
+    border-top: 1px solid #E7E4DB;
+    margin-bottom: 18px;
+  }
+  .cart-summary__total span {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; font-weight: 500; color: #1C1C1A;
+  }
+  .cart-summary__total strong {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.9rem; font-weight: 700; color: #14513A;
+  }
+  .cart-summary__pay {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+    border: none; border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    color: #FAF8F4; cursor: pointer;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .cart-summary__pay:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(20,81,58,0.25);
+  }
+  .cart-summary__continue {
+    display: block;
+    margin-top: 12px;
+    text-align: center;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; font-weight: 400;
+    color: #6B6B63; text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s;
+  }
+  .cart-summary__continue:hover { color: #14513A; }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 860px) {
+    .cart-layout { grid-template-columns: 1fr; }
+    .cart-summary { position: static; }
+  }
+  @media (max-width: 639px) {
+    .cart-hero { padding: 60px 0 40px; }
+    .cart-hero__title { font-size: 2rem; }
+    .cart-main { padding: 32px 0 64px; }
+    .cart-item { flex-wrap: wrap; padding: 16px; gap: 12px; }
+    .cart-item__av { width: 46px; height: 46px; }
+    .cart-item__name { font-size: 1.05rem; }
+    .cart-item__right {
+      flex-direction: row; align-items: center;
+      width: 100%; justify-content: space-between;
+    }
+  }
+</style>

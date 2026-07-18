@@ -1,0 +1,1177 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getLangFromUrl, t, getLocalePath } from '../../i18n/ui';
+
+const lang = getLangFromUrl(Astro.url);
+---
+
+<BaseLayout title={t(lang, 'nav.guides')} description={t(lang, 'guides.subtitle')}>
+
+  <div class="gp-hero">
+    <div class="gp-container">
+      <h1 class="gp-hero__title reveal">Nos guides</h1>
+      <p class="gp-hero__sub reveal">Choisissez votre guide certifie et reservez en quelques clics</p>
+    </div>
+  </div>
+
+  <div class="gp-activity-banner" id="activity-banner" hidden>
+    <div class="gp-container">
+      <div class="gp-activity-banner__inner">
+        <span class="gp-activity-banner__label">Activit&eacute; choisie :</span>
+        <span class="gp-activity-banner__name" id="activity-banner-name"></span>
+        <a href="#" class="gp-activity-banner__clear" id="activity-banner-clear" aria-label="Retirer l'activité">&#10005;</a>
+      </div>
+    </div>
+  </div>
+
+  <section class="gp-list">
+    <div class="gp-container stagger" id="guides-list">
+      <p class="gp-empty" id="guides-empty" hidden>Aucun guide disponible pour le moment.</p>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<script>
+  import { supabase, mapGuide, mapReview, ALL_SLOTS } from '../../lib/supabase';
+
+  const MONTH_NAMES = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+  const calStates: Record<string, { year: number; month: number; selectedDate: string | null; selectedSlot: string | null }> = {};
+
+  const ACTIVITY_NAMES: Record<string, string> = {
+    'formule-essentielle': 'Formule Essentielle',
+    'formule-confort': 'Formule Confort',
+    'formule-sur-mesure': 'Formule Sur Mesure',
+    'omra-classique': 'Omra classique',
+    'guide-pmr-omra': 'Guide PMR (Spécial Omra)',
+    'omra-masjid-aicha': 'Omra au départ du Masjid Aïcha',
+    'visite-historique-makkah': 'Visite historique de Makkah',
+    'visite-historique-medine': 'Visite historique de Médine',
+    'visite-masjid-nabawi': 'Visite du Masjid En-Nabawi',
+    'shopping-guide-medine': 'Shopping guidé à Médine',
+    'visa-omra-standard': 'Visa Omra standard',
+    'visa-omra-express': 'Visa Omra express',
+    'visa-groupe-famille': 'Visa groupe / famille',
+  };
+
+  let chosenActivitySlug: string | null = new URLSearchParams(window.location.search).get('activite');
+  let chosenActivityName: string | null = chosenActivitySlug ? (ACTIVITY_NAMES[chosenActivitySlug] || chosenActivitySlug) : null;
+
+  function initActivityBanner() {
+    const banner = document.getElementById('activity-banner');
+    const nameEl = document.getElementById('activity-banner-name');
+    const clearBtn = document.getElementById('activity-banner-clear');
+    if (!banner || !nameEl || !clearBtn) return;
+    if (chosenActivitySlug && chosenActivityName) {
+      nameEl.textContent = chosenActivityName;
+      banner.hidden = false;
+    }
+    clearBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      chosenActivitySlug = null;
+      chosenActivityName = null;
+      banner.hidden = true;
+      const url = new URL(window.location.href);
+      url.searchParams.delete('activite');
+      history.replaceState(null, '', url.toString());
+    });
+  }
+  initActivityBanner();
+
+  function esc(s: string) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // ---- Données Supabase (chargées une fois, servies depuis un cache mémoire) ----
+  let GUIDES: any[] = [];
+  let REVIEWS: any[] = []; // avis approuvés uniquement (filtrés par RLS)
+  // guideId -> date -> créneaux disponibles / créneaux réservés
+  let AVAIL: Record<string, Record<string, string[]>> = {};
+  let BOOKED: Record<string, Record<string, string[]>> = {};
+
+  function getGuides(): any[] { return GUIDES; }
+  function getApprovedReviews(guideId: string): any[] {
+    return REVIEWS.filter((r: any) => r.guideId === guideId);
+  }
+
+  // Créneaux encore réservables pour un guide à une date donnée
+  function freeSlotsFor(guideId: string, dateStr: string): string[] {
+    const av = (AVAIL[guideId] || {})[dateStr];
+    if (!av || av.length === 0) return [];
+    const bk = (BOOKED[guideId] || {})[dateStr] || [];
+    if (bk.includes('*')) return []; // ancienne réservation « journée entière »
+    return av.filter((s: string) => !bk.includes(s));
+  }
+
+  async function loadData() {
+    const [gRes, rRes, aRes, bRes] = await Promise.all([
+      supabase.from('guides').select('*').order('created_at'),
+      supabase.from('reviews').select('*').not('guide_id', 'is', null),
+      supabase.from('availability').select('guide_id, date, slots'),
+      supabase.from('booked_dates').select('guide_id, date, slot'),
+    ]);
+    GUIDES = (gRes.data || []).map(mapGuide);
+    REVIEWS = (rRes.data || []).map(mapReview);
+    AVAIL = {};
+    (aRes.data || []).forEach((r: any) => {
+      (AVAIL[r.guide_id] = AVAIL[r.guide_id] || {})[r.date] = r.slots || ALL_SLOTS.slice();
+    });
+    BOOKED = {};
+    (bRes.data || []).forEach((r: any) => {
+      const m = (BOOKED[r.guide_id] = BOOKED[r.guide_id] || {});
+      (m[r.date] = m[r.date] || []).push(r.slot || '*');
+    });
+  }
+
+  const LANG_CODES: Record<string, string> = {
+    'français': 'FR', 'francais': 'FR', 'arabe': 'AR', 'anglais': 'EN',
+    'espagnol': 'ES', 'turc': 'TR', 'ourdou': 'UR', 'indonésien': 'ID', 'indonesien': 'ID',
+  };
+  function langCode(l: string): string {
+    return LANG_CODES[l.trim().toLowerCase()] || l.trim().slice(0, 2).toUpperCase();
+  }
+
+  function starsRowHtml(avg: number): string {
+    const full = Math.round(avg);
+    let out = '';
+    for (let i = 1; i <= 5; i++) {
+      out += `<span class="gp-star ${i <= full ? 'gp-star--full' : ''}">★</span>`;
+    }
+    return out;
+  }
+
+  function renderGuidesList() {
+    const list = document.getElementById('guides-list');
+    const empty = document.getElementById('guides-empty');
+    if (!list) return;
+
+    const guides = getGuides();
+    const existing = list.querySelectorAll('.gp-card');
+    existing.forEach(el => el.remove());
+    document.querySelectorAll('body > .gp-cal').forEach(el => el.remove());
+
+    if (guides.length === 0) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    guides.forEach((g: any) => {
+      const cityLabel = g.city === 'medina' ? 'Médine' : 'La Mecque';
+      const initials = (g.firstName?.[0] || '') + (g.lastName?.[0] || '');
+      const langCodes: string[] = (g.languages || []).map((l: string) => langCode(l));
+      const langPills = langCodes.map((c: string) => `<span class="gp-card__lang">${esc(c)}</span>`).join('');
+      const langsFull = (g.languages || []).map((l: string) => `<span class="gp-profile__lang">${esc(l.trim())}</span>`).join('');
+
+      const guideReviews = getApprovedReviews(g.id);
+      const reviewCount = guideReviews.length;
+      const avgRating = reviewCount > 0
+        ? guideReviews.reduce((s: number, r: any) => s + (r.stars || 5), 0) / reviewCount
+        : 0;
+      const avgLabel = avgRating.toFixed(1).replace('.', ',');
+
+      const ratingHtml = reviewCount > 0
+        ? `<div class="gp-card__rating"><span class="gp-card__rating-star">★</span><span class="gp-card__rating-num">${avgLabel}</span><span class="gp-card__reviews">(${reviewCount} avis)</span></div>`
+        : `<div class="gp-card__rating"><span class="gp-card__rating-star">★</span><span class="gp-card__reviews">(0 avis)</span></div>`;
+
+      const avatarHtml = g.photo
+        ? `<div class="gp-card__avatar gp-card__avatar--photo" style="background-image:url(${g.photo})"></div>`
+        : `<div class="gp-card__avatar gp-card__avatar--${g.city}">${esc(initials)}</div>`;
+
+      const visualImg = g.photo
+        ? `<img src="${g.photo}" alt="${esc(g.firstName)} ${esc(g.lastName)}" class="guide-visual__image" />`
+        : `<div class="guide-visual__image guide-visual__image--initials guide-visual__image--${g.city}">${esc(initials)}</div>`;
+
+      const textReviews = guideReviews.filter((r: any) => (r.text || '').trim().length > 0);
+      const randomReview = textReviews.length > 0 ? textReviews[Math.floor(Math.random() * textReviews.length)] : null;
+
+      const reviewsBlockHtml = reviewCount > 0
+        ? `
+          <div class="gp-profile__reviews">
+            <div class="gp-profile__rv-avg">
+              <span class="gp-profile__rv-label">Moyenne des avis</span>
+              <span class="gp-profile__rv-score">${avgLabel}<em>/5</em></span>
+              <span class="gp-profile__rv-stars">${starsRowHtml(avgRating)}</span>
+              <span class="gp-profile__rv-count">Bas&eacute; sur ${reviewCount} avis</span>
+            </div>
+            <div class="gp-profile__rv-quote">
+              <span class="gp-profile__rv-label">Ils ont voyag&eacute; avec ${esc(g.firstName)}</span>
+              ${randomReview
+                ? `<p class="gp-profile__rv-text">&ldquo;${esc(randomReview.text)}&rdquo;</p><span class="gp-profile__rv-author">&ndash; ${esc(randomReview.name || 'Anonyme')}</span>`
+                : `<p class="gp-profile__rv-text gp-profile__rv-text--empty">Aucun commentaire d&eacute;taill&eacute; pour le moment.</p>`}
+            </div>
+          </div>`
+        : `
+          <div class="gp-profile__reviews gp-profile__reviews--empty">
+            <span class="gp-profile__rv-label">Avis</span>
+            <p class="gp-profile__rv-text gp-profile__rv-text--empty">Aucun avis pour le moment. Soyez le premier &agrave; voyager avec ${esc(g.firstName)} !</p>
+          </div>`;
+
+      const card = document.createElement('article');
+      card.className = 'gp-card reveal is-visible';
+      card.dataset.guideId = g.id;
+      card.innerHTML = `
+        <div class="gp-card__body">
+          <div class="gp-card__main">
+            ${avatarHtml}
+            <div class="gp-card__info">
+              <h2 class="gp-card__name">${esc(g.firstName)} ${esc(g.lastName)}</h2>
+              ${g.diploma ? `<p class="gp-card__diploma">${esc(g.diploma)}</p>` : ''}
+              ${langCodes.length ? `<div class="gp-card__langs">${langPills}</div>` : ''}
+              ${ratingHtml}
+            </div>
+            <div class="gp-card__right">
+              ${g.pricePerDay ? `<div class="gp-card__price"><span class="gp-card__amount">${esc(String(g.pricePerDay))}&euro;</span><span class="gp-card__unit">Frais inclus</span></div>` : ''}
+              <button class="gp-card__avail-btn" type="button" data-open-cal="${g.id}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="4" y="5.5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 10h16M8.5 3.5v3.5M15.5 3.5v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                Voir les disponibilit&eacute;s
+              </button>
+            </div>
+          </div>
+
+          <button class="gp-card__toggle" type="button" data-toggle-profile="${g.id}" aria-expanded="false">
+            Voir le profil
+            <svg class="gp-card__toggle-icon" width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 7l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+
+          <div class="gp-profile" id="profile-${g.id}">
+            <div class="gp-profile__inner">
+              <div class="gp-profile__sheet">
+                <div class="gp-profile__top">
+                  <div class="guide-visual">
+                    ${visualImg}
+                  </div>
+                  <div class="gp-profile__id">
+                    <span class="gp-profile__city">
+                      <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M10 18s6-5.2 6-9.5A6 6 0 0 0 4 8.5C4 12.8 10 18 10 18z" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="8.5" r="2" stroke="currentColor" stroke-width="1.6"/></svg>
+                      ${esc(cityLabel.toUpperCase())}
+                    </span>
+                    <h3 class="gp-profile__name">${esc(g.firstName)} ${esc(g.lastName)}</h3>
+                    ${g.diploma ? `<p class="gp-profile__diploma">${esc(g.diploma)}</p>` : ''}
+                    ${langsFull ? `<div class="gp-profile__langs">${langsFull}</div>` : ''}
+                    ${g.description ? `<p class="gp-profile__desc">${esc(g.description)}</p>` : ''}
+                  </div>
+                </div>
+
+                ${reviewsBlockHtml}
+              </div>
+            </div>
+          </div>
+
+          <div class="gp-cal is-hidden" id="cal-${g.id}">
+          <div class="gp-cal__panel">
+          <button type="button" class="gp-cal__close" data-cal-close="${g.id}" aria-label="Fermer">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <div class="gp-cal__header">
+            <h3 class="gp-cal__title">Choisissez quand effectuer votre Omra</h3>
+            <p class="gp-cal__guide-name">avec ${esc(g.firstName)} ${esc(g.lastName)}</p>
+          </div>
+          <div class="gp-cal__nav">
+            <button type="button" class="gp-cal__arrow" data-cal-prev="${g.id}" aria-label="Mois precedent">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9L11 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <span class="gp-cal__month" id="cal-month-${g.id}"></span>
+            <button type="button" class="gp-cal__arrow" data-cal-next="${g.id}" aria-label="Mois suivant">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 4L12 9L7 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="gp-cal__weekdays">
+            <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+          </div>
+          <div class="gp-cal__grid" id="cal-grid-${g.id}"></div>
+          <div class="gp-cal__legend">
+            <span class="gp-cal__legend-item"><span class="gp-cal__dot gp-cal__dot--available"></span> Disponible</span>
+            <span class="gp-cal__legend-item"><span class="gp-cal__dot gp-cal__dot--unavailable"></span> Indisponible</span>
+          </div>
+          <div class="gp-cal__selection is-hidden" id="cal-sel-${g.id}">
+            <p class="gp-cal__selected-date" id="cal-date-${g.id}"></p>
+            <div class="gp-cal__slots">
+              <p class="gp-cal__slots-label">Choisissez un cr&eacute;neau :</p>
+              <div class="gp-cal__slots-grid">
+                <button type="button" class="gp-cal__slot" data-slot="Matin" data-guide-id="${g.id}">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="14" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M12 6.5V4.5M5.5 14h-2M20.5 14h-2M7.4 9.4L6 8M16.6 9.4L18 8M3 18.5h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  Matin
+                </button>
+                <button type="button" class="gp-cal__slot" data-slot="Après-midi" data-guide-id="${g.id}">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M18 6l-1.4 1.4M6 18l1.4-1.4M18 18l-1.4-1.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  Apr&egrave;s-midi
+                </button>
+                <button type="button" class="gp-cal__slot" data-slot="Soir" data-guide-id="${g.id}">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="16" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M3 20.5h18M5.5 16h-2M20.5 16h-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  Soir
+                </button>
+                <button type="button" class="gp-cal__slot" data-slot="Nuit" data-guide-id="${g.id}">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5 7.5 7.5 0 1 0 19 14.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                  Nuit
+                </button>
+              </div>
+            </div>
+            <div class="gp-cal__actions">
+              <button type="button" class="gp-cal__action gp-cal__action--secondary" data-action="browse" data-guide-id="${g.id}" disabled>Reserver et continuer de surfer</button>
+              <button type="button" class="gp-cal__action gp-cal__action--primary" data-action="pay" data-guide-id="${g.id}" disabled>Proceder au paiement</button>
+            </div>
+          </div>
+          </div>
+        </div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+
+    // Les popups calendrier vont dans <body> : le transform du hover
+    // sur la carte casserait leur position: fixed sinon.
+    list.querySelectorAll('.gp-cal').forEach(c => document.body.appendChild(c));
+
+    wireUpEvents();
+  }
+
+  function renderCalendar(guideId: string) {
+    const state = calStates[guideId];
+    if (!state) return;
+    const monthLabel = document.getElementById(`cal-month-${guideId}`);
+    const grid = document.getElementById(`cal-grid-${guideId}`);
+    if (!monthLabel || !grid) return;
+
+    monthLabel.textContent = `${MONTH_NAMES[state.month]} ${state.year}`;
+    grid.innerHTML = '';
+    const firstDay = new Date(state.year, state.month, 1).getDay();
+    const offset = firstDay === 0 ? 6 : firstDay - 1;
+    const daysInMonth = new Date(state.year, state.month + 1, 0).getDate();
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    for (let i = 0; i < offset; i++) {
+      const e = document.createElement('span');
+      e.className = 'gp-cal__day gp-cal__day--empty';
+      grid.appendChild(e);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${state.year}-${String(state.month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const isPast = new Date(state.year, state.month, d) < today;
+      const free = isPast ? [] : freeSlotsFor(guideId, dateStr);
+      const isAvail = free.length > 0;
+      const isSelected = state.selectedDate === dateStr;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = String(d);
+      btn.className = 'gp-cal__day';
+      if (isAvail) btn.classList.add('gp-cal__day--available');
+      else btn.classList.add('gp-cal__day--unavailable');
+      if (isPast) btn.classList.add('gp-cal__day--past');
+      if (isSelected) btn.classList.add('gp-cal__day--selected');
+      if (isAvail) {
+        btn.addEventListener('click', () => {
+          state.selectedDate = dateStr;
+          state.selectedSlot = null;
+          renderCalendar(guideId);
+          const sel = document.getElementById(`cal-sel-${guideId}`);
+          const dateEl = document.getElementById(`cal-date-${guideId}`);
+          if (sel && dateEl) {
+            const [y,m2,d2] = dateStr.split('-').map(Number);
+            dateEl.textContent = `Date selectionnee : ${new Date(y,m2-1,d2).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}`;
+            sel.classList.remove('is-hidden');
+            // Seuls les créneaux encore libres de cette date sont cliquables
+            const freeNow = freeSlotsFor(guideId, dateStr);
+            sel.querySelectorAll('.gp-cal__slot').forEach(b => {
+              const slotName = (b as HTMLElement).dataset.slot!;
+              const isFree = freeNow.includes(slotName);
+              (b as HTMLButtonElement).disabled = !isFree;
+              b.classList.toggle('is-unavailable', !isFree);
+              b.classList.remove('is-selected');
+            });
+            sel.querySelectorAll('.gp-cal__action').forEach(a => (a as HTMLButtonElement).disabled = true);
+          }
+        });
+      } else { btn.disabled = true; }
+      grid.appendChild(btn);
+    }
+  }
+
+  function wireUpEvents() {
+    document.querySelectorAll('[data-toggle-profile]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = (btn as HTMLElement).dataset.toggleProfile!;
+        const profile = document.getElementById(`profile-${id}`);
+        if (!profile) return;
+        const isOpen = profile.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', String(isOpen));
+        btn.classList.toggle('is-open', isOpen);
+        if (!isOpen) {
+          const cal = document.getElementById(`cal-${id}`);
+          if (cal) cal.classList.add('is-hidden');
+        }
+      });
+    });
+    document.querySelectorAll('[data-open-cal]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = (btn as HTMLElement).dataset.openCal!;
+        const cal = document.getElementById(`cal-${id}`);
+        if (!cal) return;
+        document.querySelectorAll('.gp-cal').forEach(c => c.classList.add('is-hidden'));
+        if (!calStates[id]) {
+          const now = new Date();
+          calStates[id] = { year: now.getFullYear(), month: now.getMonth(), selectedDate: null, selectedSlot: null };
+        }
+        renderCalendar(id);
+        cal.classList.remove('is-hidden');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+    function closeCal(cal: Element) {
+      cal.classList.add('is-hidden');
+      document.body.style.overflow = '';
+    }
+    document.querySelectorAll('[data-cal-close]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cal = btn.closest('.gp-cal');
+        if (cal) closeCal(cal);
+      });
+    });
+    document.querySelectorAll('.gp-cal').forEach(cal => {
+      cal.addEventListener('click', (e) => {
+        if (e.target === cal) closeCal(cal);
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.gp-cal:not(.is-hidden)').forEach(c => closeCal(c));
+      }
+    });
+    document.querySelectorAll('.gp-cal__slot').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = (btn as HTMLElement).dataset.guideId!;
+        const s = calStates[id];
+        if (!s?.selectedDate) return;
+        s.selectedSlot = (btn as HTMLElement).dataset.slot!;
+        const sel = document.getElementById(`cal-sel-${id}`);
+        if (sel) {
+          sel.querySelectorAll('.gp-cal__slot').forEach(b => b.classList.remove('is-selected'));
+          btn.classList.add('is-selected');
+          sel.querySelectorAll('.gp-cal__action').forEach(a => (a as HTMLButtonElement).disabled = false);
+        }
+      });
+    });
+    document.querySelectorAll('[data-cal-prev]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = (btn as HTMLElement).dataset.calPrev!;
+        const s = calStates[id]; if (!s) return;
+        s.month--; if (s.month < 0) { s.month = 11; s.year--; }
+        renderCalendar(id);
+      });
+    });
+    document.querySelectorAll('[data-cal-next]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = (btn as HTMLElement).dataset.calNext!;
+        const s = calStates[id]; if (!s) return;
+        s.month++; if (s.month > 11) { s.month = 0; s.year++; }
+        renderCalendar(id);
+      });
+    });
+    document.querySelectorAll('[data-action="browse"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = (btn as HTMLElement).dataset.guideId!;
+        const s = calStates[id]; if (!s?.selectedDate || !s.selectedSlot) return;
+        const ok = await createBooking(id, s.selectedDate, s.selectedSlot);
+        if (!ok) return;
+        s.selectedDate = null;
+        s.selectedSlot = null;
+        renderCalendar(id);
+        const sel = document.getElementById(`cal-sel-${id}`);
+        if (sel) sel.classList.add('is-hidden');
+        const calEl = document.getElementById(`cal-${id}`);
+        if (calEl) closeCal(calEl);
+        const card = document.querySelector(`article[data-guide-id="${id}"]`) as HTMLElement;
+        if (card) {
+          card.style.borderColor = '#14513A';
+          card.style.boxShadow = '0 0 0 2px rgba(20,81,58,0.15)';
+          if (!card.querySelector('.gp-card__booked')) {
+            const badge = document.createElement('span');
+            badge.className = 'gp-card__booked';
+            badge.textContent = 'Reserve';
+            card.querySelector('.gp-card__right')?.prepend(badge);
+          }
+        }
+      });
+    });
+    document.querySelectorAll('[data-action="pay"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = (btn as HTMLElement).dataset.guideId!;
+        const s = calStates[id]; if (!s?.selectedDate || !s.selectedSlot) return;
+        const ok = await createBooking(id, s.selectedDate, s.selectedSlot);
+        if (!ok) return;
+        alert(`Reservation confirmee pour le ${s.selectedDate} (${s.selectedSlot}).\n(Page de paiement a venir)`);
+        s.selectedDate = null;
+        s.selectedSlot = null;
+        renderCalendar(id);
+        const sel = document.getElementById(`cal-sel-${id}`);
+        if (sel) sel.classList.add('is-hidden');
+        const calEl = document.getElementById(`cal-${id}`);
+        if (calEl) closeCal(calEl);
+      });
+    });
+  }
+
+  async function createBooking(guideId: string, date: string, slot: string): Promise<boolean> {
+    const guide = getGuides().find((g: any) => g.id === guideId);
+    const { data, error } = await supabase.rpc('create_booking', {
+      p_guide_id: guideId,
+      p_date: date,
+      p_slot: slot,
+      p_activity_slug: chosenActivitySlug,
+      p_activity_name: chosenActivityName,
+    });
+    if (error || !data) {
+      alert("Cette date n'est plus disponible. Le calendrier a été mis à jour.");
+      await loadData();
+      renderCalendar(guideId);
+      return false;
+    }
+
+    const bm = (BOOKED[guideId] = BOOKED[guideId] || {});
+    (bm[date] = bm[date] || []).push(slot);
+
+    // Panier local du visiteur : référence de SA réservation (id + jeton d'annulation)
+    const cart = JSON.parse(localStorage.getItem('omra-cart') || '[]');
+    cart.push({
+      bookingId: data.id,
+      cancelToken: data.cancel_token,
+      guideId,
+      guideName: guide ? `${guide.firstName} ${guide.lastName}` : 'Guide',
+      guidePhoto: guide?.photo || '',
+      date,
+      slot,
+      activityName: chosenActivityName || '',
+      price: guide?.pricePerDay || 0,
+    });
+    localStorage.setItem('omra-cart', JSON.stringify(cart));
+    window.dispatchEvent(new Event('cart-updated'));
+    return true;
+  }
+
+  loadData().then(renderGuidesList);
+</script>
+
+<style is:global>
+  .is-hidden { display: none !important; }
+
+  .gp-container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---- ACTIVITY BANNER ---- */
+  .gp-activity-banner {
+    background: #EDF5F0;
+    border-bottom: 1px solid #D4E8DB;
+  }
+  .gp-activity-banner__inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+  }
+  .gp-activity-banner__label {
+    color: #6B6B63;
+    font-weight: 400;
+  }
+  .gp-activity-banner__name {
+    color: #14513A;
+    font-weight: 600;
+  }
+  .gp-activity-banner__clear {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: #9C9C93;
+    text-decoration: none;
+    font-size: 0.75rem;
+    transition: background 0.15s, color 0.15s;
+  }
+  .gp-activity-banner__clear:hover {
+    background: rgba(20,81,58,0.08);
+    color: #14513A;
+  }
+
+  /* ---- HERO ---- */
+  .gp-hero {
+    background: radial-gradient(ellipse 120% 100% at 50% -20%, #14513A 0%, #0C3A28 60%, #082818 100%);
+    padding: 84px 0 64px; text-align: center;
+  }
+  .gp-hero__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 3rem; font-weight: 600; color: #FAF8F4;
+    margin: 0 0 12px; letter-spacing: -0.01em;
+  }
+  .gp-hero__sub {
+    font-family: 'Jost', sans-serif; font-size: 0.95rem; font-weight: 300;
+    color: rgba(250,248,244,0.65); margin: 0;
+  }
+
+  /* ---- LIST ---- */
+  .gp-list {
+    padding: 48px 0 80px;
+    background: #FFFFFF;
+  }
+
+  /* ---- CARD ---- */
+  .gp-card {
+    position: relative;
+    margin-bottom: 24px;
+  }
+  /* Bandeau vert foncé qui dépasse à gauche */
+  .gp-card::before {
+    content: '';
+    position: absolute;
+    left: -8px; top: 12px; bottom: 12px;
+    width: 28px;
+    background: #0E3B2A;
+    border-radius: 16px;
+  }
+  .gp-card__body {
+    position: relative;
+    background: #FFFFFF;
+    border: 1px solid #EFEDE6;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(18,49,37,0.06);
+    transition: box-shadow 0.4s var(--ease-out-quart),
+                border-color 0.4s var(--ease-out-quart),
+                transform 0.4s var(--ease-out-quart);
+  }
+  .gp-card:hover .gp-card__body {
+    transform: translateY(-3px);
+    border-color: rgba(20,81,58,0.18);
+    box-shadow: 0 20px 48px rgba(20,81,58,0.10);
+  }
+
+  /* -- Rangée compacte -- */
+  .gp-card__main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px 12px;
+  }
+  .gp-card__avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.15rem; font-weight: 700; letter-spacing: 0.02em;
+    color: rgba(255,255,255,0.6);
+    box-shadow: 0 6px 18px rgba(18,49,37,0.12);
+  }
+  .gp-card__avatar--medina { background: linear-gradient(135deg, #14513A, #0C3A28); }
+  .gp-card__avatar--mecca { background: linear-gradient(135deg, #1A1A2E, #2D2D4A); }
+  .gp-card__avatar--photo {
+    background-size: cover; background-position: center;
+    color: transparent;
+  }
+
+  .gp-card__info { flex: 1; min-width: 0; }
+  .gp-card__name {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.3rem; font-weight: 700; color: #14513A;
+    margin: 0 0 2px; line-height: 1.15;
+  }
+  .gp-card__diploma {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.76rem; font-weight: 300; color: #6B6B63;
+    margin: 0 0 8px; line-height: 1.35;
+  }
+  .gp-card__langs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+  .gp-card__lang {
+    display: inline-block; padding: 3px 10px;
+    background: #F2F1EC; border-radius: 20px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.62rem; font-weight: 500; letter-spacing: 0.06em;
+    color: #3A3A34;
+  }
+  .gp-card__rating {
+    display: flex; align-items: center; gap: 5px;
+    font-family: 'Jost', sans-serif;
+  }
+  .gp-card__rating-star { color: #B99752; font-size: 0.85rem; line-height: 1; }
+  .gp-card__rating-num { font-weight: 600; font-size: 0.8rem; color: #1C1C1A; }
+  .gp-card__reviews { font-size: 0.72rem; font-weight: 300; color: #6B6B63; }
+
+  .gp-card__right {
+    display: flex; flex-direction: column; align-items: flex-end;
+    justify-content: space-between; align-self: stretch;
+    gap: 10px; flex-shrink: 0;
+  }
+  .gp-card__price { text-align: right; }
+  .gp-card__unit {
+    display: block;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.65rem; font-weight: 400;
+    color: #9C9C93; margin-top: 2px;
+  }
+  .gp-card__amount {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.4rem; font-weight: 700; color: #14513A;
+    line-height: 1;
+  }
+  .gp-card__avail-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 14px;
+    background: #14513A; color: #FAF8F4;
+    border: none; border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem; font-weight: 500; letter-spacing: 0.02em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.25s var(--ease-out-quart), transform 0.25s var(--ease-out-quart), box-shadow 0.25s var(--ease-out-quart);
+  }
+  .gp-card__avail-btn:hover {
+    background: #1E6B4E;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(20,81,58,0.22);
+  }
+
+  /* -- Bouton Voir le profil -- */
+  .gp-card__toggle {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: none; border-top: 1px solid #F0EEE7;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; font-weight: 500; color: #1C1C1A;
+    cursor: pointer;
+    transition: background 0.25s var(--ease-out-quart), color 0.25s var(--ease-out-quart);
+  }
+  .gp-card__toggle:hover { background: #FAF9F5; color: #14513A; }
+  .gp-card__toggle-icon {
+    transition: transform 0.5s var(--ease-in-out-smooth);
+  }
+  .gp-card__toggle.is-open .gp-card__toggle-icon { transform: rotate(180deg); }
+
+  .gp-card__booked {
+    display: inline-block;
+    padding: 4px 12px; border-radius: 20px;
+    background: #ECFDF5; color: #16a34a;
+    font-family: 'Jost', sans-serif; font-size: 0.68rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  /* ---- FICHE PROFIL DÉPLIABLE ---- */
+  .gp-profile {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.65s var(--ease-in-out-smooth);
+  }
+  .gp-profile.is-open { grid-template-rows: 1fr; }
+  .gp-profile__inner { overflow: hidden; min-height: 0; }
+  .gp-profile__sheet {
+    background: #FFFFFF;
+    border-top: 1px solid #EFEDE6;
+    padding: 32px 28px;
+    display: flex; flex-direction: column; gap: 20px;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.5s var(--ease-out-quart) 0.1s,
+                transform 0.6s var(--ease-out-expo) 0.1s;
+  }
+  .gp-profile.is-open .gp-profile__sheet {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* -- Haut : visuel capsule + identité -- */
+  .gp-profile__top {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+  }
+
+  .guide-visual {
+    position: relative;
+    width: 40%;
+    min-width: 150px;
+    max-width: 210px;
+    aspect-ratio: 0.58;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 62px 62px 72px 62px;
+    background: #f4f4f1;
+    border: 3px solid rgba(255, 255, 255, 0.95);
+    box-shadow:
+      0 18px 45px rgba(18, 49, 37, 0.12),
+      0 4px 14px rgba(18, 49, 37, 0.08);
+  }
+  .guide-visual__image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+  }
+  .guide-visual__image--initials {
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.4rem; font-weight: 700;
+    color: rgba(255,255,255,0.55);
+  }
+  .guide-visual__image--medina { background: linear-gradient(135deg, #14513A, #0C3A28); }
+  .guide-visual__image--mecca { background: linear-gradient(135deg, #1A1A2E, #2D2D4A); }
+  .gp-profile__id { flex: 1; min-width: 0; }
+  .gp-profile__city {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 16px;
+    background: #FFFFFF; border-radius: 20px;
+    border: 1px solid #EFEDE6;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
+    color: #1C1C1A;
+    box-shadow: 0 2px 8px rgba(18,49,37,0.06);
+    margin-bottom: 16px;
+  }
+  .gp-profile__city svg { color: #14513A; }
+  .gp-profile__name {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: clamp(1.3rem, 3.2vw, 2rem);
+    font-weight: 700; color: #14513A;
+    line-height: 1.05; margin: 0 0 8px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .gp-profile__diploma {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; font-weight: 400; color: #B99752;
+    margin: 0 0 14px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .gp-profile__langs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .gp-profile__lang {
+    display: inline-block; padding: 6px 16px;
+    background: #FFFFFF; border-radius: 20px;
+    border: 1px solid #EFEDE6;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; font-weight: 400; color: #1C1C1A;
+    box-shadow: 0 2px 8px rgba(18,49,37,0.05);
+    white-space: nowrap;
+  }
+  .gp-profile__desc {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; font-weight: 300; color: #4A4A42;
+    line-height: 1.7; margin: 0;
+    max-height: 150px;
+    overflow-y: auto;
+    padding-right: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(20,81,58,0.25) transparent;
+  }
+  .gp-profile__desc::-webkit-scrollbar { width: 4px; }
+  .gp-profile__desc::-webkit-scrollbar-track { background: transparent; }
+  .gp-profile__desc::-webkit-scrollbar-thumb {
+    background: rgba(20,81,58,0.25); border-radius: 4px;
+  }
+
+  /* -- Avis -- */
+  .gp-profile__reviews {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 28px;
+    background: #F6F4EF;
+    border-radius: 18px;
+    padding: 24px 26px;
+  }
+  .gp-profile__reviews--empty { grid-template-columns: 1fr; gap: 8px; }
+  .gp-profile__rv-avg {
+    display: flex; flex-direction: column; gap: 4px;
+    padding-right: 28px;
+    border-right: 1px solid #DEDCD4;
+    flex-shrink: 0; white-space: nowrap;
+  }
+  .gp-profile__reviews--empty .gp-profile__rv-avg { border-right: none; padding-right: 0; }
+  .gp-profile__rv-label {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; font-weight: 500; color: #1C1C1A;
+    margin-bottom: 4px;
+  }
+  .gp-profile__rv-score {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.4rem; font-weight: 700; color: #14513A;
+    line-height: 1;
+  }
+  .gp-profile__rv-score em {
+    font-style: normal; font-size: 1.3rem; color: #6B6B63; font-weight: 600;
+  }
+  .gp-profile__rv-stars { font-size: 1rem; letter-spacing: 2px; }
+  .gp-star { color: #E2DFD5; }
+  .gp-star--full { color: #B99752; }
+  .gp-profile__rv-count {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; font-weight: 300; color: #6B6B63;
+  }
+  .gp-profile__rv-quote { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .gp-profile__rv-text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.88rem; font-weight: 300; color: #4A4A42;
+    line-height: 1.7; margin: 0;
+  }
+  .gp-profile__rv-text--empty { color: #9C9C93; font-style: italic; }
+  .gp-profile__rv-author {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem; font-weight: 500; color: #6B6B63;
+  }
+
+  /* ---- CALENDAR ---- */
+  .gp-cal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(10, 26, 18, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: gpCalFade 0.3s var(--ease-out-quart);
+  }
+  @keyframes gpCalFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .gp-cal__panel {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    background: #FFFFFF;
+    border-radius: 22px;
+    padding: 36px 28px 28px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.3);
+    animation: gpCalPop 0.45s var(--ease-out-expo);
+  }
+  @keyframes gpCalPop {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .gp-cal__close {
+    position: absolute;
+    top: 16px; right: 16px;
+    display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px;
+    border: none; border-radius: 50%;
+    background: #F4F3EE; color: #1C1C1A;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .gp-cal__close:hover { background: #EBE8E0; transform: rotate(90deg); }
+  .gp-cal__header { text-align: center; margin-bottom: 24px; }
+  .gp-cal__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.35rem; font-weight: 600; color: #1C1C1A;
+    margin: 0 0 4px;
+  }
+  .gp-cal__guide-name {
+    font-family: 'Jost', sans-serif; font-size: 0.8rem;
+    color: #9C9C93; margin: 0;
+  }
+
+  .gp-cal__nav {
+    display: flex; align-items: center; justify-content: center;
+    gap: 24px; margin-bottom: 16px;
+  }
+  .gp-cal__arrow {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1px solid #E5E7EB; background: #FFF;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #1C1C1A;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .gp-cal__arrow:hover { border-color: #14513A; background: #EDF5F0; }
+  .gp-cal__month {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.15rem; font-weight: 600; color: #1C1C1A;
+    min-width: 180px; text-align: center;
+  }
+
+  .gp-cal__weekdays {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    text-align: center; margin-bottom: 4px;
+    max-width: 380px; margin-inline: auto;
+  }
+  .gp-cal__weekdays span {
+    font-family: 'Jost', sans-serif; font-size: 0.65rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: #9C9C93; padding: 6px 0;
+  }
+
+  .gp-cal__grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 4px; max-width: 380px; margin: 0 auto 20px;
+  }
+  .gp-cal__day {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    font-family: 'Jost', sans-serif; font-size: 0.82rem; font-weight: 400;
+    border: none; border-radius: 8px; cursor: default;
+    background: transparent; color: #1C1C1A;
+    transition: background 0.15s, color 0.15s;
+  }
+  .gp-cal__day--empty { visibility: hidden; }
+  .gp-cal__day--available {
+    background: #ECFDF5; color: #14513A; cursor: pointer; font-weight: 500;
+  }
+  .gp-cal__day--available:hover {
+    background: #14513A; color: #FAF8F4;
+  }
+  .gp-cal__day--unavailable {
+    background: #F9F9F6; color: #D1D1CB;
+  }
+  .gp-cal__day--past {
+    background: transparent; color: #E5E5E0;
+  }
+  .gp-cal__day--selected {
+    background: #14513A !important; color: #FAF8F4 !important;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(20,81,58,0.3);
+  }
+
+  .gp-cal__legend {
+    display: flex; justify-content: center; gap: 20px; margin-bottom: 20px;
+  }
+  .gp-cal__legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Jost', sans-serif; font-size: 0.7rem; color: #6B6B64;
+  }
+  .gp-cal__dot {
+    width: 10px; height: 10px; border-radius: 3px;
+  }
+  .gp-cal__dot--available { background: #ECFDF5; border: 1px solid #86EFAC; }
+  .gp-cal__dot--unavailable { background: #F9F9F6; border: 1px solid #E5E5E0; }
+
+  .gp-cal__selection {
+    text-align: center;
+    padding-top: 20px; border-top: 1px solid #EBE8E0;
+  }
+  .gp-cal__selected-date {
+    font-family: 'Jost', sans-serif; font-size: 0.85rem;
+    color: #14513A; font-weight: 500; margin: 0 0 16px;
+  }
+
+  /* -- Créneaux -- */
+  .gp-cal__slots { margin-bottom: 20px; }
+  .gp-cal__slots-label {
+    font-family: 'Jost', sans-serif; font-size: 0.78rem;
+    font-weight: 400; color: #6B6B63; margin: 0 0 10px;
+  }
+  .gp-cal__slots-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .gp-cal__slot {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 12px 6px;
+    background: #FFFFFF;
+    border: 1px solid #E5E2D9;
+    border-radius: 12px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem; font-weight: 500; color: #3A3A34;
+    cursor: pointer;
+    transition: border-color 0.25s var(--ease-out-quart),
+                background 0.25s var(--ease-out-quart),
+                color 0.25s var(--ease-out-quart),
+                transform 0.25s var(--ease-spring);
+  }
+  .gp-cal__slot svg { color: #B99752; transition: color 0.25s; }
+  .gp-cal__slot:hover:not(:disabled) {
+    border-color: #14513A;
+    transform: translateY(-2px);
+  }
+  /* Créneau déjà réservé ou non proposé par le guide */
+  .gp-cal__slot:disabled,
+  .gp-cal__slot.is-unavailable {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: #F5F4F0;
+    text-decoration: line-through;
+  }
+  .gp-cal__slot.is-unavailable svg { color: #C5C5BE; }
+  .gp-cal__slot.is-selected {
+    background: #14513A;
+    border-color: #14513A;
+    color: #FAF8F4;
+  }
+  .gp-cal__slot.is-selected svg { color: #D4B06A; }
+
+  .gp-cal__actions {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+  }
+  .gp-cal__action {
+    padding: 12px 24px; border-radius: 8px;
+    font-family: 'Jost', sans-serif; font-size: 0.78rem; font-weight: 500;
+    letter-spacing: 0.02em; cursor: pointer;
+    border: none; transition: background 0.2s, transform 0.15s, opacity 0.2s;
+  }
+  .gp-cal__action:disabled {
+    opacity: 0.4; cursor: not-allowed;
+    transform: none !important;
+  }
+  .gp-cal__action--secondary {
+    background: #F0F0F0; color: #1C1C1A;
+  }
+  .gp-cal__action--secondary:hover { background: #EBE8E0; transform: translateY(-1px); }
+  .gp-cal__action--primary {
+    background: #B99752; color: #16130B;
+  }
+  .gp-cal__action--primary:hover { background: #CBA96A; transform: translateY(-1px); }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 767px) {
+    .gp-hero { padding: 56px 0 40px; }
+    .gp-hero__title { font-size: 2rem; }
+
+    .gp-card::before { left: -5px; width: 20px; }
+    .gp-card__main {
+      flex-wrap: wrap;
+      gap: 10px 12px;
+      padding: 14px 14px 12px;
+    }
+    .gp-card__avatar { width: 48px; height: 48px; font-size: 0.85rem; }
+    .gp-card__info { flex: 1 1 0; min-width: 0; }
+    .gp-card__name { font-size: 1.1rem; }
+    .gp-card__diploma { font-size: 0.72rem; margin-bottom: 6px; }
+    .gp-card__langs { gap: 4px; margin-bottom: 6px; }
+    .gp-card__lang { padding: 3px 8px; font-size: 0.58rem; }
+    /* Prix + bouton : rangée horizontale pleine largeur sous les infos */
+    .gp-card__right {
+      flex-direction: row; align-self: auto;
+      width: 100%;
+      justify-content: space-between; align-items: center;
+      gap: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #F3F1EA;
+    }
+    .gp-card__amount { font-size: 1.6rem; }
+    .gp-card__avail-btn { padding: 9px 14px; font-size: 0.66rem; gap: 6px; }
+
+    .gp-profile__sheet { padding: 24px 18px; }
+    .gp-profile__top { gap: 16px; }
+    .guide-visual { width: 42%; min-width: 130px; border-radius: 52px 52px 60px 52px; }
+    .gp-profile__city { padding: 6px 12px; font-size: 0.62rem; margin-bottom: 10px; }
+    .gp-profile__name { font-size: clamp(1.05rem, 4.6vw, 1.45rem); margin-bottom: 6px; }
+    .gp-profile__diploma { font-size: 0.75rem; margin-bottom: 10px; }
+    .gp-profile__langs { gap: 4px; margin-bottom: 10px; }
+    .gp-profile__lang { padding: 4px 8px; font-size: 0.64rem; }
+    .gp-profile__desc { font-size: 0.8rem; max-height: 120px; }
+    .gp-profile__stat-label { font-size: 0.68rem; }
+    .gp-profile__stat-value { font-size: 0.9rem; }
+    .gp-profile__reviews { gap: 14px; padding: 18px 16px; }
+    .gp-profile__rv-avg { padding-right: 14px; }
+    .gp-profile__rv-label { font-size: 0.75rem; }
+    .gp-profile__rv-score { font-size: 1.8rem; }
+    .gp-profile__rv-stars { font-size: 0.85rem; }
+    .gp-profile__rv-count { font-size: 0.68rem; }
+    .gp-profile__rv-text { font-size: 0.78rem; }
+
+    .gp-cal { padding: 12px; }
+    .gp-cal__panel { padding: 32px 18px 22px; border-radius: 18px; }
+    .gp-cal__slots-grid { grid-template-columns: repeat(2, 1fr); }
+    .gp-cal__actions { flex-direction: column; }
+    .gp-cal__action { width: 100%; text-align: center; }
+  }
+</style>

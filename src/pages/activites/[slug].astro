@@ -1,0 +1,475 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getLangFromUrl, t, getLocalePath } from '../../i18n/ui';
+import { activities } from '../../data/activities';
+
+export function getStaticPaths() {
+  return activities.map(a => ({ params: { slug: a.slug } }));
+}
+
+const lang = getLangFromUrl(Astro.url);
+const { slug } = Astro.params;
+const activity = activities.find(a => a.slug === slug)!;
+const totalSteps = activity.timeline.length;
+---
+
+<BaseLayout title={activity.title} description={activity.subtitle}>
+  <!-- Hero -->
+  <section class="act-hero" style={`background-image: url(${activity.heroImage})`}>
+    <div class="act-hero__overlay"></div>
+    <div class="act-hero__inner">
+      <a href={getLocalePath(lang, `/services/${activity.parentSlug}/`)} class="act-hero__back">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 4l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Retour
+      </a>
+      <p class="act-hero__eyebrow load-rise" style="--load-delay: 100ms">{activity.eyebrow}</p>
+      <h1 class="act-hero__title load-rise" style="--load-delay: 250ms">{activity.title}</h1>
+      <p class="act-hero__sub load-rise" style="--load-delay: 400ms">{activity.subtitle}</p>
+      {activity.premium && <span class="act-hero__premium load-rise" style="--load-delay: 550ms">Service premium</span>}
+    </div>
+  </section>
+
+  <!-- Description -->
+  <section class="act-desc">
+    <div class="act-container">
+      <div class="act-desc__content">
+        <h2 class="act-desc__title reveal">En quoi consiste cette activit&eacute; ?</h2>
+        <p class="act-desc__text reveal">{activity.longDescription}</p>
+        <div class="act-desc__meta reveal">
+          <div class="act-desc__meta-item">
+            <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.3"/><path d="M10 6.5V10l3 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <span>Dur&eacute;e : <strong>{activity.duration}</strong></span>
+          </div>
+          <div class="act-desc__meta-item">
+            <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.3"/><circle cx="10" cy="10" r="2" fill="currentColor"/></svg>
+            <span>Type : <strong>{activity.type}</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Timeline -->
+  <section class="act-tl">
+    <div class="act-container">
+      <p class="act-tl__eyebrow reveal">D&eacute;roulement</p>
+      <h2 class="act-tl__heading reveal">Le programme</h2>
+
+      <div class="act-tl__list">
+        {activity.timeline.map((step, i) => (
+          <div class="act-tl__step reveal">
+            <div class="act-tl__line-col">
+              <span class="act-tl__number">{i + 1}</span>
+              {i < totalSteps - 1 && <div class="act-tl__connector"></div>}
+            </div>
+            <div class="act-tl__content">
+              <h3 class="act-tl__step-title">{step.title}</h3>
+              <p class="act-tl__step-desc">{step.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <!-- Recap bar -->
+      <div class="act-tl__recap reveal">
+        <div class="act-tl__recap-item">
+          <span class="act-tl__recap-label">Dur&eacute;e totale</span>
+          <span class="act-tl__recap-value">{activity.duration}</span>
+        </div>
+        <div class="act-tl__recap-tags">
+          {activity.tags.map(tag => (
+            <span class="act-tl__recap-tag">{tag}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Infos supplémentaires -->
+  {activity.extraInfo && (
+    <section class="act-info">
+      <div class="act-container">
+        <h2 class="act-info__heading reveal">{activity.extraInfo.title}</h2>
+        <div class="act-info__list">
+          {activity.extraInfo.items.map(item => (
+            <div class="act-info__item reveal">
+              <span class="act-info__label">{item.label}</span>
+              <p class="act-info__value">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- CTA -->
+  <section class="act-cta">
+    <div class="act-container">
+      <div class="act-cta__card reveal-scale">
+        <h2 class="act-cta__title">Int&eacute;ress&eacute;(e) par cette activit&eacute; ?</h2>
+        <p class="act-cta__text">R&eacute;servez votre guide et vivez cette exp&eacute;rience en toute s&eacute;r&eacute;nit&eacute;.</p>
+        <a href={getLocalePath(lang, `/guides/?activite=${activity.slug}`)} class="act-cta__btn">
+          Je r&eacute;serve mon guide
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* ============ HERO ============ */
+  .act-hero {
+    position: relative;
+    min-height: 420px;
+    display: flex;
+    align-items: flex-end;
+    background-size: cover;
+    background-position: center;
+    padding: 0 0 56px;
+  }
+  .act-hero__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10,30,20,0.85) 0%, rgba(10,30,20,0.4) 50%, rgba(10,30,20,0.15) 100%);
+  }
+  .act-hero__inner {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  .act-hero__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(250,248,244,0.7);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    margin-bottom: 28px;
+    transition: color 0.2s;
+  }
+  .act-hero__back:hover { color: #FFFFFF; }
+  .act-hero__eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #B99752;
+    margin: 0 0 12px;
+  }
+  .act-hero__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: #FAF8F4;
+    line-height: 1.1;
+    margin: 0 0 16px;
+  }
+  .act-hero__sub {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: rgba(250,248,244,0.78);
+    line-height: 1.7;
+    max-width: 540px;
+    margin: 0;
+  }
+  .act-hero__premium {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 4px 14px;
+    background: linear-gradient(135deg, #B99752, #D4B06A);
+    color: #1C1C1A;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-radius: 20px;
+  }
+
+  /* ============ CONTAINER ============ */
+  .act-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ============ DESCRIPTION ============ */
+  .act-desc {
+    padding: 64px 0;
+    background: #FFFFFF;
+  }
+  .act-desc__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #14513A;
+    margin: 0 0 20px;
+  }
+  .act-desc__text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: #4A4A42;
+    line-height: 1.8;
+    margin: 0 0 28px;
+  }
+  .act-desc__meta {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .act-desc__meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    color: #6B6B63;
+  }
+  .act-desc__meta-item svg { color: #B99752; flex-shrink: 0; }
+  .act-desc__meta-item strong { color: #1C1C1A; font-weight: 600; }
+
+  /* ============ TIMELINE ============ */
+  .act-tl {
+    padding: 64px 0 48px;
+    background: #FAF8F4;
+  }
+  .act-tl__eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #B99752;
+    margin: 0 0 8px;
+  }
+  .act-tl__heading {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #14513A;
+    margin: 0 0 40px;
+  }
+  .act-tl__list {
+    display: flex;
+    flex-direction: column;
+  }
+  .act-tl__step {
+    display: flex;
+    gap: 24px;
+  }
+  .act-tl__line-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 44px;
+  }
+  .act-tl__number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #14513A;
+    color: #FAF8F4;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .act-tl__connector {
+    width: 2px;
+    flex: 1;
+    min-height: 24px;
+    background: linear-gradient(to bottom, #14513A, #B99752);
+    opacity: 0.3;
+  }
+  .act-tl__content {
+    padding-bottom: 32px;
+    padding-top: 8px;
+  }
+  .act-tl__step-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1C1C1A;
+    margin: 0 0 6px;
+  }
+  .act-tl__step-desc {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: #6B6B63;
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  /* Recap */
+  .act-tl__recap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+    padding: 20px 28px;
+    background: #FFFFFF;
+    border: 1px solid #EBE8E0;
+    border-radius: 12px;
+  }
+  .act-tl__recap-label {
+    display: block;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #9C9C93;
+    margin-bottom: 2px;
+  }
+  .act-tl__recap-value {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #14513A;
+  }
+  .act-tl__recap-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .act-tl__recap-tag {
+    padding: 4px 14px;
+    background: #EDF5F0;
+    color: #14513A;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 500;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ============ INFOS SUPPLÉMENTAIRES ============ */
+  .act-info {
+    padding: 56px 0 8px;
+    background: #FFFFFF;
+  }
+  .act-info__heading {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #14513A;
+    margin: 0 0 28px;
+  }
+  .act-info__list {
+    display: flex;
+    flex-direction: column;
+  }
+  .act-info__item {
+    display: flex;
+    gap: 24px;
+    padding: 16px 0;
+    border-bottom: 1px solid #EFEDE6;
+  }
+  .act-info__item:first-child { border-top: 1px solid #EFEDE6; }
+  .act-info__label {
+    flex-shrink: 0;
+    width: 130px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #B99752;
+    padding-top: 2px;
+  }
+  .act-info__value {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: #4A4A42;
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  /* ============ CTA ============ */
+  .act-cta {
+    padding: 64px 0 80px;
+    background: #FFFFFF;
+  }
+  .act-cta__card {
+    text-align: center;
+    padding: 48px 32px;
+    background: linear-gradient(135deg, #14513A 0%, #0C3A28 100%);
+    border-radius: 16px;
+  }
+  .act-cta__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #FAF8F4;
+    margin: 0 0 12px;
+  }
+  .act-cta__text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: rgba(250,248,244,0.7);
+    margin: 0 0 28px;
+  }
+  .act-cta__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    background: #B99752;
+    color: #1C1C1A;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .act-cta__btn:hover {
+    background: #D4B06A;
+    transform: translateY(-2px);
+    color: #1C1C1A;
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 639px) {
+    .act-hero { min-height: 340px; padding-bottom: 40px; }
+    .act-hero__title { font-size: 2rem; }
+    .act-hero__sub { font-size: 0.88rem; }
+    .act-desc { padding: 40px 0; }
+    .act-desc__title { font-size: 1.4rem; }
+    .act-tl { padding: 40px 0 32px; }
+    .act-tl__heading { font-size: 1.4rem; margin-bottom: 28px; }
+    .act-tl__step { gap: 16px; }
+    .act-tl__line-col { width: 36px; }
+    .act-tl__number { width: 36px; height: 36px; font-size: 0.95rem; }
+    .act-tl__content { padding-bottom: 24px; }
+    .act-tl__recap { flex-direction: column; align-items: flex-start; padding: 16px 20px; }
+    .act-info { padding: 40px 0 0; }
+    .act-info__heading { font-size: 1.4rem; }
+    .act-info__item { flex-direction: column; gap: 4px; }
+    .act-info__label { width: auto; }
+    .act-cta { padding: 40px 0 56px; }
+    .act-cta__card { padding: 36px 20px; }
+    .act-cta__title { font-size: 1.4rem; }
+  }
+</style>

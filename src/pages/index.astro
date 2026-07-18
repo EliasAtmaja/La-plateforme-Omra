@@ -1,0 +1,1913 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getLangFromUrl, t, getLocalePath } from '../i18n/ui';
+const lang = getLangFromUrl(Astro.url);
+---
+
+<BaseLayout title={t(lang, 'nav.home')} description={t(lang, 'hero.subtitle')} hasHero={true}>
+
+<!-- ========== HERO ========== -->
+<section class="hm-hero">
+  <div class="hm-hero__bg" aria-hidden="true">
+    <img src="/assets/images/hero-mecca.png" alt="" loading="eager" />
+  </div>
+  <div class="hm-hero__content">
+    <p class="hm-hero__pre load-rise" style="--load-delay: 150ms">La plateforme</p>
+    <div class="hm-hero__title-wrap load-rise" style="--load-delay: 300ms">
+      <span class="hm-hero__line-bar"></span>
+      <h1 class="hm-hero__title">OMRA</h1>
+      <span class="hm-hero__line-bar"></span>
+    </div>
+    <p class="hm-hero__sub load-rise" style="--load-delay: 450ms">Première plateforme française de mise en relation<br/><strong>entre les invités d'Allah et professionnels</strong></p>
+    <a href={getLocalePath(lang, '/guides/')} class="hm-hero__cta load-rise" style="--load-delay: 700ms">
+      <span>Choisir mon guide</span>
+      <span class="hm-hero__cta-arrow" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+    </a>
+  </div>
+</section>
+
+<!-- ========== INTRO STATEMENT ========== -->
+<section class="hm-intro">
+  <div class="hm-container">
+    <div class="hm-intro__icon reveal-scale" aria-hidden="true">
+      <img src="/assets/images/intro-icon.png" alt="" class="hm-intro__icon-img" />
+    </div>
+    <div class="hm-intro__eyebrow-wrap reveal">
+      <span class="hm-intro__line-bar"></span>
+      <span class="hm-intro__eyebrow">En toute liberté</span>
+      <span class="hm-intro__line-bar"></span>
+    </div>
+    <h2 class="hm-intro__title reveal">Votre voyage</h2>
+    <p class="hm-intro__script reveal-blur">Sur mesure</p>
+    <!-- Stepper bar -->
+    <div class="hm-stepper" id="hm-stepper">
+      <div class="hm-stepper__track">
+        <div class="hm-stepper__line">
+          <div class="hm-stepper__line-fill" id="stepper-fill"></div>
+        </div>
+        <div class="hm-stepper__node" data-step="1">
+          <div class="hm-stepper__circle"><span>1</span></div>
+        </div>
+        <div class="hm-stepper__diamond" data-between="1-2"></div>
+        <div class="hm-stepper__node" data-step="2">
+          <div class="hm-stepper__circle"><span>2</span></div>
+        </div>
+        <div class="hm-stepper__diamond" data-between="2-3"></div>
+        <div class="hm-stepper__node" data-step="3">
+          <div class="hm-stepper__circle"><span>3</span></div>
+        </div>
+      </div>
+      <div class="hm-stepper__captions" aria-live="polite">
+        <p class="hm-step-text" data-step="1">Choisissez votre activité</p>
+        <p class="hm-step-text" data-step="2">Choisissez le guide et la date souhaitée</p>
+        <p class="hm-step-text" data-step="3">Voyagez quand vous le désirez</p>
+      </div>
+    </div>
+
+    <span class="hm-intro__end-line reveal-line" aria-hidden="true"></span>
+  </div>
+</section>
+
+<!-- ========== 4 SERVICES ========== -->
+<section class="hm-services" id="services">
+  <div class="hm-container">
+    <header class="hm-section-head hm-section-head--services reveal">
+      <p class="hm-eyebrow hm-eyebrow--lined">Découvrez nos services</p>
+    </header>
+
+    <!-- Clip-path for curved panel edge -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <clipPath id="xpCurve" clipPathUnits="objectBoundingBox">
+          <path d="M0,0 H0.85 C0.92,0.15 0.98,0.35 0.98,0.5 C0.98,0.65 0.92,0.85 0.85,1 H0 Z"/>
+        </clipPath>
+      </defs>
+    </svg>
+
+    <div class="xp__grid stagger">
+      <!-- 01 — Planification -->
+      <div class="xp__card reveal" data-xp-card style="--i:0">
+        <div class="xp__visual">
+          <img src="/assets/images/planification-bg.png" alt="Planification Omra" class="xp__img" loading="lazy" />
+          <span class="xp__veil" aria-hidden="true"></span>
+          <span class="xp__frame" aria-hidden="true"></span>
+        </div>
+        <div class="xp__panel">
+          <span class="xp__sub">Organisation</span>
+          <span class="xp__title">Planification de votre voyage</span>
+          <span class="xp__reveal">
+            <span class="xp__desc">Organisation complète de votre séjour : étapes du pèlerinage, conseils pratiques, hébergements et transports.</span>
+            <a href={getLocalePath(lang, '/services/planification/')} class="xp__cta">
+              <span>Découvrir</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </a>
+          </span>
+        </div>
+        <div class="xp__open" aria-hidden="true">
+          <span class="xp__open-sub">Organisation</span>
+          <span class="xp__open-title">Planification de votre voyage</span>
+          <span class="xp__open-line"></span>
+          <p class="xp__open-desc">Organisation complète de votre séjour : étapes du pèlerinage, conseils pratiques, hébergements et transports.</p>
+          <a href={getLocalePath(lang, '/services/planification/')} class="xp__open-cta" aria-label="Découvrir : Planification">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <a href={getLocalePath(lang, '/services/planification/')} class="xp__img-cta" aria-label="Découvrir : Planification">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <!-- 02 — Makkah -->
+      <div class="xp__card reveal" data-xp-card style="--i:1">
+        <div class="xp__visual">
+          <img src="/assets/images/makkah-bg.jpg" alt="Services à Makkah" class="xp__img" style="object-position: center 65%;" loading="lazy" />
+          <span class="xp__veil" aria-hidden="true"></span>
+          <span class="xp__frame" aria-hidden="true"></span>
+        </div>
+        <div class="xp__panel">
+          <span class="xp__sub">Makkah</span>
+          <span class="xp__title">Nos services à Makkah</span>
+          <span class="xp__reveal">
+            <span class="xp__desc">Accompagnement Omra complet, visite des lieux historiques sacrés et Omra depuis le Masjid Aïcha.</span>
+            <a href={getLocalePath(lang, '/services/makkah/')} class="xp__cta">
+              <span>Découvrir</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </a>
+          </span>
+        </div>
+        <div class="xp__open" aria-hidden="true">
+          <span class="xp__open-sub">Makkah</span>
+          <span class="xp__open-title">Nos services à Makkah</span>
+          <span class="xp__open-line"></span>
+          <p class="xp__open-desc">Accompagnement Omra complet, visite des lieux historiques sacrés et Omra depuis le Masjid Aïcha.</p>
+          <a href={getLocalePath(lang, '/services/makkah/')} class="xp__open-cta" aria-label="Découvrir : Makkah">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <a href={getLocalePath(lang, '/services/makkah/')} class="xp__img-cta" aria-label="Découvrir : Makkah">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <!-- 03 — Madinah -->
+      <div class="xp__card reveal" data-xp-card style="--i:2">
+        <div class="xp__visual">
+          <img src="/assets/images/madinah-bg.jpg" alt="Services à al Madinah" class="xp__img" style="object-position: center 82%;" loading="lazy" />
+          <span class="xp__veil" aria-hidden="true"></span>
+          <span class="xp__frame" aria-hidden="true"></span>
+        </div>
+        <div class="xp__panel">
+          <span class="xp__sub">Al Madinah</span>
+          <span class="xp__title">Nos services à al Madinah</span>
+          <span class="xp__reveal">
+            <span class="xp__desc">Visite historique guidée, découverte du Masjid En-Nabawi, sorties shopping et accompagnement spirituel.</span>
+            <a href={getLocalePath(lang, '/services/madinah/')} class="xp__cta">
+              <span>Découvrir</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </a>
+          </span>
+        </div>
+        <div class="xp__open" aria-hidden="true">
+          <span class="xp__open-sub">Al Madinah</span>
+          <span class="xp__open-title">Nos services à al Madinah</span>
+          <span class="xp__open-line"></span>
+          <p class="xp__open-desc">Visite historique guidée, découverte du Masjid En-Nabawi, sorties shopping et accompagnement spirituel.</p>
+          <a href={getLocalePath(lang, '/services/madinah/')} class="xp__open-cta" aria-label="Découvrir : Madinah">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <a href={getLocalePath(lang, '/services/madinah/')} class="xp__img-cta" aria-label="Découvrir : Madinah">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <!-- 04 — Visa -->
+      <div class="xp__card reveal" data-xp-card style="--i:3">
+        <div class="xp__visual">
+          <img src="/assets/images/visa-bg.png" alt="Assistance visa" class="xp__img" loading="lazy" />
+          <span class="xp__veil" aria-hidden="true"></span>
+          <span class="xp__frame" aria-hidden="true"></span>
+        </div>
+        <div class="xp__panel">
+          <span class="xp__sub">Administratif</span>
+          <span class="xp__title">Assistance visa</span>
+          <span class="xp__reveal">
+            <span class="xp__desc">Nous vous accompagnons dans toutes vos démarches administratives pour l'obtention de votre visa.</span>
+            <a href={getLocalePath(lang, '/services/visa/')} class="xp__cta">
+              <span>Découvrir</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </a>
+          </span>
+        </div>
+        <div class="xp__open" aria-hidden="true">
+          <span class="xp__open-sub">Administratif</span>
+          <span class="xp__open-title">Assistance visa</span>
+          <span class="xp__open-line"></span>
+          <p class="xp__open-desc">Nous vous accompagnons dans toutes vos démarches administratives pour l'obtention de votre visa.</p>
+          <a href={getLocalePath(lang, '/services/visa/')} class="xp__open-cta" aria-label="Découvrir : Visa">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <a href={getLocalePath(lang, '/services/visa/')} class="xp__img-cta" aria-label="Découvrir : Visa">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== STATS BAR ========== -->
+<section class="hm-stats">
+  <div class="hm-container">
+    <div class="hm-stats__grid stagger">
+      <div class="hm-stats__item reveal">
+        <div class="hm-stats__icon" aria-hidden="true">
+          <svg viewBox="0 0 28 28" fill="none"><path d="M14 3l10 4v7c0 6.5-4.3 12.3-10 15.2C8.3 26.3 4 20.5 4 14V7l10-4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9.5 14l3 3 6-6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <span class="hm-stats__value">Securise</span>
+          <span class="hm-stats__label">et fiable</span>
+        </div>
+      </div>
+      <div class="hm-stats__item reveal">
+        <div class="hm-stats__icon" aria-hidden="true">
+          <svg viewBox="0 0 28 28" fill="none"><circle cx="10" cy="10" r="4" stroke="currentColor" stroke-width="1.4"/><circle cx="18" cy="10" r="4" stroke="currentColor" stroke-width="1.4"/><path d="M3 24c0-4 3-7 7-7M25 24c0-4-3-7-7-7M10 17h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <span class="hm-stats__value">10K+</span>
+          <span class="hm-stats__label">pelerins accompagnes</span>
+        </div>
+      </div>
+      <div class="hm-stats__item reveal">
+        <div class="hm-stats__icon" aria-hidden="true">
+          <svg viewBox="0 0 28 28" fill="none"><path d="M14 3C7.9 3 3 7.9 3 14s4.9 11 11 11 11-4.9 11-11S20.1 3 14 3z" stroke="currentColor" stroke-width="1.4"/><path d="M10 17a6 6 0 0010-1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="10" cy="12" r="1.2" fill="currentColor"/><circle cx="18" cy="12" r="1.2" fill="currentColor"/></svg>
+        </div>
+        <div>
+          <span class="hm-stats__value">7j/7</span>
+          <span class="hm-stats__label">support dedie</span>
+        </div>
+      </div>
+      <div class="hm-stats__item reveal">
+        <div class="hm-stats__icon" aria-hidden="true">
+          <svg viewBox="0 0 28 28" fill="none"><path d="M14 3l3.5 7.5L25 12l-5.5 5 1.3 7.5L14 21l-6.8 3.5L8.5 17 3 12l7.5-1.5L14 3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <span class="hm-stats__value">4.9/5</span>
+          <span class="hm-stats__label">satisfaction client</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== TESTIMONIALS ========== -->
+<section class="hm-testi" id="avis">
+  <div class="hm-container">
+    <header class="hm-section-head reveal">
+      <p class="hm-eyebrow">Témoignages</p>
+      <h2 class="hm-title">Ce que disent nos <em>pèlerins</em></h2>
+    </header>
+
+    <!-- Desktop: horizontal track with arrows -->
+    <div class="hm-testi__track-wrap">
+      <button class="hm-testi__arrow hm-testi__arrow--prev" id="testi-prev" aria-label="Précédent">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M13 4l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="hm-testi__track" id="testi-track"></div>
+      <button class="hm-testi__arrow hm-testi__arrow--next" id="testi-next" aria-label="Suivant">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <!-- Empty state -->
+    <p class="hm-testi__empty" id="testi-empty" hidden>Aucun avis pour le moment.</p>
+
+    <!-- Mobile pagination dots -->
+    <div class="hm-testi__dots" id="testi-dots"></div>
+
+    <!-- Formulaire "Laisser un avis" -->
+    <div class="hm-testi__form-wrap" id="review-form-wrap">
+      <button class="hm-testi__toggle-form" id="toggle-review-form">
+        <span>Laisser un avis</span>
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <form class="hm-testi__form" id="review-form" hidden>
+        <div class="hm-testi__form-row">
+          <label class="hm-testi__label">
+            Votre prénom
+            <input type="text" class="hm-testi__input" id="review-name" required />
+          </label>
+          <label class="hm-testi__label" id="review-service-label">
+            Service utilisé
+            <input type="text" class="hm-testi__input" id="review-service" required />
+          </label>
+        </div>
+        <label class="hm-testi__guide-check">
+          <input type="checkbox" id="review-is-guide" />
+          <span>Cet avis concerne un guide</span>
+        </label>
+        <label class="hm-testi__label" id="review-guide-label" style="display:none">
+          Choisissez le guide
+          <select class="hm-testi__input" id="review-guide">
+            <option value="">— Choisir un guide —</option>
+          </select>
+        </label>
+        <label class="hm-testi__label">
+          Note
+          <div class="hm-testi__star-input" id="star-input">
+            <button type="button" data-star="1" aria-label="1 étoile">★</button>
+            <button type="button" data-star="2" aria-label="2 étoiles">★</button>
+            <button type="button" data-star="3" aria-label="3 étoiles">★</button>
+            <button type="button" data-star="4" aria-label="4 étoiles">★</button>
+            <button type="button" data-star="5" aria-label="5 étoiles">★</button>
+          </div>
+        </label>
+        <label class="hm-testi__label">
+          Votre avis
+          <textarea class="hm-testi__textarea" id="review-text" required rows="4"></textarea>
+        </label>
+        <button type="submit" class="hm-testi__submit">Envoyer mon avis</button>
+        <p class="hm-testi__form-note">Votre avis sera visible après validation par notre équipe.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CTA ========== -->
+<section class="hm-cta">
+  <div class="hm-container hm-cta__inner reveal">
+    <p class="hm-cta__eyebrow">Pret a partir&nbsp;?</p>
+    <h2 class="hm-cta__title">Votre guide vous attend</h2>
+    <a href={getLocalePath(lang, '/guides/')} class="hm-btn hm-btn--gold">Trouver mon guide</a>
+  </div>
+</section>
+
+</BaseLayout>
+
+<style is:global>
+  /* ============================================================
+     HOMEPAGE
+     ============================================================ */
+
+  .hm-container { max-width: 1160px; margin: 0 auto; padding: 0 28px; }
+
+  .hm-eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.7rem; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.26em; color: #9A7C3F; margin-bottom: 14px;
+  }
+  .hm-section-head { text-align: center; margin-bottom: 64px; }
+  .hm-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.6rem; font-weight: 600; color: #1C1C1A; letter-spacing: -0.01em;
+    line-height: 1.1;
+  }
+  .hm-title em { font-style: italic; color: #14513A; }
+
+  .hm-diamond {
+    width: 10px; height: 10px; background: #B99752;
+    transform: rotate(45deg); margin: 18px auto 0;
+  }
+
+  /* --- En-tête section services : version premium --- */
+  .hm-section-head--services { margin-bottom: 72px; }
+  .hm-eyebrow--lined {
+    display: inline-block;
+    margin-bottom: 0;
+    font-size: 1.5rem;
+    letter-spacing: 0.28em;
+    color: #1C1C1A;
+    white-space: nowrap;
+  }
+  @media (max-width: 639px) {
+    .hm-section-head--services { margin-bottom: 48px; }
+    .hm-eyebrow--lined { font-size: clamp(0.85rem, 4.3vw, 1.15rem); letter-spacing: 0.16em; }
+  }
+
+  .hm-btn {
+    display: inline-block; padding: 15px 38px;
+    font-family: 'Jost', sans-serif; font-size: 0.75rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.16em;
+    text-decoration: none; border-radius: 2px;
+    transition: background 0.35s var(--ease-out-quart),
+                color 0.35s var(--ease-out-quart),
+                transform 0.35s var(--ease-out-quart),
+                box-shadow 0.35s var(--ease-out-quart);
+  }
+  .hm-btn--gold {
+    background: #B99752; color: #16130B;
+  }
+  .hm-btn--gold:hover {
+    background: #CBA96A; color: #16130B;
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px rgba(185,151,82,0.35);
+  }
+
+  .hm-textlink {
+    font-family: 'Jost', sans-serif; font-size: 0.75rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.16em; color: #14513A;
+    border-bottom: 1px solid #B99752; padding-bottom: 4px; text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .hm-textlink:hover { opacity: 0.65; color: #14513A; }
+
+  @font-face {
+    font-family: 'Roustel';
+    src: url('/assets/fonts/Roustel.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  /* ---- HERO ---- */
+  .hm-hero {
+    position: relative; overflow: hidden;
+    min-height: 100vh; display: flex; align-items: flex-start;
+  }
+  .hm-hero__bg {
+    position: absolute; inset: 0; z-index: 0;
+  }
+  .hm-hero__bg img {
+    width: 100%; height: 100%; object-fit: cover;
+    object-position: center 90%;
+    animation: kenBurns 2.4s var(--ease-out-expo) forwards;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hm-hero__bg img { animation: none; }
+  }
+  .hm-hero__bg::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 45%;
+    background: linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 100%);
+    z-index: 1;
+  }
+  .hm-hero__content {
+    position: relative; z-index: 2;
+    padding: 80px 28px 60px;
+    width: 100%;
+    min-height: 100vh;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .hm-hero__pre {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.35em;
+    color: #1C1C1A; margin-bottom: 2px; margin-top: 40px;
+  }
+  .hm-hero__title-wrap {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 20px;
+  }
+  .hm-hero__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 7rem; font-weight: 600; color: #14513A;
+    line-height: 0.95; letter-spacing: 0.04em; margin: 0;
+  }
+  .hm-hero__line-bar {
+    width: 40px; height: 1.5px; background: #B99752;
+    flex-shrink: 0;
+    transform: scaleX(0);
+    animation: barDraw 0.8s var(--ease-out-expo) 1s forwards;
+  }
+  .hm-hero__title-wrap .hm-hero__line-bar:first-child { transform-origin: right; }
+  .hm-hero__title-wrap .hm-hero__line-bar:last-child { transform-origin: left; }
+  @keyframes barDraw {
+    to { transform: scaleX(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hm-hero__line-bar { transform: none; animation: none; }
+  }
+  .hm-hero__sub {
+    font-family: 'Jost', sans-serif; font-size: 0.85rem; font-weight: 400;
+    color: #3A3A36; line-height: 1.7; margin-top: 0; margin-bottom: 8px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .hm-hero__sub strong {
+    display: block; font-weight: 700; color: #1C1C1A;
+  }
+  @media (max-width: 639px) {
+    /* Taille fluide pour que chaque ligne tienne entière : exactement 2 lignes */
+    .hm-hero__sub {
+      font-size: clamp(0.55rem, 2.6vw, 0.85rem);
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+  }
+  .hm-hero__cta {
+    margin-top: auto;
+    margin-bottom: 80px;
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 36px;
+    background: #14513A; color: #FAF8F4;
+    font-family: 'Jost', sans-serif; font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    text-decoration: none;
+    border: 1.5px solid #14513A;
+    border-radius: 2px;
+    box-shadow: 0 0 0 rgba(20,81,58,0);
+    transition: background 0.35s var(--ease-out-quart),
+                color 0.35s var(--ease-out-quart),
+                transform 0.35s var(--ease-out-quart),
+                box-shadow 0.35s var(--ease-out-quart);
+  }
+  .hm-hero__cta:hover {
+    background: #0C3A28; color: #FAF8F4;
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px rgba(20,81,58,0.28);
+  }
+  .hm-hero__cta-arrow {
+    display: flex; align-items: center; justify-content: center;
+    color: currentColor;
+    transition: transform 0.35s var(--ease-spring);
+  }
+  .hm-hero__cta:hover .hm-hero__cta-arrow {
+    transform: translateX(5px);
+  }
+
+
+  @media (max-width: 960px) {
+    .hm-hero { min-height: 92vh; }
+    .hm-hero__content { padding: 72px 28px 80px; }
+    .hm-hero__title { font-size: 5rem; }
+  }
+  @media (max-width: 639px) {
+    .hm-hero__content { padding: 64px 24px 60px; }
+    .hm-hero__title { font-size: 3.8rem; }
+  }
+
+  /* ---- INTRO STATEMENT ---- */
+  .hm-intro {
+    padding: 44px 0 40px;
+    background: #FFFFFF;
+    text-align: center;
+  }
+
+  .hm-intro__icon {
+    margin: 0 auto 10px;
+    color: #14513A;
+    display: flex;
+    justify-content: center;
+  }
+  .hm-intro__icon-img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+  }
+
+  .hm-intro__eyebrow-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .hm-intro__line-bar {
+    width: 50px;
+    height: 1px;
+    background: #D4D0C8;
+  }
+
+  .hm-intro__eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    color: #6B6B64;
+  }
+
+  .hm-intro__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: #1C1C1A;
+    line-height: 1;
+    margin-bottom: -4px;
+  }
+
+  .hm-intro__script {
+    font-family: 'Roustel', cursive;
+    font-size: 3.4rem;
+    font-weight: normal;
+    font-style: normal;
+    color: #14513A;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  /* ---- STEPPER ---- */
+  .hm-stepper {
+    margin-top: 40px;
+    padding: 0 20px;
+  }
+  .hm-stepper__track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .hm-stepper__line {
+    position: absolute;
+    top: 50%;
+    left: 28px;
+    right: 28px;
+    height: 2px;
+    background: #D4D0C8;
+    transform: translateY(-50%);
+    z-index: 0;
+    border-radius: 1px;
+  }
+  .hm-stepper__line-fill {
+    position: relative;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #14513A, #1A6B4E);
+    border-radius: 1px;
+    will-change: width;
+  }
+  /* Glowing tip that rides the fill edge */
+  .hm-stepper__line-fill::after {
+    content: '';
+    position: absolute;
+    right: -3px;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    margin-top: -4px;
+    border-radius: 50%;
+    background: #1A6B4E;
+    box-shadow: 0 0 12px rgba(20,81,58,0.55);
+  }
+  .hm-stepper__node {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .hm-stepper__circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid #D4D0C8;
+    background: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Long overlapping curves — color settles first, halo blooms after */
+    transition:
+      border-color 0.9s var(--ease-out-expo),
+      background 0.9s var(--ease-out-expo),
+      box-shadow 1.4s var(--ease-out-expo),
+      transform 0.9s cubic-bezier(0.34, 1.3, 0.5, 1);
+    will-change: transform, box-shadow;
+  }
+  .hm-stepper__circle span {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #D4D0C8;
+    transition: color 0.9s var(--ease-out-expo), transform 0.9s var(--ease-out-expo);
+  }
+  .hm-stepper__diamond {
+    width: 6px;
+    height: 6px;
+    background: #D4D0C8;
+    transform: rotate(45deg) scale(1);
+    flex-shrink: 0;
+    z-index: 1;
+    transition: background 0.9s var(--ease-out-expo),
+                transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .hm-stepper__diamond.is-on {
+    background: #14513A;
+    transform: rotate(45deg) scale(1.35);
+  }
+  .hm-stepper__node.is-active .hm-stepper__circle {
+    border-color: #14513A;
+    background: #14513A;
+    transform: scale(1.1);
+    box-shadow: 0 0 0 7px rgba(20,81,58,0.10),
+                0 0 0 14px rgba(20,81,58,0.04),
+                0 10px 28px rgba(20,81,58,0.22);
+    animation: stepperBreathe 3.2s ease-in-out 1.2s infinite;
+  }
+  @keyframes stepperBreathe {
+    0%, 100% {
+      box-shadow: 0 0 0 7px rgba(20,81,58,0.10),
+                  0 0 0 14px rgba(20,81,58,0.04),
+                  0 10px 28px rgba(20,81,58,0.22);
+    }
+    50% {
+      box-shadow: 0 0 0 10px rgba(20,81,58,0.13),
+                  0 0 0 20px rgba(20,81,58,0.05),
+                  0 12px 32px rgba(20,81,58,0.26);
+    }
+  }
+  .hm-stepper__node.is-active .hm-stepper__circle span {
+    color: #FAF8F4;
+    transform: scale(1.05);
+  }
+  .hm-stepper__node.is-done .hm-stepper__circle {
+    border-color: #14513A;
+    background: #14513A;
+    transform: scale(1);
+    box-shadow: 0 4px 14px rgba(20,81,58,0.14);
+  }
+  .hm-stepper__node.is-done .hm-stepper__circle span {
+    color: #FAF8F4;
+  }
+
+  /* Step text glow — crossfade + smooth fake-bold via text-shadow (no layout shift) */
+  /* Légendes sous le stepper : une seule visible à la fois,
+     alignée sous la boule correspondante */
+  .hm-stepper__captions {
+    position: relative;
+    max-width: 480px;
+    margin: 20px auto 0;
+    min-height: 1.6em;
+  }
+  .hm-step-text {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    margin: 0;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: #1C1C1A;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.8s var(--ease-in-out-smooth),
+                transform 0.8s var(--ease-in-out-smooth);
+    pointer-events: none;
+  }
+  .hm-step-text[data-step="1"] { text-align: left; }
+  .hm-step-text[data-step="2"] { text-align: center; }
+  .hm-step-text[data-step="3"] { text-align: right; }
+  .hm-step-text.is-lit {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hm-stepper__node.is-active .hm-stepper__circle { animation: none; }
+  }
+
+  @media (max-width: 639px) {
+    .hm-intro { padding: 32px 0 28px; }
+    .hm-intro__title { font-size: 2rem; }
+    .hm-intro__script { font-size: 2.4rem; }
+    .hm-stepper { margin-top: 28px; padding: 0 8px; }
+    .hm-step-text { font-size: 0.78rem; }
+    .hm-stepper__captions { margin-top: 16px; }
+    .hm-stepper__circle { width: 44px; height: 44px; }
+    .hm-stepper__circle span { font-size: 1rem; }
+  }
+
+  /* ---- 4 SERVICES — EXPANDABLE CARDS (saudiforyou style) ---- */
+  .hm-services { padding: 44px 0 80px; background: #FFFFFF; }
+
+  /* Petite ligne élégante sous le stepper */
+  .hm-intro__end-line {
+    display: block;
+    width: 72px; height: 1px;
+    margin: 52px auto 0;
+    background: linear-gradient(90deg, transparent, #B99752 30%, #B99752 70%, transparent);
+  }
+
+  .xp__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .xp__card {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    background: #FFFFFF;
+    box-shadow: 0 8px 30px rgba(20,81,58,0.14);
+    transition: box-shadow 0.5s, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .xp__card:hover {
+    box-shadow: 0 26px 70px rgba(20,81,58,0.25);
+    transform: translateY(-8px);
+  }
+
+  /* --- Visual layer --- */
+  .xp__visual {
+    position: absolute;
+    inset: 0;
+  }
+
+  .xp__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.55s cubic-bezier(0.33, 1, 0.68, 1), filter 0.55s;
+  }
+
+  .xp__card:hover .xp__img {
+    transform: scale(1.04);
+  }
+
+  .xp__veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.55) 100%);
+    transition: opacity 0.4s;
+  }
+
+  .xp__frame {
+    position: absolute;
+    inset: 12px;
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 2px;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+
+  .xp__card:hover .xp__frame {
+    border-color: rgba(255,255,255,0.32);
+  }
+
+
+  /* --- Text overlay panel (desktop: hover reveal) --- */
+  .xp__panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    z-index: 2;
+    transition: opacity 0.35s, transform 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  .xp__sub {
+    display: block;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #E0BD72;
+    margin-bottom: 6px;
+  }
+
+  .xp__title {
+    display: block;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    line-height: 1.15;
+    letter-spacing: 0.02em;
+  }
+
+  .xp__reveal {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition: grid-template-rows 0.65s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s 0.1s;
+  }
+
+  .xp__reveal > * {
+    overflow: hidden;
+  }
+
+  .xp__card:hover .xp__reveal {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  .xp__desc {
+    display: block;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 300;
+    color: rgba(255,255,255,0.82);
+    line-height: 1.65;
+    margin-top: 12px;
+    margin-bottom: 14px;
+  }
+
+  .xp__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #E0BD72;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .xp__cta:hover { opacity: 0.7; color: #E0BD72; }
+  .xp__cta svg { transition: transform 0.3s; }
+  .xp__card:hover .xp__cta svg { transform: translateX(5px); }
+
+  /* --- Slide-in panel + CTA (hidden on desktop, shown on click) --- */
+  .xp__open, .xp__img-cta { display: none; }
+
+  /* ===== TABLET & MOBILE: click-to-expand with slide ===== */
+  @media (max-width: 1099px) {
+    .xp__grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .xp__card { aspect-ratio: 4 / 4.5; }
+    .xp__card:hover { transform: none; box-shadow: 0 8px 30px rgba(20,81,58,0.14); }
+
+    .xp__img {
+      transform: scale(1.05);
+      transition: transform 0.55s cubic-bezier(0.33, 1, 0.68, 1), filter 0.55s;
+      will-change: transform;
+    }
+    .xp__card:hover .xp__img { transform: scale(1.05); }
+
+    /* Expanded: image slides right */
+    .xp__card.is-expanded .xp__img {
+      transform: translate(26%) scale(1);
+      filter: brightness(1.07);
+    }
+
+    /* Expanded: hide overlays */
+    .xp__card.is-expanded .xp__veil,
+    .xp__card.is-expanded .xp__frame,
+
+    /* Expanded: hide hover panel */
+    .xp__card.is-expanded .xp__panel {
+      opacity: 0;
+      transform: translateX(-16px);
+      pointer-events: none;
+    }
+
+    /* Disable hover reveal on touch */
+    .xp__reveal { display: none; }
+
+    /* White slide-in panel */
+    .xp__open {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px 38% 20px 24px;
+      background: #FFFFFF;
+      clip-path: url(#xpCurve);
+      transform: translateX(-101%);
+      transition: transform 0.55s cubic-bezier(0.33, 1, 0.68, 1);
+      will-change: transform;
+    }
+
+    .xp__card.is-expanded .xp__open {
+      transform: translateX(0);
+    }
+
+    /* Staggered text entrance */
+    .xp__open-sub,
+    .xp__open-title,
+    .xp__open-line,
+    .xp__open-desc,
+    .xp__open-cta {
+      opacity: 0;
+      transform: translateX(-18px);
+      transition: opacity 0.4s, transform 0.5s cubic-bezier(0.33, 1, 0.68, 1);
+    }
+
+    .xp__card.is-expanded .xp__open-sub   { opacity: 1; transform: none; transition-delay: 0.12s; }
+    .xp__card.is-expanded .xp__open-title  { opacity: 1; transform: none; transition-delay: 0.18s; }
+    .xp__card.is-expanded .xp__open-line   { opacity: 1; transform: none; transition-delay: 0.24s; }
+    .xp__card.is-expanded .xp__open-desc   { opacity: 1; transform: none; transition-delay: 0.30s; }
+    .xp__card.is-expanded .xp__open-cta    { opacity: 1; transform: none; transition-delay: 0.36s; }
+
+    .xp__open-sub {
+      display: block;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.55rem;
+      font-weight: 600;
+      color: #14513A;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      margin-bottom: 6px;
+    }
+
+    .xp__open-title {
+      display: block;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(0.95rem, 4.2vw, 1.2rem);
+      color: #1C1C1A;
+      letter-spacing: 0.04em;
+      line-height: 1.15;
+    }
+
+    .xp__open-line {
+      display: block;
+      width: 32px;
+      height: 2px;
+      background: #14513A;
+      margin: 12px 0;
+      flex-shrink: 0;
+    }
+
+    .xp__open-desc {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: #6B6B64;
+      line-height: 1.45;
+      margin-bottom: 12px;
+    }
+
+    .xp__open-cta {
+      display: none;
+    }
+
+    /* Circle arrow CTA on image side */
+    .xp__img-cta {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.6);
+      color: #FFFFFF;
+      background: rgba(0,0,0,0.2);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 0.4s 0.25s, transform 0.4s 0.25s, background 0.3s, border-color 0.3s;
+      text-decoration: none;
+    }
+
+    .xp__card.is-expanded .xp__img-cta {
+      opacity: 1;
+      pointer-events: auto;
+      transform: none;
+    }
+
+    .xp__img-cta:hover {
+      background: #B99752;
+      border-color: #B99752;
+      color: #FFFFFF;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .xp__grid { grid-template-columns: 1fr; }
+    .xp__card { aspect-ratio: 16 / 11; }
+    .xp__card.is-expanded .xp__img { transform: translate(30%) scale(1); }
+    .xp__open { width: 58%; padding-right: 15%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .xp__card, .xp__img, .xp__open,
+    .xp__open-sub, .xp__open-title, .xp__open-line,
+    .xp__open-desc, .xp__open-cta {
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ---- STATS BAR ---- */
+  .hm-stats {
+    background: #14513A; padding: 40px 0;
+  }
+  .hm-stats__grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0; text-align: center;
+  }
+  .hm-stats__item {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; padding: 12px 16px;
+    border-left: 1px solid rgba(250,248,244,0.12);
+  }
+  .hm-stats__item:first-child { border-left: none; }
+
+  .hm-stats__icon {
+    width: 28px; height: 28px; flex-shrink: 0;
+    color: #CBA96A;
+  }
+  .hm-stats__icon svg { width: 100%; height: 100%; }
+
+  .hm-stats__value {
+    display: block;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.2rem; font-weight: 600; color: #FAF8F4; line-height: 1.2;
+  }
+  .hm-stats__label {
+    display: block;
+    font-family: 'Jost', sans-serif; font-size: 0.62rem; font-weight: 400;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: rgba(250,248,244,0.55); line-height: 1.3;
+  }
+
+  @media (max-width: 767px) {
+    .hm-stats__grid { grid-template-columns: 1fr 1fr; gap: 20px 0; }
+    .hm-stats__item:nth-child(3) { border-left: none; }
+    .hm-stats__item { flex-direction: column; gap: 6px; text-align: center; }
+  }
+
+  /* ---- TESTIMONIALS ---- */
+  .hm-testi {
+    padding: 80px 0;
+    background: #F7F7F7;
+  }
+
+  .hm-testi__track-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .hm-testi__track {
+    display: flex;
+    gap: 24px;
+    overflow: hidden;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hm-testi__card {
+    flex: 0 0 calc((100% - 48px) / 3);
+    background: #FFFFFF;
+    border: 1px solid #EBE8E0;
+    border-radius: 8px;
+    padding: 32px 28px 28px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.5s cubic-bezier(0.33, 1, 0.68, 1),
+                opacity 0.4s,
+                border-color 0.4s var(--ease-out-quart),
+                box-shadow 0.4s var(--ease-out-quart);
+  }
+
+  .hm-testi__card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(20,81,58,0.25);
+    box-shadow: 0 20px 44px rgba(28,28,26,0.09);
+  }
+
+  .hm-testi__card.is-new {
+    animation: reviewPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes reviewPop {
+    0% { transform: scale(0.85) translateY(20px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  .hm-testi__stars {
+    font-size: 1rem;
+    color: #B99752;
+    letter-spacing: 4px;
+    margin-bottom: 16px;
+  }
+
+  .hm-testi__text-wrap {
+    position: relative;
+    flex: 1;
+    margin-bottom: 20px;
+  }
+
+  .hm-testi__text {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.05rem;
+    font-style: italic;
+    color: #3A3A36;
+    line-height: 1.65;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 7;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .hm-testi__text.is-expanded {
+    -webkit-line-clamp: unset;
+    overflow: visible;
+  }
+
+  .hm-testi__read-more {
+    display: none;
+    margin-top: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #14513A;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s;
+  }
+
+  .hm-testi__read-more:hover { opacity: 0.6; }
+
+  .hm-testi__read-more.is-visible { display: inline-block; }
+
+  .hm-testi__author {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 16px;
+    border-top: 1px solid #EBE8E0;
+  }
+
+  .hm-testi__name {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #1C1C1A;
+  }
+
+  .hm-testi__detail {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 300;
+    color: #9C9C93;
+  }
+
+  .hm-testi__arrow {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid #D4D0C8;
+    background: #FFFFFF;
+    color: #1C1C1A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color 0.3s var(--ease-out-quart),
+                background 0.3s var(--ease-out-quart),
+                color 0.3s var(--ease-out-quart),
+                transform 0.3s var(--ease-spring);
+  }
+
+  .hm-testi__arrow:hover {
+    border-color: #14513A;
+    background: #14513A;
+    color: #FAF8F4;
+    transform: scale(1.08);
+  }
+  .hm-testi__arrow:active { transform: scale(0.94); }
+
+  .hm-testi__dots {
+    display: none;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .hm-testi__dot {
+    min-width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid #E0DCD2;
+    color: #9C9C93;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0 8px;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+
+  .hm-testi__dot.is-active {
+    background: #14513A;
+    border-color: #14513A;
+    color: #FAF8F4;
+    font-weight: 600;
+  }
+
+  .hm-testi__empty {
+    text-align: center;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    color: #9C9C93;
+    padding: 40px 0;
+    margin: 0;
+  }
+
+  .hm-testi__guide-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: #3A3A36;
+    cursor: pointer;
+    padding: 10px 14px;
+    background: #F7F6F1;
+    border: 1px solid #ECE9E1;
+    border-radius: 10px;
+    transition: border-color 0.2s;
+  }
+  .hm-testi__guide-check:hover { border-color: rgba(20,81,58,0.3); }
+  .hm-testi__guide-check input {
+    width: 17px;
+    height: 17px;
+    accent-color: #14513A;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .hm-testi__form-note {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem;
+    color: #9C9C93;
+    margin: 12px 0 0;
+    text-align: center;
+  }
+
+  .hm-testi__form-success {
+    text-align: center;
+    padding: 20px;
+    background: #EDF5F0;
+    border: 1px solid #C8DFD1;
+    border-radius: 8px;
+    margin-top: 16px;
+  }
+
+  .hm-testi__form-success p {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    color: #14513A;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  /* --- Review form --- */
+  .hm-testi__form-wrap {
+    margin-top: 48px;
+    text-align: center;
+  }
+
+  .hm-testi__toggle-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 32px;
+    background: none;
+    border: 1px solid #14513A;
+    border-radius: 60px;
+    color: #14513A;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: background 0.25s, color 0.25s;
+  }
+
+  .hm-testi__toggle-form:hover {
+    background: #14513A;
+    color: #FAF8F4;
+  }
+
+  .hm-testi__form {
+    max-width: 560px;
+    margin: 28px auto 0;
+    text-align: left;
+  }
+
+  .hm-testi__form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .hm-testi__label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #6B6B64;
+    margin-bottom: 16px;
+  }
+
+  .hm-testi__input,
+  .hm-testi__textarea {
+    width: 100%;
+    padding: 12px 16px;
+    background: #FFFFFF;
+    border: 1px solid #D4D0C8;
+    border-radius: 4px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.88rem;
+    color: #1C1C1A;
+    transition: border-color 0.2s;
+  }
+
+  .hm-testi__input:focus,
+  .hm-testi__textarea:focus {
+    outline: none;
+    border-color: #14513A;
+  }
+
+  .hm-testi__textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .hm-testi__star-input {
+    display: flex;
+    gap: 4px;
+  }
+
+  .hm-testi__star-input button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #D4D0C8;
+    cursor: pointer;
+    padding: 2px;
+    transition: color 0.15s, transform 0.15s;
+    line-height: 1;
+  }
+
+  .hm-testi__star-input button.is-active {
+    color: #B99752;
+  }
+
+  .hm-testi__star-input button:hover {
+    transform: scale(1.2);
+  }
+
+  .hm-testi__submit {
+    display: inline-block;
+    padding: 14px 36px;
+    background: #14513A;
+    color: #FAF8F4;
+    border: none;
+    border-radius: 60px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: background 0.25s, transform 0.2s;
+  }
+
+  .hm-testi__submit:hover {
+    background: #1A6B4E;
+    transform: translateY(-2px);
+  }
+
+  /* --- Tablet: 2 per row --- */
+  @media (max-width: 1023px) {
+    .hm-testi__card {
+      flex: 0 0 calc((100% - 24px) / 2);
+    }
+  }
+
+  /* --- Mobile: 1 per page, paginated --- */
+  @media (max-width: 639px) {
+    .hm-testi { padding: 60px 0; }
+    .hm-testi__track-wrap { gap: 0; }
+    .hm-testi__arrow { display: none; }
+    .hm-testi__track {
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .hm-testi__card {
+      flex: 0 0 100%;
+      padding: 24px 20px 24px;
+      display: none;
+    }
+    .hm-testi__card.is-mobile-visible {
+      display: flex;
+    }
+    .hm-testi__dots { display: flex; }
+    .hm-testi__text { font-size: 0.95rem; }
+    .hm-testi__form-row { grid-template-columns: 1fr; }
+  }
+
+  /* ---- CTA ---- */
+  .hm-cta {
+    background: #FFFFFF; padding: 110px 0;
+    border-top: 1px solid #EEEBE3;
+  }
+  .hm-cta__inner { text-align: center; }
+  .hm-cta__eyebrow {
+    font-family: 'Jost', sans-serif; font-size: 0.7rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.26em; color: #9A7C3F; margin-bottom: 16px;
+  }
+  .hm-cta__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.8rem; font-weight: 600; color: #1C1C1A; margin-bottom: 36px;
+  }
+
+  @media (max-width: 639px) {
+    .hm-cta__title { font-size: 2rem; }
+  }
+</style>
+
+<script>
+  import { supabase, mapReview } from '../lib/supabase';
+
+  document.querySelectorAll('[data-xp-card]').forEach(card => {
+    card.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('a')) return;
+      const wasExpanded = card.classList.contains('is-expanded');
+      document.querySelectorAll('[data-xp-card]').forEach(c => {
+        c.classList.remove('is-expanded');
+        c.setAttribute('aria-expanded', 'false');
+        const openEl = c.querySelector('.xp__open');
+        if (openEl) openEl.setAttribute('aria-hidden', 'true');
+      });
+      if (!wasExpanded) {
+        card.classList.add('is-expanded');
+        card.setAttribute('aria-expanded', 'true');
+        const openEl = card.querySelector('.xp__open');
+        if (openEl) openEl.setAttribute('aria-hidden', 'false');
+      }
+    });
+  });
+
+  // ===== TESTIMONIALS =====
+  const track = document.getElementById('testi-track');
+  const prevBtn = document.getElementById('testi-prev');
+  const nextBtn = document.getElementById('testi-next');
+  const dotsWrap = document.getElementById('testi-dots');
+  const emptyMsg = document.getElementById('testi-empty');
+  let scrollPos = 0;
+  let mobilePage = 0;
+  const MOBILE_PER_PAGE = 3;
+
+  function esc(s: string) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function isMobile() { return window.innerWidth <= 639; }
+  function getCardsPerView() {
+    if (window.innerWidth <= 639) return 1;
+    if (window.innerWidth <= 1023) return 2;
+    return 3;
+  }
+  function getAllCards() {
+    return track ? Array.from(track.querySelectorAll('.hm-testi__card')) as HTMLElement[] : [];
+  }
+  // Avis chargés depuis Supabase (la RLS ne renvoie que les approuvés)
+  let REVIEWS_HOME: any[] = [];
+  function getApprovedReviews() {
+    return REVIEWS_HOME;
+  }
+  async function loadReviews() {
+    // Uniquement les avis généraux : ceux liés à un guide vivent sur sa fiche
+    const { data } = await supabase.from('reviews').select('*')
+      .is('guide_id', null)
+      .order('created_at', { ascending: false });
+    REVIEWS_HOME = (data || []).map(mapReview);
+  }
+
+  function renderReviews() {
+    if (!track) return;
+    const reviews = getApprovedReviews();
+    track.innerHTML = '';
+    scrollPos = 0;
+    track.style.transform = '';
+
+    if (reviews.length === 0) {
+      if (emptyMsg) emptyMsg.hidden = false;
+      if (dotsWrap) dotsWrap.innerHTML = '';
+      return;
+    }
+    if (emptyMsg) emptyMsg.hidden = true;
+
+    reviews.forEach((r: any) => {
+      const starStr = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
+      const card = document.createElement('div');
+      card.className = 'hm-testi__card';
+      card.innerHTML = `
+        <div class="hm-testi__stars" aria-label="${r.stars} étoiles">${starStr}</div>
+        <div class="hm-testi__text-wrap">
+          <p class="hm-testi__text">${esc(r.text)}</p>
+        </div>
+        <div class="hm-testi__author">
+          <span class="hm-testi__name">${esc(r.name)}</span>
+          <span class="hm-testi__detail">${esc(r.service)}</span>
+        </div>
+      `;
+      track.appendChild(card);
+    });
+
+    setupReadMore();
+    if (isMobile()) {
+      setupMobile();
+    } else {
+      getAllCards().forEach(c => c.classList.add('is-mobile-visible'));
+    }
+  }
+
+  // Desktop scroll
+  function scrollTrack(dir: number) {
+    if (!track) return;
+    const cards = getAllCards();
+    if (!cards.length) return;
+    const cardW = cards[0].offsetWidth + 24;
+    const perView = getCardsPerView();
+    const maxScroll = Math.max(0, (cards.length - perView) * cardW);
+    scrollPos = Math.max(0, Math.min(scrollPos + dir * cardW, maxScroll));
+    track.style.transform = `translateX(-${scrollPos}px)`;
+    track.style.transition = 'transform 0.5s cubic-bezier(0.33, 1, 0.68, 1)';
+  }
+
+  prevBtn?.addEventListener('click', () => scrollTrack(-1));
+  nextBtn?.addEventListener('click', () => scrollTrack(1));
+
+  // Mobile pagination
+  function setupMobile() {
+    const cards = getAllCards();
+    const totalPages = Math.ceil(cards.length / MOBILE_PER_PAGE);
+    if (dotsWrap) {
+      dotsWrap.innerHTML = '';
+      for (let i = 0; i < totalPages; i++) {
+        const dot = document.createElement('button');
+        dot.className = 'hm-testi__dot';
+        dot.textContent = String(i + 1);
+        dot.setAttribute('aria-label', `Page ${i + 1}`);
+        dot.addEventListener('click', () => showMobilePage(i));
+        dotsWrap.appendChild(dot);
+      }
+    }
+    showMobilePage(0);
+  }
+
+  function showMobilePage(page: number) {
+    const cards = getAllCards();
+    const totalPages = Math.ceil(cards.length / MOBILE_PER_PAGE);
+    mobilePage = Math.max(0, Math.min(page, totalPages - 1));
+    const start = mobilePage * MOBILE_PER_PAGE;
+    const end = start + MOBILE_PER_PAGE;
+    cards.forEach((c, i) => c.classList.toggle('is-mobile-visible', i >= start && i < end));
+    dotsWrap?.querySelectorAll('.hm-testi__dot').forEach((d, i) =>
+      d.classList.toggle('is-active', i === mobilePage)
+    );
+  }
+
+  // "Lire plus" truncation
+  function setupReadMore() {
+    getAllCards().forEach(card => {
+      const text = card.querySelector('.hm-testi__text') as HTMLElement;
+      const wrap = card.querySelector('.hm-testi__text-wrap') as HTMLElement;
+      if (!text || !wrap || wrap.querySelector('.hm-testi__read-more')) return;
+      const btn = document.createElement('button');
+      btn.className = 'hm-testi__read-more';
+      btn.textContent = 'Lire plus';
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const expanded = text.classList.toggle('is-expanded');
+        btn.textContent = expanded ? 'Réduire' : 'Lire plus';
+      });
+      wrap.appendChild(btn);
+      requestAnimationFrame(() => {
+        if (text.scrollHeight > text.clientHeight + 2) btn.classList.add('is-visible');
+      });
+    });
+  }
+
+  // Star rating input
+  const starInput = document.getElementById('star-input');
+  let selectedStars = 5;
+  if (starInput) {
+    const starBtns = starInput.querySelectorAll('button');
+    starBtns.forEach(b => {
+      const val = parseInt(b.getAttribute('data-star') || '0');
+      b.addEventListener('click', () => {
+        selectedStars = val;
+        starBtns.forEach(s => {
+          const sv = parseInt(s.getAttribute('data-star') || '0');
+          s.classList.toggle('is-active', sv <= val);
+        });
+      });
+      b.classList.add('is-active');
+    });
+  }
+
+  // Toggle form
+  const toggleBtn = document.getElementById('toggle-review-form');
+  const reviewForm = document.getElementById('review-form') as HTMLFormElement;
+  toggleBtn?.addEventListener('click', () => {
+    if (!reviewForm) return;
+    const isHidden = reviewForm.hidden;
+    reviewForm.hidden = !isHidden;
+    const icon = toggleBtn.querySelector('svg');
+    if (icon) icon.style.transform = isHidden ? 'rotate(45deg)' : '';
+  });
+
+  // Avis pour un guide : case à cocher + liste des guides (synchronisée avec la base)
+  const isGuideCheck = document.getElementById('review-is-guide') as HTMLInputElement | null;
+  const guideLabel = document.getElementById('review-guide-label') as HTMLElement | null;
+  const guideSelect = document.getElementById('review-guide') as HTMLSelectElement | null;
+  const serviceLabel = document.getElementById('review-service-label') as HTMLElement | null;
+  const serviceInput = document.getElementById('review-service') as HTMLInputElement | null;
+  let guidesLoaded = false;
+
+  async function loadGuidesList() {
+    if (guidesLoaded || !guideSelect) return;
+    const { data } = await supabase.from('guides').select('id, first_name, last_name').order('first_name');
+    guideSelect.innerHTML = '<option value="">— Choisir un guide —</option>' +
+      (data || []).map((g: any) => `<option value="${g.id}">${esc(g.first_name)} ${esc(g.last_name)}</option>`).join('');
+    guidesLoaded = true;
+  }
+
+  isGuideCheck?.addEventListener('change', () => {
+    const forGuide = isGuideCheck.checked;
+    if (guideLabel) guideLabel.style.display = forGuide ? '' : 'none';
+    if (serviceLabel) serviceLabel.style.display = forGuide ? 'none' : '';
+    if (serviceInput) serviceInput.required = !forGuide;
+    if (forGuide) loadGuidesList();
+  });
+
+  // Submit review → Supabase (statut « en attente », modéré par l'admin)
+  reviewForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = (document.getElementById('review-name') as HTMLInputElement).value.trim();
+    const text = (document.getElementById('review-text') as HTMLTextAreaElement).value.trim();
+    const forGuide = !!isGuideCheck?.checked;
+    const guideId = forGuide ? (guideSelect?.value || '') : '';
+
+    if (forGuide && !guideId) {
+      alert('Veuillez choisir le guide concerné par votre avis.');
+      return;
+    }
+    const guideName = forGuide && guideSelect
+      ? guideSelect.options[guideSelect.selectedIndex].textContent || ''
+      : '';
+    const service = forGuide ? `Guide - ${guideName}` : (serviceInput?.value.trim() || '');
+    if (!name || !text || !service) return;
+
+    const { error } = await supabase.from('reviews').insert({
+      name,
+      service,
+      text,
+      stars: selectedStars,
+      status: 'pending',
+      guide_id: forGuide ? guideId : null,
+    });
+    if (error) {
+      alert("Une erreur est survenue lors de l'envoi de votre avis. Veuillez réessayer.");
+      return;
+    }
+
+    // Reset form & show confirmation
+    reviewForm.reset();
+    reviewForm.hidden = true;
+    if (guideLabel) guideLabel.style.display = 'none';
+    if (serviceLabel) serviceLabel.style.display = '';
+    if (serviceInput) serviceInput.required = true;
+    const icon = toggleBtn?.querySelector('svg');
+    if (icon) (icon as HTMLElement).style.transform = '';
+    selectedStars = 5;
+    starInput?.querySelectorAll('button').forEach(b => b.classList.add('is-active'));
+
+    const formWrap = document.getElementById('review-form-wrap');
+    if (formWrap) {
+      const success = document.createElement('div');
+      success.className = 'hm-testi__form-success';
+      success.innerHTML = '<p>Merci ! Votre avis a été envoyé et sera publié après validation.</p>';
+      formWrap.appendChild(success);
+      setTimeout(() => success.remove(), 5000);
+    }
+  });
+
+  // Init + resize
+  loadReviews().then(renderReviews);
+  window.addEventListener('resize', () => {
+    if (isMobile()) {
+      setupMobile();
+      if (track) track.style.transform = '';
+    } else {
+      getAllCards().forEach(c => c.classList.add('is-mobile-visible'));
+      scrollPos = 0;
+      if (track) track.style.transform = '';
+    }
+  });
+
+  // ---- Stepper scroll animation (smooth) ----
+  (function() {
+    const stepper = document.getElementById('hm-stepper');
+    if (!stepper) return;
+
+    const nodes = stepper.querySelectorAll('.hm-stepper__node') as NodeListOf<HTMLElement>;
+    const diamonds = stepper.querySelectorAll('.hm-stepper__diamond') as NodeListOf<HTMLElement>;
+    const fill = document.getElementById('stepper-fill') as HTMLElement;
+    const texts = document.querySelectorAll('.hm-step-text') as NodeListOf<HTMLElement>;
+    const introSection = stepper.closest('.hm-intro') as HTMLElement;
+    if (!introSection) return;
+
+    let currentStep = -1;
+    let currentFill = 0;
+    let targetFill = 0;
+    let rafId = 0;
+
+    function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
+
+    function setStep(step: number) {
+      if (step === currentStep) return;
+      currentStep = step;
+      nodes.forEach((node, i) => {
+        const s = i + 1;
+        node.classList.remove('is-active', 'is-done');
+        if (s < step) node.classList.add('is-done');
+        else if (s === step) node.classList.add('is-active');
+      });
+      texts.forEach(t => {
+        const s = parseInt(t.dataset.step || '0');
+        t.classList.toggle('is-lit', s === step);
+      });
+      diamonds.forEach((d, i) => {
+        d.classList.toggle('is-on', (i + 1) < step);
+      });
+    }
+
+    let lastT = 0;
+    function tick(now: number) {
+      const dt = lastT ? Math.min((now - lastT) / 1000, 0.05) : 1 / 60;
+      lastT = now;
+      // Frame-rate-independent exponential smoothing — silky at any refresh rate
+      const alpha = 1 - Math.exp(-dt * 5);
+      currentFill = lerp(currentFill, targetFill, alpha);
+      if (Math.abs(currentFill - targetFill) < 0.05) currentFill = targetFill;
+      fill.style.width = currentFill + '%';
+      if (currentFill !== targetFill) rafId = requestAnimationFrame(tick);
+      else { rafId = 0; lastT = 0; }
+    }
+
+    function setFill(pct: number) {
+      targetFill = pct;
+      if (!rafId) rafId = requestAnimationFrame(tick);
+    }
+
+    function onScroll() {
+      const rect = introSection.getBoundingClientRect();
+      const viewH = window.innerHeight;
+
+      if (rect.top > viewH) { setStep(0); setFill(0); return; }
+      if (rect.bottom < 0) { setStep(3); setFill(100); return; }
+
+      const progress = 1 - (rect.bottom / (viewH + rect.height));
+
+      if (progress < 0.35) {
+        setStep(0);
+        setFill(0);
+      } else if (progress < 0.45) {
+        setStep(1);
+        const local = (progress - 0.35) / 0.10;
+        setFill(local * 45);
+      } else if (progress < 0.60) {
+        setStep(2);
+        const local = (progress - 0.45) / 0.15;
+        setFill(45 + local * 45);
+      } else {
+        setStep(3);
+        setFill(100);
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>

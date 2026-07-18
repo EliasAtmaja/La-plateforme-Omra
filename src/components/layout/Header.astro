@@ -1,0 +1,776 @@
+---
+import { getLangFromUrl, t, getLocalePath, languages, type Lang } from '../../i18n/ui';
+
+interface Props {
+  transparent?: boolean;
+}
+
+const { transparent = false } = Astro.props;
+const lang = getLangFromUrl(Astro.url);
+const otherLang: Lang = lang === 'fr' ? 'en' : 'fr';
+
+const navLinks = [
+  { label: t(lang, 'nav.home'), href: getLocalePath(lang, '/') },
+  { label: t(lang, 'nav.guides'), href: getLocalePath(lang, '/guides/') },
+  { label: t(lang, 'nav.about'), href: getLocalePath(lang, '/a-propos/') },
+];
+---
+
+<header class:list={['header', { 'header--opaque': !transparent, 'header--transparent': transparent }]} role="banner">
+  <div class="header__inner container">
+    <a href={getLocalePath(lang, '/')} class="header__logo" aria-label={t(lang, 'site.name')}>
+      <img src="/assets/images/logo.png" alt="" class="header__logo-mark" />
+      <span class="header__logo-text">La plateforme <em>Omra</em></span>
+    </a>
+    <span class="header__logo-spacer" aria-hidden="true"></span>
+
+    <nav class="header__nav" aria-label="Navigation principale">
+      <ul class="header__nav-list" role="list">
+        {navLinks.map(link => (
+          <li>
+            <a
+              href={link.href}
+              class:list={['header__nav-link', { 'is-active': Astro.url.pathname === link.href || Astro.url.pathname === link.href.slice(0, -1) }]}
+            >
+              {link.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="header__actions">
+      <div class="header__cart-wrap">
+        <button type="button" class="header__cart" id="cart-toggle" aria-label="Panier" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M3 6h18" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <span class="header__cart-count" id="cart-count" hidden>0</span>
+        </button>
+        <div class="header__cart-panel" id="cart-panel" hidden>
+          <p class="header__cart-panel-title">Mon panier</p>
+          <div class="header__cart-items" id="cart-items"></div>
+          <p class="header__cart-empty" id="cart-empty">Votre panier est vide.</p>
+          <div class="header__cart-footer" id="cart-footer" hidden>
+            <div class="header__cart-total">
+              <span>Total</span>
+              <strong id="cart-total"></strong>
+            </div>
+            <a href={getLocalePath(lang, '/panier/')} class="header__cart-view">Voir le panier</a>
+            <button type="button" class="header__cart-pay" id="cart-pay">Proc&eacute;der au paiement</button>
+          </div>
+        </div>
+      </div>
+      <a href={getLocalePath(lang, '/guides/')} class="header__cta">
+        {t(lang, 'hero.cta')}
+      </a>
+      <button
+        class="header__burger"
+        aria-label="Ouvrir le menu"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+      >
+        <span class="header__burger-line"></span>
+        <span class="header__burger-line"></span>
+        <span class="header__burger-line"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="header__mobile-menu" id="mobile-menu" hidden>
+    <nav aria-label="Menu mobile">
+      <ul role="list">
+        {navLinks.map(link => (
+          <li>
+            <a href={link.href} class="header__mobile-link">{link.label}</a>
+          </li>
+        ))}
+        <li>
+          <a href={getLocalePath(lang, '/panier/')} class="header__mobile-link">
+            Panier
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const toggle = document.querySelector('.header__burger');
+  const menu = document.getElementById('mobile-menu');
+  if (toggle && menu) {
+    toggle.addEventListener('click', () => {
+      const expanded = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!expanded));
+      menu.hidden = expanded;
+      document.body.style.overflow = expanded ? '' : 'hidden';
+    });
+  }
+
+  const header = document.querySelector('.header');
+  if (header) {
+    let lastY = 0;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y > 60) {
+        header.classList.add('is-scrolled');
+      } else {
+        header.classList.remove('is-scrolled');
+      }
+      if (y > lastY && y > 120) {
+        header.classList.add('is-hidden');
+      } else {
+        header.classList.remove('is-hidden');
+      }
+      lastY = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+
+  // ===== PANIER =====
+  // Le panier du visiteur vit dans SON navigateur (localStorage 'omra-cart') :
+  // chaque entrée référence une réservation Supabase (id + jeton d'annulation).
+  function cartEsc(s: string) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function getCart(): any[] {
+    return JSON.parse(localStorage.getItem('omra-cart') || '[]');
+  }
+  function saveCart(items: any[]) {
+    localStorage.setItem('omra-cart', JSON.stringify(items));
+  }
+  function cartFormatDate(d: string): string {
+    if (!d) return '';
+    const [y, m, day] = d.split('-').map(Number);
+    return new Date(y, m - 1, day).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  async function cancelBookingRemote(bookingId: string, token: string) {
+    try {
+      const { supabase } = await import('../../lib/supabase');
+      await supabase.rpc('cancel_booking', { p_booking_id: bookingId, p_token: token });
+    } catch (_) {
+      // même si l'appel échoue (déjà annulée…), on retire l'article localement
+    }
+  }
+
+  function renderCart() {
+    const items = getCart();
+    const badge = document.getElementById('cart-count');
+    const itemsEl = document.getElementById('cart-items');
+    const emptyEl = document.getElementById('cart-empty');
+    const footerEl = document.getElementById('cart-footer');
+    const totalEl = document.getElementById('cart-total');
+
+    if (badge) {
+      badge.textContent = String(items.length);
+      badge.hidden = items.length === 0;
+    }
+    if (!itemsEl || !emptyEl || !footerEl || !totalEl) return;
+
+    if (items.length === 0) {
+      itemsEl.innerHTML = '';
+      emptyEl.hidden = false;
+      footerEl.hidden = true;
+      return;
+    }
+    emptyEl.hidden = true;
+    footerEl.hidden = false;
+
+    let total = 0;
+    itemsEl.innerHTML = items.map((b: any) => {
+      const price = b.price || 0;
+      total += price;
+      const initials = (b.guideName || 'G').split(' ').map((p: string) => p[0] || '').join('').slice(0, 2);
+      const avatar = b.guidePhoto
+        ? `<span class="hc-item__av" style="background-image:url(${b.guidePhoto})"></span>`
+        : `<span class="hc-item__av hc-item__av--initials">${cartEsc(initials)}</span>`;
+      return `
+        <div class="hc-item">
+          ${avatar}
+          <div class="hc-item__info">
+            <span class="hc-item__name">${cartEsc(b.guideName || 'Guide')}</span>
+            <span class="hc-item__date">${cartEsc(cartFormatDate(b.date))}${b.slot ? ' &middot; ' + cartEsc(b.slot) : ''}</span>
+            ${b.activityName ? `<span class="hc-item__activity">${cartEsc(b.activityName)}</span>` : ''}
+          </div>
+          <div class="hc-item__right">
+            ${price ? `<span class="hc-item__price">${price}&euro;</span>` : ''}
+            <button type="button" class="hc-item__remove" data-cart-remove="${cartEsc(b.bookingId)}" aria-label="Retirer du panier">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    totalEl.textContent = total + '€';
+
+    itemsEl.querySelectorAll('[data-cart-remove]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = (btn as HTMLElement).dataset.cartRemove!;
+        const entry = getCart().find((b: any) => b.bookingId === id);
+        if (entry) await cancelBookingRemote(entry.bookingId, entry.cancelToken);
+        saveCart(getCart().filter((b: any) => b.bookingId !== id));
+        window.dispatchEvent(new Event('cart-updated'));
+      });
+    });
+  }
+
+  const cartToggle = document.getElementById('cart-toggle');
+  const cartPanel = document.getElementById('cart-panel');
+  const cartWrap = cartToggle?.closest('.header__cart-wrap');
+  if (cartToggle && cartPanel) {
+    cartToggle.addEventListener('click', () => {
+      const isOpen = !cartPanel.hidden;
+      cartPanel.hidden = isOpen;
+      cartToggle.setAttribute('aria-expanded', String(!isOpen));
+      if (!isOpen) renderCart();
+    });
+    document.addEventListener('click', (e) => {
+      const target = e.target as Node;
+      // Un élément retiré du DOM (ex. bouton ✕ après re-rendu) n'est pas un clic extérieur
+      if (!target.isConnected) return;
+      if (!cartPanel.hidden && cartWrap && !cartWrap.contains(target)) {
+        cartPanel.hidden = true;
+        cartToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !cartPanel.hidden) {
+        cartPanel.hidden = true;
+        cartToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+  document.getElementById('cart-pay')?.addEventListener('click', () => {
+    alert('Page de paiement à venir');
+  });
+
+  renderCart();
+  let lastCartCount = getCart().length;
+  window.addEventListener('cart-updated', () => {
+    const n = getCart().length;
+    // Un article vient d'être ajouté → le panier clignote
+    if (n > lastCartCount && cartToggle) {
+      cartToggle.classList.remove('is-ping');
+      void (cartToggle as HTMLElement).offsetWidth; // relance l'animation
+      cartToggle.classList.add('is-ping');
+      setTimeout(() => cartToggle.classList.remove('is-ping'), 1300);
+    }
+    lastCartCount = n;
+    renderCart();
+  });
+  window.addEventListener('storage', renderCart);
+</script>
+
+<style>
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: transparent;
+    border-bottom: 1px solid transparent;
+    transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .header--opaque,
+  .header.is-scrolled {
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(14px);
+    border-bottom-color: var(--color-border-light);
+  }
+
+  .header.is-hidden {
+    transform: translateY(-100%);
+  }
+
+  .header__inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 76px;
+    gap: var(--space-6);
+  }
+
+  .header__logo {
+    position: absolute;
+    left: var(--space-6);
+    top: 50%;
+    transform: translate(0%, -50%);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--color-primary-dark);
+    text-decoration: none;
+    transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity var(--transition-fast);
+  }
+
+  .header__logo:hover { opacity: 0.75; color: var(--color-primary-dark); }
+
+  .header__logo-spacer {
+    width: 56px;
+    flex-shrink: 0;
+  }
+
+  .header__logo-mark {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .header__logo-text {
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  .header__logo-text em {
+    font-style: italic;
+    color: var(--color-accent-dark);
+  }
+
+  .header__nav-list {
+    display: flex;
+    gap: var(--space-8);
+  }
+
+  .header__nav-link {
+    display: block;
+    position: relative;
+    padding: var(--space-2) 0;
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+    font-weight: var(--weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    transition: color 0.3s var(--ease-out-quart);
+  }
+
+  .header__nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 2px;
+    width: 100%;
+    height: 1px;
+    background: var(--color-accent);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.4s var(--ease-out-quart);
+  }
+
+  .header__nav-link:hover {
+    color: var(--color-primary-dark);
+  }
+
+  .header__nav-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  .header__nav-link.is-active {
+    color: var(--color-primary-dark);
+  }
+
+  .header__nav-link.is-active::after {
+    transform: scaleX(1);
+  }
+
+  .header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    flex-shrink: 0;
+  }
+
+  .header__cart-wrap {
+    position: relative;
+  }
+
+  .header__cart {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    transition: color var(--transition-fast);
+  }
+
+  .header__cart:hover { color: var(--color-primary-dark); }
+
+  .header__cart-count {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--color-accent-dark);
+    color: #FFFFFF;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .header__cta {
+    display: inline-block;
+    padding: 11px 26px;
+    background: var(--color-primary-dark);
+    color: var(--color-text-on-dark);
+    font-size: 0.75rem;
+    font-weight: var(--weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+  }
+
+  .header__cta:hover {
+    background: var(--color-primary);
+    color: var(--color-text-on-dark);
+  }
+
+  .header__burger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .header__burger-line {
+    display: block;
+    width: 24px;
+    height: 1.5px;
+    background: var(--color-text);
+    border-radius: 1px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s;
+    transform-origin: center;
+  }
+
+  .header__burger[aria-expanded="true"] .header__burger-line:nth-child(1) {
+    transform: translateY(6.5px) rotate(45deg);
+  }
+
+  .header__burger[aria-expanded="true"] .header__burger-line:nth-child(2) {
+    opacity: 0;
+  }
+
+  .header__burger[aria-expanded="true"] .header__burger-line:nth-child(3) {
+    transform: translateY(-6.5px) rotate(-45deg);
+  }
+
+  .header__mobile-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: calc(100vh - 76px);
+    height: calc(100dvh - 76px);
+    background: #FFFFFF;
+    padding: var(--space-8) var(--space-6);
+    z-index: 9999;
+    overflow-y: auto;
+  }
+
+  .header__mobile-menu:not([hidden]) {
+    animation: menuIn 0.4s var(--ease-out-expo);
+  }
+
+  @keyframes menuIn {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .header__mobile-menu:not([hidden]) li {
+    opacity: 0;
+    animation: menuLinkIn 0.5s var(--ease-out-expo) forwards;
+  }
+  .header__mobile-menu li:nth-child(1) { animation-delay: 60ms; }
+  .header__mobile-menu li:nth-child(2) { animation-delay: 120ms; }
+  .header__mobile-menu li:nth-child(3) { animation-delay: 180ms; }
+  .header__mobile-menu li:nth-child(4) { animation-delay: 240ms; }
+  .header__mobile-menu li:nth-child(5) { animation-delay: 300ms; }
+
+  @keyframes menuLinkIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .header__mobile-menu:not([hidden]),
+    .header__mobile-menu:not([hidden]) li {
+      animation: none;
+      opacity: 1;
+    }
+  }
+
+  .header__mobile-link {
+    display: block;
+    padding: var(--space-5) 0;
+    font-family: var(--font-heading);
+    font-size: var(--text-2xl);
+    font-weight: 500;
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-border-light);
+    transition: color 0.3s var(--ease-out-quart), padding-left 0.3s var(--ease-out-quart);
+  }
+
+  .header__mobile-link:hover {
+    color: var(--color-primary);
+    padding-left: 8px;
+  }
+
+  @media (max-width: 1023px) {
+    .header__nav { display: none; }
+    .header__cta { display: none; }
+    .header__burger { display: flex; }
+  }
+</style>
+
+<style is:global>
+  .header--transparent:not(.is-scrolled) .header__logo-text {
+    display: none;
+  }
+  .header--transparent.is-scrolled .header__logo-text {
+    display: inline;
+    opacity: 1;
+    animation: headerLogoTextIn 0.3s ease;
+  }
+  @keyframes headerLogoTextIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .header--transparent:not(.is-scrolled) .header__logo {
+    left: 50%;
+    transform: translate(-50%, calc(-50% + 16px));
+  }
+  .header--transparent:not(.is-scrolled) .header__logo-mark {
+    transform: scale(1.8);
+  }
+  .header--transparent:not(.is-scrolled) .header__nav {
+    display: none !important;
+  }
+  .header--transparent:not(.is-scrolled) .header__actions {
+    margin-left: auto;
+  }
+
+  /* ===== CLIGNOTEMENT DU PANIER À L'AJOUT ===== */
+  .header__cart.is-ping {
+    animation: cartPing 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .header__cart.is-ping .header__cart-count {
+    animation: cartBadgePing 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes cartPing {
+    0% { transform: scale(1); color: inherit; }
+    15% { transform: scale(1.35); color: #14513A; }
+    30% { transform: scale(0.95); color: #B99752; }
+    45% { transform: scale(1.2); color: #14513A; }
+    60% { transform: scale(1); color: #B99752; }
+    80% { color: #14513A; }
+    100% { transform: scale(1); color: inherit; }
+  }
+  @keyframes cartBadgePing {
+    0%, 100% { transform: scale(1); }
+    20% { transform: scale(1.5); }
+    40% { transform: scale(1); }
+    55% { transform: scale(1.3); }
+    70% { transform: scale(1); }
+  }
+
+  /* ===== PANNEAU PANIER ===== */
+  .header__cart-panel[hidden],
+  .header__cart-footer[hidden],
+  .header__cart-count[hidden],
+  .header__cart-empty[hidden] {
+    display: none !important;
+  }
+
+  .header__cart-panel {
+    position: absolute;
+    top: calc(100% + 14px);
+    right: -8px;
+    width: min(370px, calc(100vw - 24px));
+    background: #FFFFFF;
+    border: 1px solid #EFEDE6;
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(18,49,37,0.16);
+    padding: 20px;
+    z-index: 300;
+    animation: cartPanelIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .header__cart-panel::before {
+    content: '';
+    position: absolute;
+    top: -6px; right: 22px;
+    width: 12px; height: 12px;
+    background: #FFFFFF;
+    border-left: 1px solid #EFEDE6;
+    border-top: 1px solid #EFEDE6;
+    transform: rotate(45deg);
+  }
+  @keyframes cartPanelIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .header__cart-panel-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.2rem; font-weight: 700;
+    color: #14513A;
+    margin: 0 0 14px;
+  }
+
+  .header__cart-items {
+    display: flex; flex-direction: column;
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(20,81,58,0.25) transparent;
+  }
+
+  .hc-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #F3F1EA;
+  }
+  .hc-item:last-child { border-bottom: none; }
+  .hc-item__av {
+    width: 42px; height: 42px; border-radius: 50%;
+    background-size: cover; background-position: center;
+    flex-shrink: 0;
+  }
+  .hc-item__av--initials {
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+    color: rgba(255,255,255,0.6);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.7rem; font-weight: 700;
+  }
+  .hc-item__info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .hc-item__name {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; font-weight: 600; color: #1C1C1A;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hc-item__date {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem; font-weight: 400; color: #14513A;
+  }
+  .hc-item__activity {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.68rem; font-weight: 300; color: #9C9C93;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hc-item__right {
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .hc-item__price {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.1rem; font-weight: 700; color: #14513A;
+  }
+  .hc-item__remove {
+    display: flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #F5F4F0; border: none;
+    color: #9C9C93; cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .hc-item__remove:hover { background: #FEE2E2; color: #DC2626; }
+
+  .header__cart-empty {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; font-weight: 300; color: #9C9C93;
+    text-align: center;
+    margin: 8px 0 12px;
+  }
+
+  .header__cart-footer {
+    border-top: 1px solid #EFEDE6;
+    padding-top: 14px;
+    margin-top: 8px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .header__cart-total {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'Jost', sans-serif;
+  }
+  .header__cart-total span {
+    font-size: 0.8rem; font-weight: 400; color: #6B6B63;
+  }
+  .header__cart-total strong {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.5rem; font-weight: 700; color: #14513A;
+  }
+  .header__cart-view {
+    display: block;
+    padding: 11px;
+    text-align: center;
+    background: #FFFFFF;
+    border: 1px solid #14513A;
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.76rem; font-weight: 500;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    color: #14513A; text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+  }
+  .header__cart-view:hover { background: #EDF5F0; color: #14513A; }
+  .header__cart-pay {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+    border: none; border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.76rem; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    color: #FAF8F4; cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .header__cart-pay:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(20,81,58,0.25);
+  }
+
+  @media (max-width: 767px) {
+    .header__cart-panel {
+      position: fixed;
+      top: 84px;
+      left: 12px;
+      right: 12px;
+      width: auto;
+    }
+    .header__cart-panel::before { display: none; }
+    .header__cart-items { max-height: min(300px, calc(100vh - 350px)); }
+  }
+</style>

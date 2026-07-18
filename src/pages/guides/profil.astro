@@ -1,0 +1,1705 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Profil du guide" description="Consultez le profil de votre guide">
+  <section class="gpr" id="profile-section">
+    <div class="gpr__loading" id="profile-loading">Chargement du profil...</div>
+  </section>
+</BaseLayout>
+
+<script>
+  import { supabase, mapGuide, mapReview, mapBooking, isAdmin, ALL_SLOTS } from '../../lib/supabase';
+
+  const MONTHS = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+
+  const LANG_FLAGS: Record<string, string> = {
+    'Français': '🇫🇷', 'Arabe': '🇸🇦', 'Anglais': '🇬🇧', 'Espagnol': '🇪🇸',
+    'Turc': '🇹🇷', 'Ourdou': '🇵🇰', 'Indonésien': '🇮🇩', 'Malais': '🇲🇾',
+  };
+
+  function esc(s: string) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // ---- Caches de données (chargés depuis Supabase au démarrage) ----
+  let REVIEWS_CACHE: any[] = [];       // avis approuvés de ce guide
+  let AVAIL_CACHE: Record<string, string[]> = {};  // date -> créneaux disponibles
+  let BOOKED_CACHE: Record<string, string[]> = {}; // date -> créneaux réservés ('*' = journée entière, ancien format)
+  let BOOKINGS_CACHE: any[] = [];      // réservations complètes (mode guide/admin uniquement)
+
+  function getReviews(): any[] { return REVIEWS_CACHE; }
+  function getGuideBookings(_guideId: string): any[] { return BOOKINGS_CACHE; }
+
+  async function saveAvail(guideId: string, entries: Record<string, string[]>): Promise<boolean> {
+    const clean: Record<string, string[]> = {};
+    Object.keys(entries).forEach(d => {
+      if (entries[d] && entries[d].length > 0) clean[d] = entries[d];
+    });
+    const rows = Object.keys(clean).map(d => ({ guide_id: guideId, date: d, slots: clean[d] }));
+
+    // 1. Upsert d'abord (aucune suppression tant que l'écriture n'a pas réussi)
+    if (rows.length > 0) {
+      const { error: upErr } = await supabase.from('availability')
+        .upsert(rows, { onConflict: 'guide_id,date' });
+      if (upErr) {
+        alert(`L'enregistrement a échoué : ${upErr.message}\n\nVos disponibilités n'ont PAS été modifiées.`);
+        return false;
+      }
+    }
+
+    // 2. Puis suppression des jours retirés uniquement
+    const { data: existing, error: selErr } = await supabase.from('availability')
+      .select('date').eq('guide_id', guideId);
+    if (!selErr && existing) {
+      const toDelete = existing.map((r: any) => r.date).filter((d: string) => !clean[d]);
+      if (toDelete.length > 0) {
+        const { error: delErr } = await supabase.from('availability')
+          .delete().eq('guide_id', guideId).in('date', toDelete);
+        if (delErr) {
+          alert(`Certains jours n'ont pas pu être retirés : ${delErr.message}`);
+        }
+      }
+    }
+
+    AVAIL_CACHE = clean;
+    return true;
+  }
+
+  // Créneaux encore libres pour une date (dispos moins réservés)
+  function freeSlotsAt(dateStr: string, avail: Record<string, string[]>): string[] {
+    const av = avail[dateStr] || [];
+    const bk = BOOKED_CACHE[dateStr] || [];
+    if (bk.includes('*')) return [];
+    return av.filter((s: string) => !bk.includes(s));
+  }
+
+  var calMonth: number, calYear: number;
+  var calEditing = false;
+  var calDraft: Record<string, string[]> = {};
+  var editSelDate: string | null = null;
+
+  const params = new URLSearchParams(window.location.search);
+  const guideId = params.get('id');
+  // Mode guide : session Supabase du guide lui-même, ou session admin
+  // (l'admin voit alors le profil comme si le guide était connecté).
+  let isGuideLogin = false;
+  const section = document.getElementById('profile-section')!;
+
+  function showNotFound() {
+    section.innerHTML = '<div class="gpr__error"><p>Guide introuvable.</p><a href="/guides/">Retour aux guides</a></div>';
+  }
+
+  (async function init() {
+    if (!guideId) { showNotFound(); return; }
+
+    const { data: gRow } = await supabase.from('guides').select('*').eq('id', guideId).maybeSingle();
+    if (!gRow) { showNotFound(); return; }
+    const guide = mapGuide(gRow);
+
+    if (params.get('login') === '1') {
+      const { data: sess } = await supabase.auth.getSession();
+      const user = sess.session?.user;
+      if (user) {
+        if (guide.authUserId && user.id === guide.authUserId) isGuideLogin = true;
+        else isGuideLogin = await isAdmin();
+      }
+    }
+
+    const [rRes, aRes, bdRes] = await Promise.all([
+      supabase.from('reviews').select('*').eq('guide_id', guideId),
+      supabase.from('availability').select('date, slots').eq('guide_id', guideId),
+      supabase.from('booked_dates').select('date, slot').eq('guide_id', guideId),
+    ]);
+    REVIEWS_CACHE = (rRes.data || []).map(mapReview).filter((r: any) => r.status === 'approved');
+    if (aRes.error && isGuideLogin) {
+      alert(`Erreur de chargement des disponibilités : ${aRes.error.message}\n\n(La migration SQL « créneaux » a-t-elle été exécutée dans Supabase ?)`);
+    }
+    AVAIL_CACHE = {};
+    (aRes.data || []).forEach((r: any) => {
+      AVAIL_CACHE[r.date] = r.slots || ALL_SLOTS.slice();
+    });
+    BOOKED_CACHE = {};
+    (bdRes.data || []).forEach((r: any) => {
+      (BOOKED_CACHE[r.date] = BOOKED_CACHE[r.date] || []).push(r.slot || '*');
+    });
+
+    if (isGuideLogin) {
+      const { data: bks } = await supabase.from('bookings').select('*').eq('guide_id', guideId).order('date');
+      BOOKINGS_CACHE = (bks || []).map(mapBooking).filter((b: any) => b.status !== 'reassigned');
+    }
+
+    renderProfile(guide);
+  })();
+
+  function timeAgo(dateStr: string): string {
+    const now = Date.now();
+    const then = new Date(dateStr).getTime();
+    const diff = Math.floor((now - then) / 1000);
+    if (diff < 60) return "A l'instant";
+    if (diff < 3600) return `Il y a ${Math.floor(diff/60)} min`;
+    if (diff < 86400) return `Il y a ${Math.floor(diff/3600)}h`;
+    const days = Math.floor(diff / 86400);
+    if (days === 1) return 'Il y a 1 jour';
+    if (days < 7) return `Il y a ${days} jours`;
+    const weeks = Math.floor(days / 7);
+    if (weeks === 1) return 'Il y a 1 semaine';
+    if (weeks < 5) return `Il y a ${weeks} semaines`;
+    const months = Math.floor(days / 30);
+    if (months === 1) return 'Il y a 1 mois';
+    return `Il y a ${months} mois`;
+  }
+
+  function renderProfile(guide: any) {
+    const cityLabel = guide.city === 'medina' ? 'Medine' : 'La Mecque';
+    const initials = (guide.firstName?.[0] || '') + (guide.lastName?.[0] || '');
+    const heroImg = guide.city === 'medina' ? '/assets/images/madinah-bg.jpg' : '/assets/images/makkah-bg.jpg';
+
+    const guideReviews = getReviews().filter((r: any) => r.guideId === guide.id && r.status === 'approved');
+    const avgRating = guideReviews.length > 0
+      ? (guideReviews.reduce((s: number, r: any) => s + (r.stars || 5), 0) / guideReviews.length)
+      : 0;
+
+    const dist: number[] = [0,0,0,0,0];
+    guideReviews.forEach((r: any) => { dist[(r.stars || 5) - 1]++; });
+    const maxDist = Math.max(...dist, 1);
+
+    document.title = `${guide.firstName} ${guide.lastName} | La plateforme Omra`;
+
+    const photoHtml = guide.photo
+      ? `<div class="gpr__avatar" style="background-image:url(${guide.photo})"></div>`
+      : `<div class="gpr__avatar gpr__avatar--initials gpr__avatar--${guide.city}">${esc(initials)}</div>`;
+
+    const langsHtml = (guide.languages || []).map((l: string) => {
+      const flag = LANG_FLAGS[l] || '🌐';
+      return `<span class="gpr__lang-chip">${flag} ${esc(l)}</span>`;
+    }).join('');
+
+    const includesItems = [
+      'Accompagnement personnalise',
+      'Itineraires sur mesure',
+      'Conseils & bonnes adresses',
+      'Support avant, pendant et apres',
+    ];
+
+    const reviewsHtml = guideReviews.length === 0
+      ? '<p class="gpr__no-reviews">Aucun avis pour le moment.</p>'
+      : guideReviews.map((r: any) => {
+          const ago = r.date ? timeAgo(r.date) : '';
+          const initial = (r.name || 'A')[0].toUpperCase();
+          const reviewPhoto = r.photo
+            ? `<div class="gpr__rv-avatar" style="background-image:url(${r.photo})"></div>`
+            : `<div class="gpr__rv-avatar gpr__rv-avatar--initials">${initial}</div>`;
+          return `
+            <div class="gpr__rv-card">
+              <div class="gpr__rv-top">
+                ${reviewPhoto}
+                <div class="gpr__rv-meta">
+                  <span class="gpr__rv-name">${esc(r.name || 'Anonyme')}</span>
+                  <span class="gpr__rv-stars">${renderStarsHtml(r.stars || 5)}</span>
+                  <span class="gpr__rv-date">${ago}</span>
+                </div>
+              </div>
+              <p class="gpr__rv-text">${esc(r.text || '')}</p>
+            </div>
+          `;
+        }).join('');
+
+    const barsHtml = [5,4,3,2,1].map(n => {
+      const count = dist[n-1];
+      const pct = (count / maxDist) * 100;
+      return `
+        <div class="gpr__bar-row">
+          <span class="gpr__bar-label">${n} etoile${n>1?'s':''}</span>
+          <span class="gpr__bar-dot">●</span>
+          <div class="gpr__bar-track"><div class="gpr__bar-fill" style="width:${pct}%"></div></div>
+          <span class="gpr__bar-count">${count}</span>
+        </div>
+      `;
+    }).join('');
+
+    section.innerHTML = `
+      ${isGuideLogin ? `
+      <div class="gpr__guide-bar">
+        <span class="gpr__guide-bar-text">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M2.5 14c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.4"/></svg>
+          Espace guide — g&eacute;rez vos disponibilit&eacute;s et vos r&eacute;servations
+        </span>
+        <button type="button" class="gpr__guide-bar-logout" id="guide-logout">Se d&eacute;connecter</button>
+      </div>
+      ` : ''}
+      <!-- ═══ HERO ═══ -->
+      <div class="gpr__hero" style="background-image:url(${heroImg})">
+        <div class="gpr__hero-fade"></div>
+      </div>
+
+      <div class="gpr__profile-head">
+        <div class="gpr__container">
+          ${photoHtml}
+          <span class="gpr__city-pill gpr__city-pill--${guide.city}">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C5 1.5 2.5 4 2.5 7c0 4 5.5 7.5 5.5 7.5s5.5-3.5 5.5-7.5c0-3-2.5-5.5-5.5-5.5z" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="7" r="2" stroke="currentColor" stroke-width="1.2"/></svg>
+            ${esc(cityLabel)}
+          </span>
+          <h1 class="gpr__name">${esc(guide.firstName)} ${esc(guide.lastName)}
+            <svg class="gpr__verified" width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#14513A"/><path d="M7.5 12.5l3 3 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </h1>
+          <p class="gpr__subtitle">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C5 1.5 2.5 4 2.5 7c0 4 5.5 7.5 5.5 7.5s5.5-3.5 5.5-7.5c0-3-2.5-5.5-5.5-5.5z" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="7" r="2" stroke="currentColor" stroke-width="1.2"/></svg>
+            Guide certifie${guide.diploma ? `  &middot;  ${esc(guide.diploma)}` : ''}
+          </p>
+        </div>
+      </div>
+
+      <!-- ═══ CONTENT ═══ -->
+      <div class="gpr__container gpr__content">
+
+        ${guide.description ? `
+        <!-- A PROPOS -->
+        <div class="gpr__card gpr__card--about">
+          <div class="gpr__card-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="7.5" r="4" stroke="currentColor" stroke-width="1.4"/><path d="M3 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </div>
+          <h2 class="gpr__card-title">A propos</h2>
+          <p class="gpr__bio">${esc(guide.description)}</p>
+        </div>
+        ` : ''}
+
+        ${(guide.languages || []).length > 0 ? `
+        <!-- LANGUES -->
+        <div class="gpr__card gpr__card--langs">
+          <div class="gpr__card-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9" stroke="currentColor" stroke-width="1.4"/><ellipse cx="11" cy="11" rx="4" ry="9" stroke="currentColor" stroke-width="1.2"/><path d="M2.5 8.5h17M2.5 13.5h17" stroke="currentColor" stroke-width="1.1"/></svg>
+          </div>
+          <h2 class="gpr__card-title">Langues parlees</h2>
+          <div class="gpr__langs">${langsHtml}</div>
+        </div>
+        ` : ''}
+
+        ${guide.pricePerDay ? `
+        <!-- TARIFS -->
+        <div class="gpr__card gpr__card--price">
+          <div class="gpr__card-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M12 2v18M7.5 6.5h6.75a2.75 2.75 0 010 5.5H6.5h8.25a2.75 2.75 0 010 5.5H7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h2 class="gpr__card-title">Tarifs</h2>
+          <div class="gpr__price-layout">
+            <div class="gpr__price-left">
+              <span class="gpr__price-amount">${esc(String(guide.pricePerDay))}<span class="gpr__price-currency">&euro;</span></span>
+              <span class="gpr__price-note">Frais inclus</span>
+            </div>
+            <div class="gpr__price-right">
+              ${includesItems.map(item => `
+                <div class="gpr__price-feat">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#EDF5F0"/><path d="M5 8.2l2 2 4-4" stroke="#14513A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span>${item}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- CTA DISPONIBILITES -->
+        <div class="gpr__cta-card" id="cta-dispo">
+          <div class="gpr__cta-left">
+            <div class="gpr__cta-icon">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="5" width="22" height="20" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M3 11h22M9 2v5M19 2v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="17" r="1.5" fill="currentColor"/><circle cx="14" cy="17" r="1.5" fill="currentColor"/><circle cx="18" cy="17" r="1.5" fill="currentColor"/></svg>
+            </div>
+            <div>
+              <h2 class="gpr__cta-title">Voir les disponibilites</h2>
+              <p class="gpr__cta-sub">Consultez les dates disponibles et reservez votre guide en quelques clics.</p>
+            </div>
+          </div>
+          <button type="button" class="gpr__cta-btn" id="scroll-to-cal">
+            Voir le calendrier
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <!-- CALENDRIER (hidden par defaut, ouvert via CTA) -->
+        <div class="gpr__card gpr__card--cal is-hidden" id="cal-section">
+          <div class="gpr__card-header-row">
+            <h2 class="gpr__card-title">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="16" height="15" rx="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 8h16M6 1v4M14 1v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              Calendrier
+            </h2>
+            ${isGuideLogin ? '<button type="button" class="gpr__cal-edit-btn" id="cal-edit-btn">Modifier</button>' : ''}
+          </div>
+          <div class="gpr__cal-nav">
+            <button type="button" class="gpr__cal-arrow" id="cal-prev">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <span class="gpr__cal-month" id="cal-month"></span>
+            <button type="button" class="gpr__cal-arrow" id="cal-next">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 4l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="gpr__cal-weekdays">
+            <span>LUN</span><span>MAR</span><span>MER</span><span>JEU</span><span>VEN</span><span>SAM</span><span>DIM</span>
+          </div>
+          <div class="gpr__cal-grid" id="cal-grid"></div>
+          <div class="gpr__cal-legend">
+            <span class="gpr__cal-legend-item"><span class="gpr__cal-dot gpr__cal-dot--avail"></span> Disponible</span>
+            <span class="gpr__cal-legend-item"><span class="gpr__cal-dot gpr__cal-dot--busy"></span> Indisponible</span>
+            ${isGuideLogin ? '<span class="gpr__cal-legend-item"><span class="gpr__cal-dot gpr__cal-dot--booked"></span> Reserve</span>' : ''}
+          </div>
+          ${isGuideLogin ? `
+          <div class="gpr__slot-editor is-hidden" id="slot-editor">
+            <p class="gpr__slot-editor-title" id="slot-editor-title"></p>
+            <div class="gpr__slot-editor-chips">
+              ${ALL_SLOTS.map((s: string) => `<button type="button" class="gpr__slot-chip" data-eslot="${s}">${s}</button>`).join('')}
+            </div>
+            <button type="button" class="gpr__slot-dayoff" id="slot-dayoff">Rendre ce jour indisponible</button>
+          </div>
+          ` : ''}
+          <div class="gpr__cal-edit-tools is-hidden" id="cal-edit-tools">
+            <label class="gpr__check-all">
+              <input type="checkbox" id="check-all-month" />
+              <span>Cocher tout le mois</span>
+            </label>
+            <button type="button" class="gpr__cal-save-btn" id="cal-save-btn">Enregistrer</button>
+          </div>
+        </div>
+
+        ${isGuideLogin ? `
+        <!-- RESERVATIONS (guide only) -->
+        <div class="gpr__card">
+          <div class="gpr__card-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="4" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M3 9h16M8 2v4M14 2v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </div>
+          <h2 class="gpr__card-title">R&eacute;servations effectu&eacute;es</h2>
+          <div id="bookings-list"></div>
+        </div>
+        ` : ''}
+
+        <!-- MOYENNE DES AVIS -->
+        <div class="gpr__card gpr__card--rating">
+          <div class="gpr__card-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2l2.7 5.5 6 .9-4.35 4.25 1.03 5.95L11 15.9l-5.38 2.7 1.03-5.95L2.3 8.4l6-.9L11 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          </div>
+          <h2 class="gpr__card-title">Moyenne des avis</h2>
+          ${guideReviews.length > 0 ? `
+            <div class="gpr__rating-layout">
+              <div class="gpr__rating-left">
+                <div class="gpr__rating-big-star">
+                  <svg width="28" height="28" viewBox="0 0 20 20" fill="#D4A843"><path d="M10 1.5l2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6L5.1 16.7l.9-5.5-4-3.9 5.5-.8L10 1.5z"/></svg>
+                </div>
+                <span class="gpr__rating-num">${avgRating.toFixed(1)}</span>
+                <span class="gpr__rating-slash">/ 5</span>
+                <div class="gpr__rating-stars">${renderStarsHtml(avgRating)}</div>
+                <span class="gpr__rating-count">Basee sur ${guideReviews.length} avis</span>
+              </div>
+              <div class="gpr__rating-bars">
+                ${barsHtml}
+              </div>
+            </div>
+          ` : '<p class="gpr__no-reviews">Aucun avis pour le moment.</p>'}
+        </div>
+
+        <!-- LES AVIS -->
+        <div class="gpr__card gpr__card--reviews">
+          <div class="gpr__card-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 4h14a2 2 0 012 2v8a2 2 0 01-2 2H8l-4 3v-3a2 2 0 01-2-2V6a2 2 0 012-2z" stroke="currentColor" stroke-width="1.4"/></svg>
+          </div>
+          <h2 class="gpr__card-title">Les avis${guideReviews.length > 0 ? ` (${guideReviews.length})` : ''}</h2>
+          <div class="gpr__rv-list" id="reviews-list">
+            ${reviewsHtml}
+          </div>
+
+          <!-- FORM -->
+          <div class="gpr__rv-form-wrap">
+            <h3 class="gpr__rv-form-title">Laisser un avis</h3>
+            <form class="gpr__rv-form" id="review-form">
+              <div class="gpr__rf-stars" id="rf-stars">
+                ${[1,2,3,4,5].map(n => `
+                  <button type="button" class="gpr__rf-star" data-star="${n}" aria-label="${n} etoile${n>1?'s':''}">
+                    <svg viewBox="0 0 20 20" width="32" height="32"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                  </button>
+                `).join('')}
+              </div>
+              <input type="text" name="reviewer-name" class="gpr__rf-input" placeholder="Votre nom" required />
+              <textarea name="reviewer-text" class="gpr__rf-textarea" rows="3" placeholder="Partagez votre experience..." required></textarea>
+              <button type="submit" class="gpr__rf-submit" id="rf-submit" disabled>Publier mon avis</button>
+              <div class="gpr__rf-success is-hidden" id="rf-success">
+                <p>Merci ! Votre avis a &eacute;t&eacute; envoy&eacute; et sera publi&eacute; apr&egrave;s validation.</p>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
+
+      ${isGuideLogin ? `
+      <!-- MODAL REFUS -->
+      <div class="gpr__modal-overlay is-hidden" id="refuse-modal">
+        <div class="gpr__modal">
+          <h3 class="gpr__modal-title">Faire part d'un emp&ecirc;chement</h3>
+          <p class="gpr__modal-sub">R&eacute;servation du <strong id="refuse-modal-date"></strong></p>
+          <p class="gpr__modal-hint">Veuillez indiquer la raison de votre emp&ecirc;chement. Cette information sera transmise &agrave; l'administrateur.</p>
+          <textarea class="gpr__modal-textarea" id="refuse-reason" rows="4" placeholder="Raison de l'emp&ecirc;chement..."></textarea>
+          <div class="gpr__modal-actions">
+            <button type="button" class="gpr__modal-cancel" id="refuse-cancel">Annuler</button>
+            <button type="button" class="gpr__modal-confirm" id="refuse-confirm">Envoyer</button>
+          </div>
+        </div>
+      </div>
+      ` : ''}
+    `;
+
+    document.getElementById('guide-logout')?.addEventListener('click', async () => {
+      const { data } = await supabase.auth.getUser();
+      // Ne déconnecte la session que si c'est bien le guide (pas l'admin qui consulte)
+      if (data.user && guide.authUserId && data.user.id === guide.authUserId) {
+        await supabase.auth.signOut();
+      }
+      window.location.href = `/guides/profil/?id=${guide.id}`;
+    });
+
+    try { initCalendar(guide); } catch(e) { console.error('Calendar init error:', e); }
+    try { initReviewForm(guide); } catch(e) { console.error('Review form init error:', e); }
+    try { initScrollBtn(); } catch(e) { console.error('Scroll btn init error:', e); }
+    try { initBookings(guide); } catch(e) { console.error('Bookings init error:', e); }
+    try { initRefuseModal(guide); } catch(e) { console.error('Refuse modal init error:', e); }
+  }
+
+  function renderStarsHtml(rating: number): string {
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+      if (i <= Math.floor(rating)) {
+        html += '<span class="gpr__star gpr__star--full">&#9733;</span>';
+      } else if (i - rating < 1 && i - rating > 0) {
+        html += '<span class="gpr__star gpr__star--half">&#9733;</span>';
+      } else {
+        html += '<span class="gpr__star gpr__star--empty">&#9734;</span>';
+      }
+    }
+    return html;
+  }
+
+  // ===== CALENDAR =====
+  function initCalendar(guide: any) {
+    const now = new Date();
+    calMonth = now.getMonth();
+    calYear = now.getFullYear();
+    calDraft = JSON.parse(JSON.stringify(AVAIL_CACHE));
+    renderCal(guide);
+    initSlotEditor(guide);
+
+    document.getElementById('cal-prev')?.addEventListener('click', () => {
+      calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
+      renderCal(guide);
+    });
+    document.getElementById('cal-next')?.addEventListener('click', () => {
+      calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
+      renderCal(guide);
+    });
+
+    const editBtn = document.getElementById('cal-edit-btn');
+    const editTools = document.getElementById('cal-edit-tools');
+    const saveBtn = document.getElementById('cal-save-btn');
+    const checkAll = document.getElementById('check-all-month') as HTMLInputElement | null;
+
+    if (editBtn && editTools && saveBtn) {
+      editBtn.addEventListener('click', () => {
+        calEditing = true;
+        calDraft = JSON.parse(JSON.stringify(AVAIL_CACHE));
+        editSelDate = null;
+        editBtn.classList.add('is-hidden');
+        editTools.classList.remove('is-hidden');
+        renderCal(guide);
+        renderSlotEditor(guide);
+      });
+      saveBtn.addEventListener('click', async () => {
+        (saveBtn as HTMLButtonElement).disabled = true;
+        saveBtn.textContent = 'Enregistrement...';
+        const ok = await saveAvail(guide.id, calDraft);
+        (saveBtn as HTMLButtonElement).disabled = false;
+        saveBtn.textContent = 'Enregistrer';
+        if (!ok) return; // erreur affichée, on reste en mode édition
+        calEditing = false;
+        editSelDate = null;
+        editBtn.classList.remove('is-hidden');
+        editTools.classList.add('is-hidden');
+        renderCal(guide);
+        renderSlotEditor(guide);
+      });
+      if (checkAll) {
+        checkAll.addEventListener('change', () => {
+          const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+          const today = new Date(); today.setHours(0,0,0,0);
+          for (let d = 1; d <= daysInMonth; d++) {
+            const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            if (new Date(calYear, calMonth, d) < today) continue;
+            if (checkAll.checked) {
+              if (!calDraft[ds]) calDraft[ds] = ALL_SLOTS.slice();
+            } else {
+              delete calDraft[ds];
+            }
+          }
+          editSelDate = null;
+          renderCal(guide);
+          renderSlotEditor(guide);
+        });
+      }
+    }
+  }
+
+  // ===== ÉDITEUR DE CRÉNEAUX (mode guide) =====
+  function initSlotEditor(guide: any) {
+    const wrap = document.getElementById('slot-editor');
+    if (!wrap) return;
+
+    wrap.querySelectorAll('[data-eslot]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (!editSelDate) return;
+        const s = (chip as HTMLElement).dataset.eslot!;
+        const booked = BOOKED_CACHE[editSelDate] || [];
+        if (booked.includes(s) || booked.includes('*')) return; // créneau déjà réservé : intouchable
+        const slots = calDraft[editSelDate] || [];
+        if (slots.includes(s)) {
+          calDraft[editSelDate] = slots.filter((x: string) => x !== s);
+          if (calDraft[editSelDate].length === 0) delete calDraft[editSelDate];
+        } else {
+          calDraft[editSelDate] = [...slots, s];
+        }
+        renderCal(guide);
+        renderSlotEditor(guide);
+      });
+    });
+
+    document.getElementById('slot-dayoff')?.addEventListener('click', () => {
+      if (!editSelDate) return;
+      const booked = BOOKED_CACHE[editSelDate] || [];
+      if (booked.length > 0) {
+        alert('Ce jour a déjà une réservation : signalez un empêchement depuis vos réservations.');
+        return;
+      }
+      delete calDraft[editSelDate];
+      editSelDate = null;
+      renderCal(guide);
+      renderSlotEditor(guide);
+    });
+  }
+
+  function renderSlotEditor(guide: any) {
+    const wrap = document.getElementById('slot-editor');
+    const title = document.getElementById('slot-editor-title');
+    if (!wrap || !title) return;
+    if (!calEditing || !editSelDate) {
+      wrap.classList.add('is-hidden');
+      return;
+    }
+    const [y, m, d] = editSelDate.split('-').map(Number);
+    title.textContent = `Créneaux du ${new Date(y, m - 1, d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+
+    const slots = calDraft[editSelDate] || [];
+    const booked = BOOKED_CACHE[editSelDate] || [];
+    wrap.querySelectorAll('[data-eslot]').forEach(chip => {
+      const s = (chip as HTMLElement).dataset.eslot!;
+      const isBooked = booked.includes(s) || booked.includes('*');
+      chip.classList.toggle('is-on', slots.includes(s) || isBooked);
+      chip.classList.toggle('is-booked', isBooked);
+      (chip as HTMLButtonElement).disabled = isBooked;
+    });
+    wrap.classList.remove('is-hidden');
+  }
+
+  function renderCal(guide: any) {
+    const grid = document.getElementById('cal-grid');
+    const label = document.getElementById('cal-month');
+    if (!grid || !label) return;
+    label.textContent = `${MONTHS[calMonth]} ${calYear}`;
+
+    const avail = calEditing ? calDraft : AVAIL_CACHE;
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const offset = firstDay === 0 ? 6 : firstDay - 1;
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    let html = '';
+    for (let i = 0; i < offset; i++) html += '<span class="gpr__cal-cell gpr__cal-cell--empty"></span>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isPast = new Date(calYear, calMonth, d) < today;
+      const daySlots = avail[ds] || [];
+      const booked = BOOKED_CACHE[ds] || [];
+      const hasBooking = booked.length > 0;
+      const free = freeSlotsAt(ds, avail);
+      const isFullyBooked = hasBooking && free.length === 0;
+      let cls = 'gpr__cal-cell';
+      if (isPast) cls += ' gpr__cal-cell--past';
+      else if (isGuideLogin && isFullyBooked) cls += ' gpr__cal-cell--booked';
+      else if (free.length > 0) {
+        cls += ' gpr__cal-cell--avail';
+        // Marqueur : jour partiellement dispo (créneaux retirés ou déjà réservés)
+        if (daySlots.length < ALL_SLOTS.length || hasBooking) cls += ' gpr__cal-cell--partial';
+      }
+      else cls += ' gpr__cal-cell--busy';
+      if (calEditing && !isPast) cls += ' gpr__cal-cell--editable';
+      if (calEditing && editSelDate === ds) cls += ' gpr__cal-cell--editsel';
+      html += `<button type="button" class="${cls}" data-date="${ds}" ${isPast ? 'disabled' : ''}>${d}</button>`;
+    }
+    grid.innerHTML = html;
+
+    const checkAll = document.getElementById('check-all-month') as HTMLInputElement | null;
+    if (checkAll && calEditing) {
+      let allChecked = true;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        if (new Date(calYear, calMonth, d) < today) continue;
+        if (!avail[ds] || avail[ds].length === 0) { allChecked = false; break; }
+      }
+      checkAll.checked = allChecked;
+    }
+
+    if (calEditing) {
+      grid.querySelectorAll('.gpr__cal-cell--editable').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const ds = (btn as HTMLElement).dataset.date!;
+          if (editSelDate === ds) {
+            // Re-clic sur le même jour → on referme l'éditeur de créneaux
+            editSelDate = null;
+          } else {
+            // Jour indisponible → devient disponible avec ses 4 créneaux ;
+            // puis l'éditeur permet d'en retirer manuellement
+            if (!calDraft[ds]) calDraft[ds] = ALL_SLOTS.slice();
+            editSelDate = ds;
+          }
+          renderCal(guide);
+          renderSlotEditor(guide);
+        });
+      });
+    }
+  }
+
+  // ===== REVIEW FORM =====
+  function initReviewForm(guide: any) {
+    let selectedStars = 0;
+    const starBtns = document.querySelectorAll('#rf-stars .gpr__rf-star');
+    const submitBtn = document.getElementById('rf-submit') as HTMLButtonElement;
+    const form = document.getElementById('review-form') as HTMLFormElement;
+
+    starBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedStars = parseInt((btn as HTMLElement).dataset.star!);
+        starBtns.forEach((b, i) => b.classList.toggle('gpr__rf-star--active', i < selectedStars));
+        submitBtn.disabled = false;
+      });
+      btn.addEventListener('mouseenter', () => {
+        const hoverVal = parseInt((btn as HTMLElement).dataset.star!);
+        starBtns.forEach((b, i) => b.classList.toggle('gpr__rf-star--hover', i < hoverVal));
+      });
+      btn.addEventListener('mouseleave', () => {
+        starBtns.forEach(b => b.classList.remove('gpr__rf-star--hover'));
+      });
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (selectedStars === 0) return;
+      const name = (form.querySelector('[name="reviewer-name"]') as HTMLInputElement).value.trim();
+      const text = (form.querySelector('[name="reviewer-text"]') as HTMLTextAreaElement).value.trim();
+      if (!name || !text) return;
+
+      submitBtn.disabled = true;
+      const { error } = await supabase.from('reviews').insert({
+        guide_id: guide.id,
+        name, text,
+        stars: selectedStars,
+        service: `Guide - ${guide.firstName} ${guide.lastName}`,
+        status: 'pending',
+      });
+      submitBtn.disabled = false;
+      if (error) {
+        alert("Une erreur est survenue lors de l'envoi. Veuillez réessayer.");
+        return;
+      }
+      form.classList.add('is-hidden');
+      document.getElementById('rf-success')!.classList.remove('is-hidden');
+    });
+  }
+
+  function initScrollBtn() {
+    document.getElementById('scroll-to-cal')?.addEventListener('click', () => {
+      const calSection = document.getElementById('cal-section');
+      if (!calSection) return;
+      const isOpen = !calSection.classList.contains('is-hidden');
+      if (isOpen) {
+        // Re-clic → on referme le calendrier
+        calSection.classList.add('is-hidden');
+      } else {
+        calSection.classList.remove('is-hidden');
+        calSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+
+  // ===== BOOKINGS LIST (guide mode) =====
+  function initBookings(guide: any) {
+    const container = document.getElementById('bookings-list');
+    if (!container) return;
+    renderBookings(guide, container);
+  }
+
+  function renderBookings(guide: any, container: HTMLElement) {
+    const bookings = getGuideBookings(guide.id);
+    if (bookings.length === 0) {
+      container.innerHTML = '<p class="gpr__no-reviews">Aucune reservation pour le moment.</p>';
+      return;
+    }
+    const sorted = bookings.sort((a: any, b: any) => a.date.localeCompare(b.date));
+    container.innerHTML = sorted.map((b: any) => {
+      const dateStr = new Date(b.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const isPending = b.status === 'pending-refusal';
+      return `
+        <div class="gpr__booking ${isPending ? 'gpr__booking--pending' : ''}">
+          <div class="gpr__booking-date">
+            <span class="gpr__booking-dot ${isPending ? 'gpr__booking-dot--pending' : ''}"></span>
+            ${esc(dateStr)}
+            ${b.slot ? `<span class="gpr__booking-slot">${esc(b.slot)}</span>` : ''}
+            ${b.activityName ? `<span class="gpr__booking-activity">${esc(b.activityName)}</span>` : ''}
+            ${isPending ? '<span class="gpr__booking-pending-label">En attente de validation admin</span>' : ''}
+          </div>
+          <div class="gpr__booking-actions">
+            ${b.seen
+              ? `<span class="gpr__booking-seen"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Vu</span>`
+              : `<button type="button" class="gpr__booking-info" data-booking-id="${esc(b.id)}">Marquer comme vu</button>`}
+            ${!isPending ? `<button type="button" class="gpr__booking-refuse" data-booking-id="${esc(b.id)}" data-booking-date="${esc(dateStr)}">Faire part d'un emp&ecirc;chement</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.gpr__booking-info').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const bId = (btn as HTMLElement).dataset.bookingId!;
+        (btn as HTMLButtonElement).disabled = true;
+        const { error } = await supabase.from('bookings').update({ seen: true }).eq('id', bId);
+        if (error) {
+          (btn as HTMLButtonElement).disabled = false;
+          alert('Une erreur est survenue. Réessayez.');
+          return;
+        }
+        const booking = BOOKINGS_CACHE.find((b: any) => b.id === bId);
+        if (booking) booking.seen = true;
+        renderBookings(guide, container);
+      });
+    });
+
+    container.querySelectorAll('.gpr__booking-refuse').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const bId = (btn as HTMLElement).dataset.bookingId!;
+        const dateLabel = (btn as HTMLElement).dataset.bookingDate!;
+        openRefuseModal(guide, bId, dateLabel);
+      });
+    });
+  }
+
+  // ===== REFUSE MODAL =====
+  var currentRefuseBookingId = '';
+
+  function openRefuseModal(guide: any, bookingId: string, dateLabel: string) {
+    currentRefuseBookingId = bookingId;
+    const modal = document.getElementById('refuse-modal');
+    const dateEl = document.getElementById('refuse-modal-date');
+    const reasonEl = document.getElementById('refuse-reason') as HTMLTextAreaElement | null;
+    if (!modal || !dateEl) return;
+    dateEl.textContent = dateLabel;
+    if (reasonEl) reasonEl.value = '';
+    modal.classList.remove('is-hidden');
+  }
+
+  function initRefuseModal(guide: any) {
+    const modal = document.getElementById('refuse-modal');
+    const cancelBtn = document.getElementById('refuse-cancel');
+    const confirmBtn = document.getElementById('refuse-confirm');
+    if (!modal || !cancelBtn || !confirmBtn) return;
+
+    cancelBtn.addEventListener('click', () => modal.classList.add('is-hidden'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('is-hidden'); });
+
+    confirmBtn.addEventListener('click', async () => {
+      const reason = (document.getElementById('refuse-reason') as HTMLTextAreaElement).value.trim();
+      if (!reason) { alert('Veuillez indiquer une raison.'); return; }
+
+      (confirmBtn as HTMLButtonElement).disabled = true;
+      const { error } = await supabase.from('bookings').update({
+        status: 'pending-refusal',
+        refusal_reason: reason,
+        refusal_date: new Date().toISOString(),
+      }).eq('id', currentRefuseBookingId);
+      (confirmBtn as HTMLButtonElement).disabled = false;
+
+      if (error) {
+        alert('Une erreur est survenue. Veuillez réessayer.');
+        return;
+      }
+
+      const booking = BOOKINGS_CACHE.find((b: any) => b.id === currentRefuseBookingId);
+      if (booking) {
+        booking.status = 'pending-refusal';
+        booking.refusalReason = reason;
+      }
+
+      modal.classList.add('is-hidden');
+      const container = document.getElementById('bookings-list');
+      if (container) renderBookings(guide, container);
+      renderCal(guide);
+    });
+  }
+</script>
+
+<style is:global>
+  .is-hidden { display: none !important; }
+
+  /* ═══════════════════════════════════════
+     LOADING / ERROR
+     ═══════════════════════════════════════ */
+  .gpr__loading, .gpr__error {
+    text-align: center; padding: 140px 24px;
+    font-family: 'Jost', system-ui, sans-serif;
+    font-size: 1rem; color: #9C9C93;
+  }
+  .gpr__error a {
+    display: inline-block; margin-top: 16px;
+    color: #14513A; font-weight: 600; text-decoration: none;
+  }
+
+  /* ═══════════════════════════════════════
+     BARRE MODE GUIDE
+     ═══════════════════════════════════════ */
+  .gpr__guide-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+  }
+  .gpr__guide-bar-text {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem; font-weight: 400;
+    color: rgba(250,248,244,0.85);
+  }
+  .gpr__guide-bar-text svg { color: #E8C987; flex-shrink: 0; }
+  .gpr__guide-bar-logout {
+    padding: 7px 16px;
+    background: rgba(250,248,244,0.12);
+    border: 1px solid rgba(250,248,244,0.25);
+    border-radius: 20px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.7rem; font-weight: 500;
+    color: #FAF8F4; cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .gpr__guide-bar-logout:hover {
+    background: rgba(250,248,244,0.22);
+    border-color: rgba(250,248,244,0.5);
+  }
+
+  /* ═══════════════════════════════════════
+     HERO — panoramic city photo
+     ═══════════════════════════════════════ */
+  .gpr__hero {
+    height: 320px;
+    background-size: cover;
+    background-position: center 40%;
+    position: relative;
+  }
+  .gpr__hero-fade {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.08) 0%,
+      rgba(255,255,255,0) 40%,
+      rgba(255,255,255,0.6) 75%,
+      #FFFFFF 100%
+    );
+  }
+
+  /* ═══════════════════════════════════════
+     PROFILE HEAD — overlapping avatar
+     ═══════════════════════════════════════ */
+  .gpr__container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  .gpr__profile-head {
+    position: relative;
+    margin-top: -80px;
+    text-align: center;
+    padding-bottom: 40px;
+  }
+  .gpr__avatar {
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    background-size: cover;
+    background-position: center;
+    border: 5px solid #FFFFFF;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    position: relative;
+    z-index: 2;
+  }
+  .gpr__avatar--initials {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.2rem; font-weight: 700; color: rgba(255,255,255,0.5);
+  }
+  .gpr__avatar--medina { background: linear-gradient(135deg, #1E6B4E, #14513A); }
+  .gpr__avatar--mecca { background: linear-gradient(135deg, #2D2D4A, #1A1A2E); }
+
+  .gpr__city-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 16px;
+    border-radius: 20px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.68rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 14px;
+  }
+  .gpr__city-pill--medina { background: #EDF5F0; color: #14513A; }
+  .gpr__city-pill--mecca { background: #F5F3E8; color: #1A1A2E; }
+
+  .gpr__name {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.8rem; font-weight: 700; color: #1C1C1A;
+    margin: 0 0 6px;
+    display: inline-flex; align-items: center; gap: 8px;
+    justify-content: center;
+  }
+  .gpr__verified { flex-shrink: 0; }
+
+  .gpr__subtitle {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.88rem; color: #9C9C93;
+    margin: 0;
+  }
+  .gpr__subtitle svg { color: #B99752; }
+
+  /* ═══════════════════════════════════════
+     CONTENT CONTAINER
+     ═══════════════════════════════════════ */
+  .gpr__content {
+    padding-bottom: 100px;
+    display: flex; flex-direction: column; gap: 24px;
+  }
+
+  /* ═══════════════════════════════════════
+     CARDS — elegant, generous
+     ═══════════════════════════════════════ */
+  .gpr__card {
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 24px;
+    padding: 36px 36px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+    transition: box-shadow 0.3s;
+  }
+  .gpr__card:hover {
+    box-shadow: 0 4px 28px rgba(0,0,0,0.06);
+  }
+  .gpr__card-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 48px; height: 48px;
+    background: #F5F3EE;
+    border-radius: 14px;
+    color: #14513A;
+    margin-bottom: 18px;
+  }
+  .gpr__card-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.35rem; font-weight: 700; color: #1C1C1A;
+    margin: 0 0 18px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .gpr__card-title svg { color: #14513A; flex-shrink: 0; }
+  .gpr__card-header-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .gpr__card-header-row .gpr__card-title { margin-bottom: 0; }
+
+  /* ═══════════════════════════════════════
+     ABOUT
+     ═══════════════════════════════════════ */
+  .gpr__bio {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem; line-height: 1.85;
+    color: #4A4A42; margin: 0;
+    white-space: pre-line;
+  }
+
+  /* ═══════════════════════════════════════
+     LANGUAGES — premium chips
+     ═══════════════════════════════════════ */
+  .gpr__langs {
+    display: flex; flex-wrap: wrap; gap: 10px;
+  }
+  .gpr__lang-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    background: #FAFAF7;
+    border: 1px solid #EBE8E0;
+    border-radius: 14px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.88rem; font-weight: 500;
+    color: #1C1C1A;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .gpr__lang-chip:hover {
+    border-color: #14513A;
+    box-shadow: 0 2px 8px rgba(20,81,58,0.08);
+  }
+
+  /* ═══════════════════════════════════════
+     TARIFS — premium split layout
+     ═══════════════════════════════════════ */
+  .gpr__price-layout {
+    display: flex; gap: 40px; align-items: center;
+    padding: 24px 28px;
+    background: #FAFAF7;
+    border-radius: 18px;
+    border: 1px solid #EBE8E0;
+  }
+  .gpr__price-left {
+    display: flex; flex-direction: column;
+    flex-shrink: 0;
+  }
+  .gpr__price-amount {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 3rem; font-weight: 700; color: #14513A;
+    line-height: 1;
+  }
+  .gpr__price-currency {
+    font-size: 2rem; font-weight: 600;
+  }
+  .gpr__price-per {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.88rem; color: #9C9C93;
+    margin-top: 2px;
+  }
+  .gpr__price-note {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; color: #B99752;
+    font-weight: 500; margin-top: 4px;
+  }
+  .gpr__price-right {
+    display: flex; flex-direction: column; gap: 10px;
+    border-left: 1px solid #EBE8E0;
+    padding-left: 32px;
+  }
+  .gpr__price-feat {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; color: #4A4A42;
+  }
+  .gpr__price-feat svg { flex-shrink: 0; }
+
+  /* ═══════════════════════════════════════
+     CTA DISPONIBILITES — impossible to miss
+     ═══════════════════════════════════════ */
+  .gpr__cta-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 32px 36px;
+    background: linear-gradient(135deg, #14513A 0%, #0C3A28 100%);
+    border-radius: 24px;
+    box-shadow: 0 8px 40px rgba(20,81,58,0.18);
+  }
+  .gpr__cta-left {
+    display: flex; align-items: center; gap: 20px;
+  }
+  .gpr__cta-icon {
+    width: 56px; height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.12);
+    border-radius: 16px;
+    color: #FAF8F4;
+    flex-shrink: 0;
+  }
+  .gpr__cta-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.3rem; font-weight: 700;
+    color: #FAF8F4; margin: 0 0 4px;
+  }
+  .gpr__cta-sub {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.82rem; font-weight: 300;
+    color: rgba(250,248,244,0.6);
+    margin: 0; line-height: 1.5;
+  }
+  .gpr__cta-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 28px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    border-radius: 14px;
+    color: #FAF8F4;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; font-weight: 600;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: all 0.25s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .gpr__cta-btn:hover {
+    background: rgba(255,255,255,0.22);
+    border-color: rgba(255,255,255,0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  }
+
+  /* ═══════════════════════════════════════
+     CALENDAR
+     ═══════════════════════════════════════ */
+  .gpr__cal-edit-btn {
+    padding: 8px 20px; border-radius: 12px;
+    border: 1.5px solid #14513A;
+    background: transparent; color: #14513A;
+    font-size: 0.78rem; font-weight: 600;
+    font-family: 'Jost', sans-serif;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .gpr__cal-edit-btn:hover { background: #14513A; color: #FAF8F4; }
+
+  .gpr__cal-nav {
+    display: flex; align-items: center; justify-content: center;
+    gap: 24px; margin-bottom: 18px;
+  }
+  .gpr__cal-arrow {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid #EBE8E0; background: #FFF;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #4A4A42; transition: all 0.15s;
+  }
+  .gpr__cal-arrow:hover { border-color: #14513A; color: #14513A; }
+  .gpr__cal-month {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.15rem; font-weight: 700; color: #1C1C1A;
+    min-width: 180px; text-align: center;
+  }
+  .gpr__cal-weekdays {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 4px; margin-bottom: 8px;
+  }
+  .gpr__cal-weekdays span {
+    text-align: center;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.62rem; font-weight: 600;
+    color: #B5B5AE; text-transform: uppercase;
+    letter-spacing: 0.08em; padding: 6px 0;
+  }
+  .gpr__cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+  .gpr__cal-cell {
+    aspect-ratio: 1; border-radius: 12px; border: none;
+    font-size: 0.82rem; font-weight: 500;
+    font-family: 'Jost', sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    cursor: default; transition: all 0.15s;
+    background: #F7F7F5; color: #B5B5AE;
+  }
+  .gpr__cal-cell--empty { background: transparent; }
+  .gpr__cal-cell--past { background: #FAFAFA; color: #DDDDD8; }
+  .gpr__cal-cell--avail {
+    background: #E8F5EE; color: #14513A; font-weight: 600;
+    cursor: pointer;
+  }
+  .gpr__cal-cell--avail:hover {
+    background: #D0EDDB;
+    transform: scale(1.08);
+    box-shadow: 0 2px 10px rgba(20,81,58,0.12);
+  }
+  .gpr__cal-cell--busy { background: #F7F7F5; color: #CFCFC8; }
+  .gpr__cal-cell--booked {
+    background: #FDECEA; color: #C0392B; font-weight: 600;
+    cursor: not-allowed;
+  }
+  .gpr__cal-cell--editable { cursor: pointer; }
+  .gpr__cal-cell--editable:hover {
+    transform: scale(1.08);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  }
+  .gpr__cal-cell--editable.gpr__cal-cell--busy:hover { background: #E8F5EE; }
+
+  .gpr__cal-legend {
+    display: flex; gap: 24px; justify-content: center;
+    margin-top: 18px;
+  }
+  .gpr__cal-legend-item {
+    display: flex; align-items: center; gap: 7px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem; color: #9C9C93;
+  }
+  .gpr__cal-dot { width: 10px; height: 10px; border-radius: 4px; }
+  .gpr__cal-dot--avail { background: #E8F5EE; border: 1px solid #14513A; }
+  .gpr__cal-dot--busy { background: #F7F7F5; border: 1px solid #D5D5D0; }
+  .gpr__cal-dot--booked { background: #FDECEA; border: 1px solid #C0392B; }
+
+  .gpr__cal-edit-tools {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 18px; padding-top: 18px; border-top: 1px solid #F3F0EA;
+  }
+  .gpr__check-all {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; color: #4A4A42; cursor: pointer;
+    padding: 8px 14px; background: #F7F7F5; border-radius: 10px;
+  }
+  .gpr__check-all input { accent-color: #14513A; width: 16px; height: 16px; cursor: pointer; }
+  .gpr__cal-save-btn {
+    padding: 10px 28px; border-radius: 12px; border: none;
+    background: #14513A; color: #FAF8F4;
+    font-size: 0.82rem; font-weight: 600;
+    font-family: 'Jost', sans-serif; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .gpr__cal-save-btn:hover { background: #1E6B4E; }
+
+  /* ═══════════════════════════════════════
+     RATING — Airbnb style
+     ═══════════════════════════════════════ */
+  .gpr__rating-layout {
+    display: flex; gap: 40px; align-items: flex-start;
+  }
+  .gpr__rating-left {
+    display: flex; flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    min-width: 140px;
+  }
+  .gpr__rating-big-star {
+    margin-bottom: 6px;
+  }
+  .gpr__rating-num {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 3rem; font-weight: 700; color: #1C1C1A;
+    line-height: 1;
+  }
+  .gpr__rating-slash {
+    font-family: 'Jost', sans-serif;
+    font-size: 1rem; color: #9C9C93;
+    margin-bottom: 4px;
+  }
+  .gpr__rating-stars { font-size: 1.1rem; margin-bottom: 6px; }
+  .gpr__rating-count {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; color: #9C9C93;
+  }
+  .gpr__rating-bars {
+    flex: 1;
+    display: flex; flex-direction: column; gap: 8px;
+    padding-top: 8px;
+  }
+  .gpr__bar-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .gpr__bar-label {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem; color: #9C9C93;
+    min-width: 58px; text-align: right;
+  }
+  .gpr__bar-dot {
+    font-size: 0.4rem; color: #D5D5D0;
+  }
+  .gpr__bar-track {
+    flex: 1; height: 8px;
+    background: #F0EFE9;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .gpr__bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #14513A, #B99752);
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .gpr__bar-count {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.75rem; font-weight: 600;
+    color: #6B6B63; min-width: 24px;
+  }
+
+  /* ═══════════════════════════════════════
+     STARS
+     ═══════════════════════════════════════ */
+  .gpr__star--full { color: #D4A843; }
+  .gpr__star--half { color: #D4A843; opacity: 0.5; }
+  .gpr__star--empty { color: #D5D5D0; }
+
+  /* ═══════════════════════════════════════
+     REVIEWS — Airbnb cards
+     ═══════════════════════════════════════ */
+  .gpr__rv-list {
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .gpr__rv-card {
+    padding: 24px;
+    background: #FAFAF7;
+    border: 1px solid #EBE8E0;
+    border-radius: 18px;
+    transition: box-shadow 0.2s;
+  }
+  .gpr__rv-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  }
+  .gpr__rv-top {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 14px;
+  }
+  .gpr__rv-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background-size: cover; background-position: center;
+    flex-shrink: 0;
+  }
+  .gpr__rv-avatar--initials {
+    display: flex; align-items: center; justify-content: center;
+    background: #14513A; color: #FAF8F4;
+    font-size: 0.9rem; font-weight: 600;
+    font-family: 'Jost', sans-serif;
+  }
+  .gpr__rv-meta {
+    flex: 1;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .gpr__rv-name {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.92rem; font-weight: 600; color: #1C1C1A;
+  }
+  .gpr__rv-stars { font-size: 0.85rem; }
+  .gpr__rv-date {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem; color: #9C9C93;
+  }
+  .gpr__rv-text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.9rem; line-height: 1.7;
+    color: #4A4A42; margin: 0;
+  }
+  .gpr__no-reviews {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.88rem; color: #9C9C93; margin: 0;
+  }
+
+  /* ═══════════════════════════════════════
+     REVIEW FORM
+     ═══════════════════════════════════════ */
+  .gpr__rv-form-wrap {
+    margin-top: 28px; padding-top: 28px;
+    border-top: 1px solid #EBE8E0;
+  }
+  .gpr__rv-form-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.15rem; font-weight: 700; color: #1C1C1A;
+    margin: 0 0 18px;
+  }
+  .gpr__rf-stars { display: flex; gap: 6px; margin-bottom: 18px; }
+  .gpr__rf-star {
+    background: none; border: none; cursor: pointer; padding: 2px;
+    color: #D5D5D0; transition: color 0.1s, transform 0.15s;
+  }
+  .gpr__rf-star svg { fill: currentColor; display: block; }
+  .gpr__rf-star--active, .gpr__rf-star--hover { color: #D4A843; }
+  .gpr__rf-star:hover { transform: scale(1.15); }
+  .gpr__rf-input, .gpr__rf-textarea {
+    width: 100%; padding: 13px 18px;
+    border: 1.5px solid #EBE8E0;
+    border-radius: 14px;
+    font-size: 0.88rem; font-family: 'Jost', sans-serif;
+    box-sizing: border-box;
+    background: #FAFAF7;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+  .gpr__rf-textarea { resize: vertical; min-height: 80px; }
+  .gpr__rf-input:focus, .gpr__rf-textarea:focus {
+    outline: none; border-color: #14513A;
+  }
+  .gpr__rf-submit {
+    padding: 13px 32px;
+    background: #14513A; color: #FAF8F4;
+    border: none; border-radius: 14px;
+    font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; font-family: 'Jost', sans-serif;
+    transition: all 0.2s;
+  }
+  .gpr__rf-submit:disabled { opacity: 0.35; cursor: not-allowed; }
+  .gpr__rf-submit:not(:disabled):hover {
+    background: #1E6B4E;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(20,81,58,0.2);
+  }
+  .gpr__rf-success {
+    text-align: center;
+    padding: 20px;
+    background: #EDF5F0;
+    border: 1px solid #C8DFD1;
+    border-radius: 8px;
+    margin-top: 16px;
+  }
+  .gpr__rf-success p {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    color: #14513A;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  /* ═══════════════════════════════════════
+     BOOKINGS (guide mode)
+     ═══════════════════════════════════════ */
+  .gpr__booking {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 0; border-bottom: 1px solid #F3F0EA;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .gpr__booking:last-child { border-bottom: none; }
+  .gpr__booking-date {
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; font-weight: 500; color: #1C1C1A;
+  }
+  .gpr__booking-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #22C55E; flex-shrink: 0;
+  }
+  .gpr__booking-dot--pending {
+    background: #E67E22;
+    animation: pendingPulse 2s ease-in-out infinite;
+  }
+  @keyframes pendingPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .gpr__booking--pending {
+    background: #FEF9F3; border: 1px solid #F5DEB3;
+    border-radius: 14px; padding: 14px 18px;
+  }
+  .gpr__booking-activity {
+    font-size: 0.68rem; color: #14513A; font-weight: 600;
+    background: #EDF5F0; padding: 3px 10px; border-radius: 8px;
+  }
+  .gpr__booking-slot {
+    font-size: 0.68rem; color: #B99752; font-weight: 600;
+    background: rgba(185,151,82,0.12); padding: 3px 10px; border-radius: 8px;
+  }
+  .gpr__booking-pending-label {
+    font-size: 0.68rem; color: #E67E22; font-weight: 600;
+    background: rgba(230,126,34,0.1); padding: 3px 10px; border-radius: 8px;
+  }
+  .gpr__booking-actions { display: flex; gap: 8px; }
+  .gpr__booking-info {
+    padding: 7px 16px; border-radius: 10px;
+    border: 1px solid #E5E5E0; background: #FFF;
+    color: #4A4A42; font-size: 0.72rem; font-weight: 500;
+    font-family: 'Jost', sans-serif; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .gpr__booking-info:hover { border-color: #14513A; color: #14513A; }
+  .gpr__booking-refuse {
+    padding: 7px 16px; border-radius: 10px;
+    border: 1px solid #E8C1BD; background: #FFF;
+    color: #C0392B; font-size: 0.72rem; font-weight: 600;
+    font-family: 'Jost', sans-serif; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .gpr__booking-refuse:hover { background: #C0392B; color: #FFF; border-color: #C0392B; }
+  .gpr__booking-seen {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 7px 16px; border-radius: 10px;
+    background: #E8F5EE; color: #14513A;
+    font-size: 0.72rem; font-weight: 600;
+    font-family: 'Jost', sans-serif;
+  }
+
+  /* ═══════════════════════════════════════
+     ÉDITEUR DE CRÉNEAUX (mode guide)
+     ═══════════════════════════════════════ */
+  .gpr__slot-editor {
+    margin-top: 18px;
+    padding: 18px;
+    background: #FAF9F5;
+    border: 1px solid #ECE9E1;
+    border-radius: 14px;
+    animation: slotEditorIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes slotEditorIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .gpr__slot-editor-title {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.82rem; font-weight: 600; color: #14513A;
+    margin: 0 0 12px;
+    text-transform: capitalize;
+  }
+  .gpr__slot-editor-chips {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .gpr__slot-chip {
+    padding: 10px 6px;
+    background: #FFFFFF;
+    border: 1.5px solid #E5E2D9;
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem; font-weight: 500; color: #9C9C93;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+  .gpr__slot-chip.is-on {
+    background: #14513A;
+    border-color: #14513A;
+    color: #FAF8F4;
+    font-weight: 600;
+  }
+  .gpr__slot-chip.is-booked {
+    background: #FDECEA;
+    border-color: #E8C1BD;
+    color: #C0392B;
+    cursor: not-allowed;
+  }
+  .gpr__slot-dayoff {
+    display: block; width: 100%;
+    padding: 9px;
+    background: none;
+    border: 1px dashed #D5D0C7;
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem; font-weight: 500; color: #9C9C93;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .gpr__slot-dayoff:hover { border-color: #C0392B; color: #C0392B; background: #FDF6F5; }
+
+  /* Jour partiellement disponible (créneaux retirés ou réservés) */
+  .gpr__cal-cell--partial { box-shadow: inset 0 -3px 0 #B99752; }
+  .gpr__cal-cell--editsel {
+    outline: 2px solid #14513A;
+    outline-offset: 1px;
+  }
+  @media (max-width: 480px) {
+    .gpr__slot-editor-chips { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ═══════════════════════════════════════
+     REFUSE MODAL
+     ═══════════════════════════════════════ */
+  .gpr__modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; padding: 24px;
+  }
+  .gpr__modal {
+    background: #FFF; border-radius: 24px; padding: 36px;
+    max-width: 480px; width: 100%;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.18);
+  }
+  .gpr__modal-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.3rem; font-weight: 700; color: #C0392B;
+    margin: 0 0 8px;
+  }
+  .gpr__modal-sub {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; color: #1C1C1A; margin: 0 0 12px;
+  }
+  .gpr__modal-hint {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; color: #9C9C93; margin: 0 0 16px; line-height: 1.5;
+  }
+  .gpr__modal-textarea {
+    width: 100%; padding: 14px 18px;
+    border: 1.5px solid #E5E5E0;
+    border-radius: 14px;
+    font-size: 0.85rem; font-family: 'Jost', sans-serif;
+    box-sizing: border-box; background: #FAFAF7;
+    resize: vertical; min-height: 80px;
+    margin-bottom: 22px;
+  }
+  .gpr__modal-textarea:focus { outline: none; border-color: #C0392B; }
+  .gpr__modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .gpr__modal-cancel {
+    padding: 11px 22px; border-radius: 12px;
+    border: 1px solid #E5E5E0; background: #FFF;
+    color: #4A4A42; font-size: 0.82rem; font-weight: 500;
+    font-family: 'Jost', sans-serif; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .gpr__modal-cancel:hover { border-color: #9C9C93; }
+  .gpr__modal-confirm {
+    padding: 11px 22px; border-radius: 12px; border: none;
+    background: #C0392B; color: #FFF;
+    font-size: 0.82rem; font-weight: 600;
+    font-family: 'Jost', sans-serif; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .gpr__modal-confirm:hover { background: #A93226; }
+
+  /* ═══════════════════════════════════════
+     RESPONSIVE — mobile first priority
+     ═══════════════════════════════════════ */
+  @media (max-width: 768px) {
+    .gpr__hero { height: 240px; }
+    .gpr__profile-head { margin-top: -60px; }
+    .gpr__avatar { width: 110px; height: 110px; }
+    .gpr__name { font-size: 2rem; flex-wrap: wrap; }
+    .gpr__card { padding: 28px 22px; border-radius: 20px; }
+
+    .gpr__price-layout {
+      flex-direction: column; gap: 20px;
+      padding: 20px;
+    }
+    .gpr__price-right {
+      border-left: none; padding-left: 0;
+      border-top: 1px solid #EBE8E0; padding-top: 18px;
+    }
+    .gpr__price-amount { font-size: 2.6rem; }
+
+    .gpr__cta-card {
+      flex-direction: column;
+      text-align: center;
+      padding: 28px 24px;
+    }
+    .gpr__cta-left {
+      flex-direction: column; gap: 14px;
+    }
+    .gpr__cta-btn { width: 100%; justify-content: center; }
+
+    .gpr__rating-layout {
+      flex-direction: column; gap: 24px;
+    }
+    .gpr__rating-left {
+      flex-direction: row; gap: 16px;
+      align-items: center;
+      min-width: unset;
+    }
+    .gpr__rating-num { font-size: 2.4rem; }
+
+    .gpr__booking {
+      flex-direction: column; align-items: flex-start;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .gpr__container { padding: 0 16px; }
+    .gpr__hero { height: 200px; }
+    .gpr__profile-head { margin-top: -50px; }
+    .gpr__avatar { width: 96px; height: 96px; }
+    .gpr__name { font-size: 1.7rem; }
+    .gpr__card { padding: 22px 18px; border-radius: 18px; }
+    .gpr__cta-card { border-radius: 18px; }
+    .gpr__lang-chip { padding: 8px 14px; font-size: 0.82rem; }
+  }
+</style>

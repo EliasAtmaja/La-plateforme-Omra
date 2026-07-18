@@ -1,0 +1,158 @@
+---
+import { getLangFromUrl, t, getLocalePath } from '../../i18n/ui';
+
+const lang = getLangFromUrl(Astro.url);
+const year = new Date().getFullYear();
+---
+
+<footer class="footer" role="contentinfo">
+  <div class="footer__inner container">
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <a href={getLocalePath(lang, '/')} class="footer__logo" aria-label={t(lang, 'site.name')}>
+          <img src="/assets/images/logo.png" alt="" class="footer__logo-icon" width="32" height="32" />
+          <span class="footer__logo-text">La plateforme <em>Omra</em></span>
+        </a>
+        <p class="footer__description">{t(lang, 'footer.description')}</p>
+      </div>
+
+      <div class="footer__col">
+        <h3 class="footer__heading">{t(lang, 'footer.navigation')}</h3>
+        <ul role="list">
+          <li><a href={getLocalePath(lang, '/')}>{t(lang, 'nav.home')}</a></li>
+          <li><a href={getLocalePath(lang, '/guides/')}>{t(lang, 'nav.guides')}</a></li>
+          <li><a href={getLocalePath(lang, '/a-propos/')}>{t(lang, 'nav.about')}</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h3 class="footer__heading">{t(lang, 'footer.services')}</h3>
+        <ul role="list">
+          <li><a href={getLocalePath(lang, '/guides/?city=medina')}>{t(lang, 'city.medina')}</a></li>
+          <li><a href={getLocalePath(lang, '/guides/?city=mecca')}>{t(lang, 'city.mecca')}</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h3 class="footer__heading">{t(lang, 'footer.legal')}</h3>
+        <ul role="list">
+          <li><a href={getLocalePath(lang, '/mentions-legales/')}>{t(lang, 'footer.legalMentions')}</a></li>
+          <li><a href={getLocalePath(lang, '/mentions-legales/')}>{t(lang, 'footer.privacy')}</a></li>
+          <li><a href={getLocalePath(lang, '/mentions-legales/')}>{t(lang, 'footer.terms')}</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <p>&copy; {year} {t(lang, 'site.name')}. {t(lang, 'footer.rights')}</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background: var(--color-secondary);
+    color: var(--color-text-on-dark);
+    padding-block: var(--space-20) var(--space-8);
+    margin-top: auto;
+    border-top: 3px solid var(--color-accent);
+  }
+
+  .footer__logo-text {
+    font-family: var(--font-heading);
+    font-size: var(--text-xl);
+    font-weight: 600;
+  }
+
+  .footer__logo-text em {
+    font-style: italic;
+    color: var(--color-accent);
+  }
+
+  .footer__grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: var(--space-12);
+    margin-bottom: var(--space-12);
+  }
+
+  .footer__logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--color-text-on-dark);
+    margin-bottom: var(--space-4);
+  }
+
+  .footer__logo:hover { opacity: 0.85; color: var(--color-text-on-dark); }
+
+  .footer__logo-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    /* Logo is dark green — invert to cream so it reads on the dark footer */
+    filter: brightness(0) invert(0.95);
+  }
+
+  .footer__description {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+    max-width: 30ch;
+  }
+
+  .footer__heading {
+    font-size: 0.7rem;
+    font-weight: var(--weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin-bottom: var(--space-5);
+    color: var(--color-accent);
+  }
+
+  .footer__col ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .footer__col a {
+    display: inline-block;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: var(--text-sm);
+    transition: color 0.3s var(--ease-out-quart), transform 0.3s var(--ease-out-quart);
+  }
+
+  .footer__col a:hover {
+    color: var(--color-accent);
+    transform: translateX(4px);
+  }
+
+  .footer__bottom {
+    padding-top: var(--space-8);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+  }
+
+  .footer__bottom p {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: var(--text-sm);
+    margin-inline: auto;
+  }
+
+  @media (max-width: 1023px) {
+    .footer__grid {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-8);
+    }
+    .footer__brand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .footer__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

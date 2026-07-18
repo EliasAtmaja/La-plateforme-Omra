@@ -1,0 +1,228 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/ui/Button.astro';
+import { getLangFromUrl, t, getLocalePath } from '../i18n/ui';
+
+const lang = getLangFromUrl(Astro.url);
+---
+
+<BaseLayout title={t(lang, 'about.title')} description="Découvrez La plateforme Omra, la première plateforme de mise en relation entre pèlerins et guides locaux qualifiés.">
+
+  <section class="about-hero">
+    <div class="container">
+      <p class="section__subtitle load-rise" style="--load-delay: 100ms">{t(lang, 'about.subtitle')}</p>
+      <h1 class="about-hero__title load-rise" style="--load-delay: 250ms">{t(lang, 'about.title')}</h1>
+    </div>
+  </section>
+
+  <section class="about-content section">
+    <div class="container container--narrow">
+      <div class="about-block reveal">
+        <h2>Notre mission</h2>
+        <p>
+          La plateforme Omra est née d'un constat simple : trop de pèlerins arrivent à Médine ou à La Mecque sans guide,
+          sans repères, et passent à côté de la richesse spirituelle et historique de ces lieux sacrés.
+        </p>
+        <p>
+          Notre mission est de connecter chaque pèlerin avec un guide local qualifié, passionné et bienveillant,
+          pour que chaque Omra et chaque visite devienne une expérience véritablement transformatrice.
+        </p>
+      </div>
+
+      <div class="about-block reveal">
+        <h2>Comment ça fonctionne</h2>
+        <div class="about-values stagger">
+          <div class="about-value reveal">
+            <div class="about-value__icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none"><circle cx="17" cy="16" r="6" stroke="currentColor" stroke-width="1.5"/><circle cx="31" cy="16" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M6 38c0-6 5-11 11-11M42 38c0-6-5-11-11-11M17 27h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <h3>Mise en relation directe</h3>
+            <p>Nous mettons en relation les pèlerins avec des guides locaux vérifiés. Vous choisissez votre guide, vos dates, et votre prestation.</p>
+          </div>
+          <div class="about-value reveal">
+            <div class="about-value__icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none"><rect x="8" y="14" width="32" height="22" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 22h32" stroke="currentColor" stroke-width="1.5"/><path d="M14 30h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <h3>Transparence totale</h3>
+            <p>Vous ne payez en ligne que les frais de mise en relation. Le guide est rémunéré directement, sur place, une fois la prestation terminée.</p>
+          </div>
+          <div class="about-value reveal">
+            <div class="about-value__icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none"><path d="M24 5l14 6v10c0 9-6 17-14 21-8-4-14-12-14-21V11l14-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M17 23l5 5 9-10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Guides vérifiés</h3>
+            <p>Chaque guide est vérifié, évalué par la communauté, et sélectionné pour son expertise et sa bienveillance envers les pèlerins.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="about-block reveal">
+        <h2>Nos villes</h2>
+        <div class="about-cities">
+          <div class="about-city about-city--medina">
+            <span class="about-city__icon" aria-hidden="true">
+              <svg viewBox="0 0 120 120" fill="none"><path d="M60 14C60 14 34 36 34 58V102H86V58C86 36 60 14 60 14Z" stroke="currentColor" stroke-width="3"/><line x1="24" y1="102" x2="96" y2="102" stroke="currentColor" stroke-width="3"/></svg>
+            </span>
+            <h3>Médine</h3>
+            <p>Visite historique, découverte du Masjid En-Nabawi et sorties shopping guidées.</p>
+          </div>
+          <div class="about-city about-city--mecca">
+            <span class="about-city__icon" aria-hidden="true">
+              <svg viewBox="0 0 120 120" fill="none"><path d="M28 44L60 30L92 44V98H28V44Z" stroke="currentColor" stroke-width="3"/><path d="M28 56H92" stroke="currentColor" stroke-width="2"/><line x1="18" y1="98" x2="102" y2="98" stroke="currentColor" stroke-width="3"/></svg>
+            </span>
+            <h3>La Mecque</h3>
+            <p>Accompagnement Omra, visite historique et Omra depuis le Masjid Aïcha.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="about-cta">
+        <Button variant="primary" size="lg" href={getLocalePath(lang, '/guides/')}>
+          {t(lang, 'hero.cta')}
+        </Button>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .about-hero {
+    background: linear-gradient(180deg, var(--color-primary-50) 0%, var(--color-background) 100%);
+    padding: var(--space-20) 0 var(--space-12);
+    text-align: center;
+  }
+
+  .about-hero__title {
+    font-size: var(--text-5xl);
+    color: var(--color-secondary);
+  }
+
+  .about-block {
+    margin-bottom: var(--space-16);
+  }
+
+  .about-block h2 {
+    font-size: var(--text-2xl);
+    margin-bottom: var(--space-6);
+    color: var(--color-secondary);
+  }
+
+  .about-block p {
+    font-size: var(--text-lg);
+    color: var(--color-text-muted);
+    line-height: var(--leading-relaxed);
+    margin-bottom: var(--space-4);
+  }
+
+  .about-values {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-6);
+  }
+
+  .about-value {
+    padding: var(--space-6);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-xl);
+    text-align: center;
+    transition: opacity 0.8s var(--ease-out-expo),
+                transform 0.6s var(--ease-out-expo),
+                border-color 0.4s var(--ease-out-quart),
+                box-shadow 0.4s var(--ease-out-quart);
+  }
+  .about-value:hover {
+    border-color: var(--color-primary-200);
+    box-shadow: 0 16px 40px rgba(20,81,58,0.08);
+  }
+  .about-value:hover .about-value__icon {
+    transform: translateY(-4px);
+    color: var(--color-accent-dark);
+  }
+
+  .about-value__icon {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto var(--space-4);
+    transition: transform 0.4s var(--ease-spring), color 0.4s var(--ease-out-quart);
+    color: var(--color-accent-dark);
+  }
+
+  .about-value__icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .about-value h3 {
+    font-size: var(--text-lg);
+    margin-bottom: var(--space-2);
+  }
+
+  .about-value p {
+    font-size: var(--text-sm);
+    margin-bottom: 0;
+  }
+
+  .about-cities {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+  }
+
+  .about-city {
+    padding: var(--space-8);
+    border-radius: var(--radius-2xl);
+    text-align: center;
+    transition: transform 0.4s var(--ease-out-quart), box-shadow 0.4s var(--ease-out-quart);
+  }
+  .about-city:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 44px rgba(28,28,26,0.08);
+  }
+
+  .about-city--medina {
+    background: var(--color-primary-50);
+    border: 1px solid var(--color-primary-200);
+  }
+
+  .about-city--mecca {
+    background: #FAF7F0;
+    border: 1px solid #E8E0C8;
+  }
+
+  .about-city__icon {
+    display: block;
+    width: 60px;
+    height: 60px;
+    margin: 0 auto var(--space-4);
+    color: var(--color-accent-dark);
+  }
+
+  .about-city__icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .about-city h3 {
+    font-size: var(--text-xl);
+    margin-bottom: var(--space-2);
+  }
+
+  .about-city p {
+    font-size: var(--text-sm);
+    margin-bottom: 0;
+  }
+
+  .about-cta {
+    text-align: center;
+    padding-top: var(--space-8);
+  }
+
+  @media (max-width: 1023px) {
+    .about-values { grid-template-columns: 1fr; max-width: 400px; margin-inline: auto; }
+  }
+
+  @media (max-width: 639px) {
+    .about-hero__title { font-size: var(--text-3xl); }
+    .about-cities { grid-template-columns: 1fr; }
+  }
+</style>

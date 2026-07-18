@@ -1,0 +1,371 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getLangFromUrl, getLocalePath } from '../../i18n/ui';
+import { services } from '../../data/services';
+
+const lang = getLangFromUrl(Astro.url);
+const service = services.find(s => s.slug === 'planification')!;
+---
+
+<BaseLayout title={service.title} description={service.subtitle}>
+
+<!-- Hero -->
+<section class="sv-hero">
+  <div class="sv-hero__bg">
+    <img src={service.heroImage} alt="" loading="eager" />
+  </div>
+  <div class="sv-hero__overlay"></div>
+  <div class="sv-hero__content">
+    <a href={getLocalePath(lang, '/')} class="sv-hero__back" aria-label="Retour">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 4l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <p class="sv-hero__eyebrow load-rise" style="--load-delay: 100ms">{service.eyebrow}</p>
+    <h1 class="sv-hero__title load-rise" style="--load-delay: 250ms">{service.title}</h1>
+    <p class="sv-hero__sub load-rise" style="--load-delay: 400ms">{service.subtitle}</p>
+  </div>
+</section>
+
+<!-- Intro -->
+<section class="pl-intro">
+  <div class="pl-container">
+    <p class="pl-intro__eyebrow reveal">Un voyage organis&eacute; pour vous</p>
+    <h2 class="pl-intro__title reveal">Confiez-nous la planification de votre voyage</h2>
+    <p class="pl-intro__text reveal">
+      Organiser un tel voyage demande du temps, des connaissances et beaucoup d'anticipation :
+      h&eacute;bergements, transports, itin&eacute;raires, d&eacute;marches&hellip; Notre &eacute;quipe s'occupe de tout,
+      pour que vous puissiez vous concentrer sur l'essentiel : votre voyage spirituel.
+    </p>
+    <p class="pl-intro__text reveal">
+      Remplissez le formulaire ci-dessous, et notre &eacute;quipe vous contactera par la suite pour
+      organiser une r&eacute;union avec vous, o&ugrave; tout vous sera expliqu&eacute; en d&eacute;tail :
+      le programme, les h&eacute;bergements, les transports et chaque &eacute;tape de votre s&eacute;jour.
+    </p>
+  </div>
+</section>
+
+<!-- Formulaire -->
+<section class="pl-form-section">
+  <div class="pl-container">
+    <form class="pl-form reveal" id="planif-form" novalidate>
+      <h3 class="pl-form__title">Parlez-nous de votre voyage</h3>
+
+      <div class="pl-form__field">
+        <label for="pl-name">Nom &amp; Pr&eacute;nom</label>
+        <input type="text" id="pl-name" name="name" required autocomplete="name" />
+      </div>
+
+      <div class="pl-form__row">
+        <div class="pl-form__field">
+          <label for="pl-group">Taille du groupe</label>
+          <input type="number" id="pl-group" name="groupSize" min="1" max="200" required />
+        </div>
+        <div class="pl-form__field">
+          <label for="pl-phone">Num&eacute;ro de t&eacute;l&eacute;phone</label>
+          <input type="tel" id="pl-phone" name="phone" required autocomplete="tel" />
+        </div>
+      </div>
+
+      <div class="pl-form__row">
+        <div class="pl-form__field">
+          <label for="pl-arrival">Date d'arriv&eacute;e en Arabie Saoudite</label>
+          <input type="date" id="pl-arrival" name="arrival" required />
+        </div>
+        <div class="pl-form__field">
+          <label for="pl-departure">Date de d&eacute;part de l'Arabie Saoudite</label>
+          <input type="date" id="pl-departure" name="departure" required />
+        </div>
+      </div>
+
+      <div class="pl-form__field">
+        <label for="pl-email">Email</label>
+        <input type="email" id="pl-email" name="email" required autocomplete="email" />
+      </div>
+
+      <p class="pl-form__error is-hidden" id="planif-error">Merci de remplir tous les champs correctement.</p>
+
+      <button type="submit" class="pl-form__submit">
+        Envoyer ma demande
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </form>
+
+    <div class="pl-success is-hidden" id="planif-success">
+      <div class="pl-success__icon">
+        <svg viewBox="0 0 48 48" fill="none" width="48" height="48"><circle cx="24" cy="24" r="21" stroke="currentColor" stroke-width="2"/><path d="M15 24.5l6.5 6.5L33 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3 class="pl-success__title">Demande envoy&eacute;e !</h3>
+      <p class="pl-success__text">
+        Merci d'avoir fait confiance &agrave; notre agence, notre &eacute;quipe prendra contact
+        avec vous dans les prochaines 24&nbsp;heures&nbsp;!
+      </p>
+      <a href={getLocalePath(lang, '/')} class="pl-success__home">
+        Retour &agrave; l'accueil
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+</BaseLayout>
+
+<script>
+  import { supabase } from '../../lib/supabase';
+
+  const form = document.getElementById('planif-form') as HTMLFormElement | null;
+  const success = document.getElementById('planif-success');
+  const errorMsg = document.getElementById('planif-error');
+
+  if (form && success) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!form.checkValidity()) {
+        errorMsg?.classList.remove('is-hidden');
+        return;
+      }
+      errorMsg?.classList.add('is-hidden');
+
+      const submitBtn = form.querySelector('.pl-form__submit') as HTMLButtonElement;
+      submitBtn.disabled = true;
+
+      const data = new FormData(form);
+      const { error } = await supabase.from('planif_requests').insert({
+        name: data.get('name'),
+        group_size: parseInt(String(data.get('groupSize'))) || null,
+        arrival: data.get('arrival') || null,
+        departure: data.get('departure') || null,
+        phone: data.get('phone'),
+        email: data.get('email'),
+      });
+      submitBtn.disabled = false;
+
+      if (error) {
+        if (errorMsg) {
+          errorMsg.textContent = "Une erreur est survenue lors de l'envoi. Veuillez réessayer.";
+          errorMsg.classList.remove('is-hidden');
+        }
+        return;
+      }
+
+      form.classList.add('is-hidden');
+      success.classList.remove('is-hidden');
+      success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+</script>
+
+<style is:global>
+  .is-hidden { display: none !important; }
+
+  .pl-container { max-width: 680px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---- HERO (réutilise les styles sv-hero) ---- */
+  .sv-hero {
+    position: relative;
+    overflow: hidden;
+    min-height: 420px;
+    display: flex;
+    align-items: flex-end;
+  }
+  .sv-hero__bg { position: absolute; inset: 0; }
+  .sv-hero__bg img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center 60%;
+  }
+  .sv-hero__overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(12,58,40,0.3) 0%, rgba(12,58,40,0.75) 60%, rgba(12,58,40,0.92) 100%);
+  }
+  .sv-hero__content {
+    position: relative; z-index: 2;
+    max-width: 800px; margin: 0 auto;
+    padding: 120px 24px 60px; width: 100%;
+  }
+  .sv-hero__back {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(8px);
+    color: #FAF8F4;
+    position: absolute; top: 100px; left: 24px;
+    transition: background 0.2s;
+    text-decoration: none;
+  }
+  .sv-hero__back:hover { background: rgba(255,255,255,0.22); color: #FAF8F4; }
+  .sv-hero__eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.26em;
+    color: #CBA96A; margin-bottom: 12px;
+  }
+  .sv-hero__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 3.2rem; font-weight: 700;
+    color: #FAF8F4; line-height: 1.05; letter-spacing: -0.01em;
+    margin-bottom: 16px; text-transform: uppercase;
+  }
+  .sv-hero__sub {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem; font-weight: 300;
+    color: rgba(250,248,244,0.78); line-height: 1.7;
+    max-width: 480px;
+  }
+
+  /* ---- INTRO ---- */
+  .pl-intro {
+    background: #FFFFFF;
+    padding: 56px 0 8px;
+  }
+  .pl-intro__eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.22em;
+    color: #B99752; margin: 0 0 8px;
+  }
+  .pl-intro__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.9rem; font-weight: 700;
+    color: #14513A; line-height: 1.15;
+    margin: 0 0 20px;
+  }
+  .pl-intro__text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem; font-weight: 300;
+    color: #4A4A42; line-height: 1.8;
+    margin: 0 0 16px;
+  }
+
+  /* ---- FORMULAIRE ---- */
+  .pl-form-section {
+    background: #FFFFFF;
+    padding: 32px 0 88px;
+  }
+  .pl-form {
+    background: #FAF8F4;
+    border: 1px solid #EFEDE6;
+    border-radius: 20px;
+    padding: 36px 32px;
+  }
+  .pl-form__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.4rem; font-weight: 700;
+    color: #1C1C1A; margin: 0 0 24px;
+  }
+  .pl-form__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .pl-form__field { margin-bottom: 18px; }
+  .pl-form__field label {
+    display: block;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; font-weight: 500;
+    color: #1C1C1A;
+    margin-bottom: 6px;
+  }
+  .pl-form__field input {
+    width: 100%;
+    padding: 12px 14px;
+    background: #FFFFFF;
+    border: 1px solid #E3E0D6;
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.9rem; font-weight: 300;
+    color: #1C1C1A;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .pl-form__field input:focus {
+    outline: none;
+    border-color: #14513A;
+    box-shadow: 0 0 0 3px rgba(20,81,58,0.1);
+  }
+  .pl-form__error {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem; font-weight: 400;
+    color: #B3261E;
+    margin: 0 0 14px;
+  }
+  .pl-form__submit {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 30px;
+    background: #14513A; color: #FAF8F4;
+    border: none; border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.82rem; font-weight: 500;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
+  }
+  .pl-form__submit:hover {
+    background: #0C3A28;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(20,81,58,0.25);
+  }
+  .pl-form__submit svg { transition: transform 0.3s var(--ease-spring); }
+  .pl-form__submit:hover svg { transform: translateX(4px); }
+
+  /* ---- SUCCÈS ---- */
+  .pl-success {
+    text-align: center;
+    background: #FAF8F4;
+    border: 1px solid #EFEDE6;
+    border-radius: 20px;
+    padding: 56px 32px;
+    animation: plSuccessIn 0.6s var(--ease-out-expo);
+  }
+  @keyframes plSuccessIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .pl-success__icon {
+    color: #14513A;
+    margin-bottom: 16px;
+    display: inline-block;
+  }
+  .pl-success__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.7rem; font-weight: 700;
+    color: #14513A; margin: 0 0 12px;
+  }
+  .pl-success__text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem; font-weight: 300;
+    color: #4A4A42; line-height: 1.8;
+    max-width: 440px; margin: 0 auto;
+  }
+  .pl-success__home {
+    display: inline-flex; align-items: center; gap: 10px;
+    margin-top: 28px;
+    padding: 13px 28px;
+    background: #14513A; color: #FAF8F4;
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem; font-weight: 500;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
+  }
+  .pl-success__home:hover {
+    background: #0C3A28; color: #FAF8F4;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(20,81,58,0.25);
+  }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 639px) {
+    .sv-hero { min-height: 360px; }
+    .sv-hero__title { font-size: 2.2rem; }
+    .sv-hero__content { padding: 100px 24px 50px; }
+    .sv-hero__back { top: 80px; }
+
+    .pl-intro { padding: 40px 0 4px; }
+    .pl-intro__title { font-size: 1.5rem; }
+    .pl-intro__text { font-size: 0.88rem; }
+
+    .pl-form-section { padding: 24px 0 64px; }
+    .pl-form { padding: 26px 18px; }
+    .pl-form__row { grid-template-columns: 1fr; gap: 0; }
+    .pl-form__submit { width: 100%; justify-content: center; }
+    .pl-success { padding: 44px 20px; }
+  }
+</style>
