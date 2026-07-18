@@ -226,7 +226,7 @@ const lang = getLangFromUrl(Astro.url);
               ${g.pricePerDay ? `<div class="gp-card__price"><span class="gp-card__amount">${esc(String(g.pricePerDay))}&euro;</span><span class="gp-card__unit">Frais inclus</span></div>` : ''}
               <button class="gp-card__avail-btn" type="button" data-open-cal="${g.id}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="4" y="5.5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 10h16M8.5 3.5v3.5M15.5 3.5v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                Voir les disponibilit&eacute;s
+                Les disponibilit&eacute;s
               </button>
             </div>
           </div>
@@ -1334,7 +1334,7 @@ const lang = getLangFromUrl(Astro.url);
 
     .gp-card::before { left: -5px; width: 20px; }
     .gp-card__main {
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 10px 12px;
       padding: 14px 14px 12px;
     }
@@ -1344,17 +1344,16 @@ const lang = getLangFromUrl(Astro.url);
     .gp-card__diploma { font-size: 0.72rem; margin-bottom: 6px; }
     .gp-card__langs { gap: 4px; margin-bottom: 6px; }
     .gp-card__lang { padding: 3px 8px; font-size: 0.58rem; }
-    /* Prix + bouton : rangée horizontale pleine largeur sous les infos */
+    /* Prix dans l'espace blanc à droite, bouton en dessous
+       (aligné avec la ligne des avis) — sans rien pousser */
     .gp-card__right {
-      flex-direction: row; align-self: auto;
-      width: 100%;
-      justify-content: space-between; align-items: center;
-      gap: 12px;
-      padding-top: 10px;
-      border-top: 1px solid #F3F1EA;
+      flex-direction: column; align-self: stretch;
+      justify-content: space-between; align-items: flex-end;
+      gap: 8px;
     }
-    .gp-card__amount { font-size: 1.6rem; }
-    .gp-card__avail-btn { padding: 9px 14px; font-size: 0.66rem; gap: 6px; }
+    .gp-card__amount { font-size: 2rem; }
+    .gp-card__unit { font-size: 0.6rem; }
+    .gp-card__avail-btn { padding: 8px 12px; font-size: 0.64rem; gap: 6px; }
 
     .gp-profile__sheet { padding: 24px 18px; }
     .gp-profile__top { gap: 16px; }
