@@ -15,34 +15,14 @@ const navLinks = [
   { label: t(lang, 'nav.about'), href: getLocalePath(lang, '/a-propos/') },
 ];
 
-const mobileMenu = [
-  {
-    title: 'Navigation',
-    links: [
-      { label: 'Accueil', href: getLocalePath(lang, '/') },
-      { label: 'Qui sommes-nous', href: getLocalePath(lang, '/a-propos/') },
-    ],
-  },
-  {
-    title: 'Vos guides',
-    links: [
-      { label: 'Vos Guides à Médine', href: getLocalePath(lang, '/guides/') + '?ville=medine' },
-      { label: 'Vos Guides à Makkah', href: getLocalePath(lang, '/guides/') + '?ville=makkah' },
-    ],
-  },
-  {
-    title: 'Services',
-    links: [
-      { label: 'Visas & Formalités', href: getLocalePath(lang, '/services/visa/') },
-      { label: 'Conseils & Optimisation', href: getLocalePath(lang, '/services/planification/') },
-    ],
-  },
-  {
-    title: 'Support',
-    links: [
-      { label: 'Aide / Support', href: 'https://wa.me/966598665332?text=As-salamu%20alaykum%2C%20j%27ai%20besoin%20d%27aide.' },
-    ],
-  },
+const mobileLinks = [
+  { label: 'Accueil', href: getLocalePath(lang, '/') },
+  { label: 'Vos Guides à Médine', href: getLocalePath(lang, '/guides/') + '?ville=medine' },
+  { label: 'Vos Guides à Makkah', href: getLocalePath(lang, '/guides/') + '?ville=makkah' },
+  { label: 'Visas & Formalités', href: getLocalePath(lang, '/services/visa/') },
+  { label: 'Conseils & Optimisation', href: getLocalePath(lang, '/services/planification/') },
+  { label: 'Aide / Support', href: 'https://wa.me/966598665332?text=As-salamu%20alaykum%2C%20j%27ai%20besoin%20d%27aide.' },
+  { label: 'Qui sommes-nous', href: getLocalePath(lang, '/a-propos/') },
 ];
 ---
 
@@ -111,21 +91,16 @@ const mobileMenu = [
 
   <div class="header__mobile-menu" id="mobile-menu" hidden>
     <nav aria-label="Menu mobile">
-      {mobileMenu.map(group => (
-        <div class="header__mobile-group">
-          <p class="header__mobile-group-title">{group.title}</p>
-          <ul role="list">
-            {group.links.map(link => (
-              <li>
-                <a href={link.href} class="header__mobile-link">
-                  <span>{link.label}</span>
-                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+      <ul role="list">
+        {mobileLinks.map(link => (
+          <li>
+            <a href={link.href} class="header__mobile-link">
+              <span>{link.label}</span>
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </li>
+        ))}
+      </ul>
     </nav>
   </div>
 </header>
@@ -541,14 +516,17 @@ const mobileMenu = [
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .header__mobile-menu:not([hidden]) .header__mobile-group {
+  .header__mobile-menu:not([hidden]) li {
     opacity: 0;
     animation: menuLinkIn 0.5s var(--ease-out-expo) forwards;
   }
-  .header__mobile-menu .header__mobile-group:nth-child(1) { animation-delay: 50ms; }
-  .header__mobile-menu .header__mobile-group:nth-child(2) { animation-delay: 130ms; }
-  .header__mobile-menu .header__mobile-group:nth-child(3) { animation-delay: 210ms; }
-  .header__mobile-menu .header__mobile-group:nth-child(4) { animation-delay: 290ms; }
+  .header__mobile-menu li:nth-child(1) { animation-delay: 40ms; }
+  .header__mobile-menu li:nth-child(2) { animation-delay: 80ms; }
+  .header__mobile-menu li:nth-child(3) { animation-delay: 120ms; }
+  .header__mobile-menu li:nth-child(4) { animation-delay: 160ms; }
+  .header__mobile-menu li:nth-child(5) { animation-delay: 200ms; }
+  .header__mobile-menu li:nth-child(6) { animation-delay: 240ms; }
+  .header__mobile-menu li:nth-child(7) { animation-delay: 280ms; }
 
   @keyframes menuLinkIn {
     from { opacity: 0; transform: translateY(16px); }
@@ -563,36 +541,21 @@ const mobileMenu = [
     }
   }
 
-  .header__mobile-group {
-    margin-bottom: var(--space-6);
-  }
-  .header__mobile-group:last-child { margin-bottom: 0; }
-
-  .header__mobile-group-title {
-    font-family: 'Jost', sans-serif;
-    font-size: 0.66rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.22em;
-    color: #B99752;
-    margin: 0 0 4px;
-  }
-
   .header__mobile-link {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    padding: 14px 0;
+    padding: 16px 0;
     font-family: var(--font-heading);
-    font-size: 1.18rem;
+    font-size: 1.2rem;
     font-weight: 600;
     letter-spacing: 0.01em;
     color: var(--color-text);
     border-bottom: 1px solid var(--color-border-light);
     transition: color 0.3s var(--ease-out-quart), padding-left 0.3s var(--ease-out-quart);
   }
-  .header__mobile-group li:last-child .header__mobile-link {
+  .header__mobile-menu li:last-child .header__mobile-link {
     border-bottom: none;
   }
 

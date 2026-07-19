@@ -19,7 +19,7 @@ const lang = getLangFromUrl(Astro.url);
       <span class="hm-hero__line-bar"></span>
     </div>
     <p class="hm-hero__sub load-rise" style="--load-delay: 450ms">Première plateforme française de mise en relation<br/><strong>entre les invités d'Allah et professionnels</strong></p>
-    <a href={getLocalePath(lang, '/guides/')} class="hm-hero__cta load-rise" style="--load-delay: 700ms">
+    <a href="#services" class="hm-hero__cta load-rise" style="--load-delay: 700ms">
       <span>Choisir mon / ma guide</span>
       <span class="hm-hero__cta-arrow" aria-hidden="true">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -74,7 +74,7 @@ const lang = getLangFromUrl(Astro.url);
 <section class="hm-services" id="services">
   <div class="hm-container">
     <header class="hm-section-head hm-section-head--services reveal">
-      <p class="hm-eyebrow hm-eyebrow--lined">Sélectionner vos accompagnements à la carte</p>
+      <p class="hm-eyebrow hm-eyebrow--lined">S&eacute;lectionner vos accompagnements<span class="hm-eyebrow__script">&agrave; la carte</span></p>
     </header>
 
     <!-- Clip-path for curved panel edge -->
@@ -380,15 +380,27 @@ const lang = getLangFromUrl(Astro.url);
     font-size: 1.5rem;
     letter-spacing: 0.28em;
     color: #1C1C1A;
-    white-space: nowrap;
+    white-space: normal;
+    line-height: 1.4;
+  }
+  .hm-eyebrow__script {
+    display: block;
+    font-family: 'Roustel', cursive;
+    font-size: 2.6rem;
+    font-weight: normal;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    color: #1E7A56;
+    line-height: 1.2;
+    margin-top: 6px;
   }
   @media (max-width: 1023px) {
     .hm-eyebrow--lined {
-      font-size: clamp(0.9rem, 2.2vw, 1.25rem);
-      letter-spacing: 0.18em;
-      white-space: normal;
-      line-height: 1.5;
+      font-size: clamp(0.9rem, 2.6vw, 1.25rem);
+      letter-spacing: 0.16em;
+      padding: 0 16px;
     }
+    .hm-eyebrow__script { font-size: 2.1rem; }
   }
   @media (max-width: 639px) {
     .hm-section-head--services { margin-bottom: 48px; }
