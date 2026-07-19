@@ -20,7 +20,7 @@ const lang = getLangFromUrl(Astro.url);
     </div>
     <p class="hm-hero__sub load-rise" style="--load-delay: 450ms">Première plateforme française de mise en relation<br/><strong>entre les invités d'Allah et professionnels</strong></p>
     <a href={getLocalePath(lang, '/guides/')} class="hm-hero__cta load-rise" style="--load-delay: 700ms">
-      <span>Choisir mon guide</span>
+      <span>Choisir mon / ma guide</span>
       <span class="hm-hero__cta-arrow" aria-hidden="true">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </span>
@@ -39,7 +39,7 @@ const lang = getLangFromUrl(Astro.url);
       <span class="hm-intro__eyebrow">En toute liberté</span>
       <span class="hm-intro__line-bar"></span>
     </div>
-    <h2 class="hm-intro__title reveal">Votre voyage</h2>
+    <h2 class="hm-intro__title reveal">Votre accompagnement</h2>
     <p class="hm-intro__script reveal-blur">Sur mesure</p>
     <!-- Stepper bar -->
     <div class="hm-stepper" id="hm-stepper">
@@ -74,7 +74,7 @@ const lang = getLangFromUrl(Astro.url);
 <section class="hm-services" id="services">
   <div class="hm-container">
     <header class="hm-section-head hm-section-head--services reveal">
-      <p class="hm-eyebrow hm-eyebrow--lined">Découvrez nos services</p>
+      <p class="hm-eyebrow hm-eyebrow--lined">Sélectionner vos accompagnements à la carte</p>
     </header>
 
     <!-- Clip-path for curved panel edge -->
@@ -96,9 +96,9 @@ const lang = getLangFromUrl(Astro.url);
         </div>
         <div class="xp__panel">
           <span class="xp__sub">Organisation</span>
-          <span class="xp__title">Planification de votre voyage</span>
+          <span class="xp__title">Conseil &amp; Optimisation : Votre appel priv&eacute;</span>
           <span class="xp__reveal">
-            <span class="xp__desc">Organisation complète de votre séjour : étapes du pèlerinage, conseils pratiques, hébergements et transports.</span>
+            <span class="xp__desc">Un entretien privé de 30 minutes avec un expert pour structurer votre séjour, éviter les pièges logistiques et maîtriser votre budget.</span>
             <a href={getLocalePath(lang, '/services/planification/')} class="xp__cta">
               <span>Découvrir</span>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
@@ -107,9 +107,9 @@ const lang = getLangFromUrl(Astro.url);
         </div>
         <div class="xp__open" aria-hidden="true">
           <span class="xp__open-sub">Organisation</span>
-          <span class="xp__open-title">Planification de votre voyage</span>
+          <span class="xp__open-title">Conseil &amp; Optimisation : Votre appel priv&eacute;</span>
           <span class="xp__open-line"></span>
-          <p class="xp__open-desc">Organisation complète de votre séjour : étapes du pèlerinage, conseils pratiques, hébergements et transports.</p>
+          <p class="xp__open-desc">Un entretien privé de 30 minutes avec un expert pour structurer votre séjour, éviter les pièges logistiques et maîtriser votre budget.</p>
           <a href={getLocalePath(lang, '/services/planification/')} class="xp__open-cta" aria-label="Découvrir : Planification">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
           </a>
@@ -128,7 +128,7 @@ const lang = getLangFromUrl(Astro.url);
         </div>
         <div class="xp__panel">
           <span class="xp__sub">Makkah</span>
-          <span class="xp__title">Nos services à Makkah</span>
+          <span class="xp__title">Vos accompagnements à Makkah Al Mukaramah</span>
           <span class="xp__reveal">
             <span class="xp__desc">Accompagnement Omra complet, visite des lieux historiques sacrés et Omra depuis le Masjid Aïcha.</span>
             <a href={getLocalePath(lang, '/services/makkah/')} class="xp__cta">
@@ -139,7 +139,7 @@ const lang = getLangFromUrl(Astro.url);
         </div>
         <div class="xp__open" aria-hidden="true">
           <span class="xp__open-sub">Makkah</span>
-          <span class="xp__open-title">Nos services à Makkah</span>
+          <span class="xp__open-title">Vos accompagnements à Makkah Al Mukaramah</span>
           <span class="xp__open-line"></span>
           <p class="xp__open-desc">Accompagnement Omra complet, visite des lieux historiques sacrés et Omra depuis le Masjid Aïcha.</p>
           <a href={getLocalePath(lang, '/services/makkah/')} class="xp__open-cta" aria-label="Découvrir : Makkah">
@@ -160,7 +160,7 @@ const lang = getLangFromUrl(Astro.url);
         </div>
         <div class="xp__panel">
           <span class="xp__sub">Al Madinah</span>
-          <span class="xp__title">Nos services à al Madinah</span>
+          <span class="xp__title">Vos accompagnements à Al-Madinah</span>
           <span class="xp__reveal">
             <span class="xp__desc">Visite historique guidée, découverte du Masjid En-Nabawi, sorties shopping et accompagnement spirituel.</span>
             <a href={getLocalePath(lang, '/services/madinah/')} class="xp__cta">
@@ -171,7 +171,7 @@ const lang = getLangFromUrl(Astro.url);
         </div>
         <div class="xp__open" aria-hidden="true">
           <span class="xp__open-sub">Al Madinah</span>
-          <span class="xp__open-title">Nos services à al Madinah</span>
+          <span class="xp__open-title">Vos accompagnements à Al-Madinah</span>
           <span class="xp__open-line"></span>
           <p class="xp__open-desc">Visite historique guidée, découverte du Masjid En-Nabawi, sorties shopping et accompagnement spirituel.</p>
           <a href={getLocalePath(lang, '/services/madinah/')} class="xp__open-cta" aria-label="Découvrir : Madinah">
@@ -227,8 +227,8 @@ const lang = getLangFromUrl(Astro.url);
           <svg viewBox="0 0 28 28" fill="none"><path d="M14 3l10 4v7c0 6.5-4.3 12.3-10 15.2C8.3 26.3 4 20.5 4 14V7l10-4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9.5 14l3 3 6-6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
         <div>
-          <span class="hm-stats__value">S&eacute;curis&eacute;</span>
-          <span class="hm-stats__label">et fiable</span>
+          <span class="hm-stats__value">Certifi&eacute; ✓</span>
+          <span class="hm-stats__label">professionnels v&eacute;rifi&eacute;s</span>
         </div>
       </div>
       <div class="hm-stats__item reveal">
@@ -237,7 +237,7 @@ const lang = getLangFromUrl(Astro.url);
         </div>
         <div>
           <span class="hm-stats__value">10K+</span>
-          <span class="hm-stats__label">pelerins accompagnes</span>
+          <span class="hm-stats__label">p&egrave;lerins accompagn&eacute;s</span>
         </div>
       </div>
       <div class="hm-stats__item reveal">
@@ -246,7 +246,7 @@ const lang = getLangFromUrl(Astro.url);
         </div>
         <div>
           <span class="hm-stats__value">7j/7</span>
-          <span class="hm-stats__label">support dedie</span>
+          <span class="hm-stats__label">support d&eacute;di&eacute;</span>
         </div>
       </div>
       <div class="hm-stats__item reveal">
@@ -338,7 +338,7 @@ const lang = getLangFromUrl(Astro.url);
 <!-- ========== CTA ========== -->
 <section class="hm-cta">
   <div class="hm-container hm-cta__inner reveal">
-    <p class="hm-cta__eyebrow">Pret a partir&nbsp;?</p>
+    <p class="hm-cta__eyebrow">Pr&ecirc;t &agrave; partir&nbsp;?</p>
     <h2 class="hm-cta__title">Votre guide vous attend</h2>
     <a href={getLocalePath(lang, '/guides/')} class="hm-btn hm-btn--gold">Trouver mon guide</a>
   </div>
@@ -1890,16 +1890,16 @@ const lang = getLangFromUrl(Astro.url);
 
       const progress = 1 - (rect.bottom / (viewH + rect.height));
 
-      if (progress < 0.35) {
+      if (progress < 0.45) {
         setStep(0);
         setFill(0);
-      } else if (progress < 0.45) {
+      } else if (progress < 0.58) {
         setStep(1);
-        const local = (progress - 0.35) / 0.10;
+        const local = (progress - 0.45) / 0.13;
         setFill(local * 45);
-      } else if (progress < 0.60) {
+      } else if (progress < 0.72) {
         setStep(2);
-        const local = (progress - 0.45) / 0.15;
+        const local = (progress - 0.58) / 0.14;
         setFill(45 + local * 45);
       } else {
         setStep(3);

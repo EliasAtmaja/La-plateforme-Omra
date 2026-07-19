@@ -23,8 +23,8 @@ export const services: ServicePage[] = [
   {
     slug: 'planification',
     eyebrow: 'Organisation',
-    title: 'Planification de votre voyage',
-    subtitle: 'Un accompagnement complet pour organiser votre voyage en toute sérénité, de A à Z.',
+    title: 'Conseil & Optimisation : Votre appel privé',
+    subtitle: 'Un entretien privé de 30 minutes avec un expert pour structurer l\'intégralité de votre séjour.',
     heroImage: '/assets/images/planification-bg.png',
     features: [
       { icon: 'calendar', label: 'Planning personnalisé' },
@@ -67,7 +67,7 @@ export const services: ServicePage[] = [
   {
     slug: 'makkah',
     eyebrow: 'Accompagnement',
-    title: 'Services à Makkah',
+    title: 'Vos accompagnements à Makkah Al Mukaramah',
     subtitle: 'Un accompagnement complet pour accomplir votre Omra en toute sérénité.',
     heroImage: '/assets/images/makkah-bg.jpg',
     features: [
@@ -78,15 +78,6 @@ export const services: ServicePage[] = [
     ],
     subServices: [
       {
-        slug: 'omra-classique',
-        title: 'Omra classique',
-        desc: 'Accompagnement complet des rituels de l\'Omra avec un guide expérimenté.',
-        duration: '3 à 5h',
-        type: 'Privé',
-        typeIcon: 'private',
-        image: '/assets/images/makkah-bg.jpg',
-      },
-      {
         slug: 'guide-pmr-omra',
         title: 'Guide PMR (Spécial Omra)',
         desc: 'Un service dédié aux personnes à mobilité réduite. Guide privé et assistance complète de A à Z.',
@@ -95,6 +86,15 @@ export const services: ServicePage[] = [
         typeIcon: 'pmr',
         image: '/assets/images/omra-pmr.png',
         premium: true,
+      },
+      {
+        slug: 'omra-classique',
+        title: 'Omra classique',
+        desc: 'Accompagnement complet des rituels de l\'Omra avec un guide expérimenté.',
+        duration: '3 à 5h',
+        type: 'Privé',
+        typeIcon: 'private',
+        image: '/assets/images/makkah-bg.jpg',
       },
       {
         slug: 'omra-masjid-aicha',
@@ -119,7 +119,7 @@ export const services: ServicePage[] = [
   {
     slug: 'madinah',
     eyebrow: 'Découverte',
-    title: 'Services à al Madinah',
+    title: 'Vos accompagnements à Al-Madinah',
     subtitle: 'Découvrez la ville du Prophète avec des guides locaux passionnés et bienveillants.',
     heroImage: '/assets/images/madinah-bg.jpg',
     features: [

@@ -28,18 +28,34 @@ const service = services.find(s => s.slug === 'planification')!;
 <!-- Intro -->
 <section class="pl-intro">
   <div class="pl-container">
-    <p class="pl-intro__eyebrow reveal">Un voyage organis&eacute; pour vous</p>
-    <h2 class="pl-intro__title reveal">Confiez-nous la planification de votre voyage</h2>
+    <p class="pl-intro__eyebrow reveal">Conseil &amp; Optimisation</p>
+    <h2 class="pl-intro__title reveal">Votre appel priv&eacute; avec un expert</h2>
+    <div class="pl-intro__price reveal">
+      <span class="pl-intro__price-amount">39&nbsp;&euro;</span>
+      <span class="pl-intro__price-note">la session de 30 minutes</span>
+    </div>
     <p class="pl-intro__text reveal">
-      Organiser un tel voyage demande du temps, des connaissances et beaucoup d'anticipation :
-      h&eacute;bergements, transports, itin&eacute;raires, d&eacute;marches&hellip; Notre &eacute;quipe s'occupe de tout,
-      pour que vous puissiez vous concentrer sur l'essentiel : votre voyage spirituel.
+      Vous partez en Omra de mani&egrave;re autonome ? Ne laissez pas de place au stress et &agrave; la
+      perte de temps entre les &eacute;tapes de M&eacute;dine et de La Mecque.
     </p>
     <p class="pl-intro__text reveal">
-      Remplissez le formulaire ci-dessous, et notre &eacute;quipe vous contactera par la suite pour
-      organiser une r&eacute;union avec vous, o&ugrave; tout vous sera expliqu&eacute; en d&eacute;tail :
-      le programme, les h&eacute;bergements, les transports et chaque &eacute;tape de votre s&eacute;jour.
+      R&eacute;servez un entretien priv&eacute; de 30 minutes avec un expert pour structurer
+      l'int&eacute;gralit&eacute; de votre s&eacute;jour, &eacute;viter les pi&egrave;ges logistiques
+      et ma&icirc;triser votre budget.
     </p>
+
+    <div class="pl-benefits reveal">
+      <h3 class="pl-benefits__title">Ce que vous allez gagner gr&acirc;ce &agrave; cet appel :</h3>
+      <div class="pl-benefits__item">
+        <span class="pl-benefits__emoji" aria-hidden="true">🗺️</span>
+        <p><strong>Votre programme cl&eacute; en main :</strong> un itin&eacute;raire fluide et personnalis&eacute;, con&ccedil;u sp&eacute;cialement en fonction de vos dates r&eacute;elles de d&eacute;part.</p>
+      </div>
+      <div class="pl-benefits__item">
+        <span class="pl-benefits__emoji" aria-hidden="true">⏳</span>
+        <p><strong>Une optimisation maximale de votre temps :</strong> moins de futilit&eacute;s et de transports mal g&eacute;r&eacute;s, pour vous concentrer sur l'essentiel : vos adorations et la d&eacute;couverte des Lieux Saints.</p>
+      </div>
+      <p class="pl-benefits__closing">Repartez l'esprit 100&nbsp;% tranquille avant de prendre l'avion.</p>
+    </div>
   </div>
 </section>
 
@@ -84,7 +100,7 @@ const service = services.find(s => s.slug === 'planification')!;
       <p class="pl-form__error is-hidden" id="planif-error">Merci de remplir tous les champs correctement.</p>
 
       <button type="submit" class="pl-form__submit">
-        Envoyer ma demande
+        R&eacute;server mon appel priv&eacute;
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </form>
@@ -232,6 +248,61 @@ const service = services.find(s => s.slug === 'planification')!;
     font-size: 0.95rem; font-weight: 300;
     color: #4A4A42; line-height: 1.8;
     margin: 0 0 16px;
+  }
+
+  /* ---- TARIF ---- */
+  .pl-intro__price {
+    display: inline-flex; align-items: baseline; gap: 10px;
+    background: #FAF8F4;
+    border: 1px solid #EFEDE6;
+    border-radius: 14px;
+    padding: 12px 22px;
+    margin: 0 0 22px;
+  }
+  .pl-intro__price-amount {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2rem; font-weight: 700; color: #14513A;
+    line-height: 1;
+  }
+  .pl-intro__price-note {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.82rem; font-weight: 400; color: #6B6B63;
+  }
+
+  /* ---- BÉNÉFICES ---- */
+  .pl-benefits {
+    background: #FAF8F4;
+    border: 1px solid #EFEDE6;
+    border-radius: 18px;
+    padding: 26px 26px 20px;
+    margin-top: 28px;
+  }
+  .pl-benefits__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.25rem; font-weight: 700; color: #14513A;
+    margin: 0 0 18px;
+  }
+  .pl-benefits__item {
+    display: flex; align-items: flex-start; gap: 12px;
+    margin-bottom: 14px;
+  }
+  .pl-benefits__emoji {
+    font-size: 1.3rem; line-height: 1.4;
+    flex-shrink: 0;
+  }
+  .pl-benefits__item p {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.92rem; font-weight: 300;
+    color: #4A4A42; line-height: 1.7;
+    margin: 0;
+  }
+  .pl-benefits__item strong { font-weight: 500; color: #1C1C1A; }
+  .pl-benefits__closing {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem; font-weight: 500;
+    color: #14513A; line-height: 1.7;
+    margin: 6px 0 0;
+    text-align: center;
   }
 
   /* ---- FORMULAIRE ---- */
