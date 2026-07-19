@@ -170,12 +170,24 @@ import '../../../styles/global.css';
           </div>
         </div>
         <div class="adm-form-field">
-          <label>Diplome</label>
+          <label>Expertise</label>
           <input type="text" name="diplome" placeholder="Licence en Histoire islamique" />
         </div>
         <div class="adm-form-field">
           <label>Langues (separees par des virgules)</label>
           <input type="text" name="langues" placeholder="Arabe, Francais, Anglais" />
+        </div>
+        <div class="adm-form-field">
+          <label>Services propos&eacute;s par ce guide</label>
+          <div class="adm-form-services">
+            <label class="adm-form-service"><input type="checkbox" name="services" value="omra-classique" /><span>Omra Priv&eacute; Premium</span></label>
+            <label class="adm-form-service"><input type="checkbox" name="services" value="guide-pmr-omra" /><span>Omra Priv&eacute; Premium PMR</span></label>
+            <label class="adm-form-service"><input type="checkbox" name="services" value="omra-masjid-aicha" /><span>Omra au d&eacute;part du Masjid A&iuml;cha</span></label>
+            <label class="adm-form-service"><input type="checkbox" name="services" value="visite-historique-makkah" /><span>Visite historique de Makkah</span></label>
+            <label class="adm-form-service"><input type="checkbox" name="services" value="visite-historique-medine" /><span>Visite historique de M&eacute;dine</span></label>
+            <label class="adm-form-service"><input type="checkbox" name="services" value="visite-masjid-nabawi" /><span>Visite du Masjid En-Nabawi</span></label>
+            <label class="adm-form-service"><input type="checkbox" name="services" value="shopping-guide-medine" /><span>Shopping guid&eacute; &agrave; M&eacute;dine</span></label>
+          </div>
         </div>
         <div class="adm-form-field">
           <label>Description</label>
@@ -597,9 +609,15 @@ import '../../../styles/global.css';
         const reason = refBooking.refusalReason || '';
         const radioName = `replace-${g.id}-${refBooking.id}`;
 
+        // Si la réservation refusée porte sur un service précis, seuls les
+        // guides affectés à ce service peuvent la reprendre
+        const eligibleGuides = refBooking.activitySlug
+          ? otherGuides.filter((r: any) => (r.services || []).includes(refBooking.activitySlug))
+          : otherGuides;
+
         let replacementCards = '';
-        if (otherGuides.length > 0) {
-          replacementCards = otherGuides.map((r: any) => {
+        if (eligibleGuides.length > 0) {
+          replacementCards = eligibleGuides.map((r: any) => {
             const rInitials = (r.firstName?.[0] || '') + (r.lastName?.[0] || '');
             const rLangs = (r.languages || []).join(', ');
             const ogAvail = new Set(getAvail(r.id));
@@ -622,7 +640,7 @@ import '../../../styles/global.css';
                 </div>
                 <div class="adm-g__rcard-body is-hidden">
                   <div class="adm-g__rcard-profile">
-                    ${r.diploma ? `<div class="adm-g__rcard-detail"><span class="adm-g__rcard-label">Diplome</span><span class="adm-g__rcard-value">${escG(r.diploma)}</span></div>` : ''}
+                    ${r.diploma ? `<div class="adm-g__rcard-detail"><span class="adm-g__rcard-label">Expertise</span><span class="adm-g__rcard-value">${escG(r.diploma)}</span></div>` : ''}
                     <a href="/guides/profil/?id=${r.id}" class="adm-g__rcard-profile-link">
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 6s2-4 5-4 5 4 5 4-2 4-5 4-5-4-5-4z" stroke="currentColor" stroke-width="1.1"/><circle cx="6" cy="6" r="1.5" stroke="currentColor" stroke-width="1.1"/></svg>
                       Voir le profil complet
@@ -652,7 +670,9 @@ import '../../../styles/global.css';
             `;
           }).join('');
         } else {
-          replacementCards = `<p class="adm-g__no-replace">Aucun autre guide dans cette ville.</p>`;
+          replacementCards = refBooking.activitySlug
+            ? `<p class="adm-g__no-replace">Aucun autre guide affect&eacute; &agrave; ce service dans cette ville.</p>`
+            : `<p class="adm-g__no-replace">Aucun autre guide dans cette ville.</p>`;
         }
 
         return `
@@ -921,6 +941,9 @@ import '../../../styles/global.css';
     (addGuideForm.querySelector('[name="diplome"]') as HTMLInputElement).value = guide.diploma || '';
     (addGuideForm.querySelector('[name="langues"]') as HTMLInputElement).value = (guide.languages || []).join(', ');
     (addGuideForm.querySelector('[name="description"]') as HTMLTextAreaElement).value = guide.description || '';
+    addGuideForm.querySelectorAll('[name="services"]').forEach((c: any) => {
+      c.checked = (guide.services || []).includes(c.value);
+    });
     // Identifiants gérés par Supabase Auth : non modifiables après création
     const loginInput = addGuideForm.querySelector('[name="identifiant"]') as HTMLInputElement;
     const mdpInput = addGuideForm.querySelector('[name="mdp"]') as HTMLInputElement;
@@ -985,6 +1008,9 @@ import '../../../styles/global.css';
     const photoMatch = photoUrl.match(/url\("?([^"]*)"?\)/);
     let photoDataUrl = photoMatch ? photoMatch[1] : '';
 
+    const servicesChecked = Array.from(form.querySelectorAll('[name="services"]:checked'))
+      .map((c: any) => c.value);
+
     const fields = {
       first_name: prenom,
       last_name: nom,
@@ -993,6 +1019,7 @@ import '../../../styles/global.css';
       description: description || null,
       languages: langues ? langues.split(',').map((l: string) => l.trim()).filter(Boolean) : [],
       price_per_day: prix ? parseInt(prix) : 0,
+      services: servicesChecked,
     };
 
     if (editingGuideId) {
@@ -2042,6 +2069,25 @@ import '../../../styles/global.css';
     outline: none; border-color: #14513A;
     box-shadow: 0 0 0 3px rgba(20,81,58,0.08);
   }
+
+  .adm-form-services {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .adm-form-service {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 14px;
+    border: 1.5px solid #E7E4DB; border-radius: 20px;
+    background: #FAF9F5;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .adm-form-service:hover { border-color: #14513A; }
+  .adm-form-service:has(input:checked) {
+    border-color: #14513A;
+    background: #EDF5F0;
+  }
+  .adm-form-service input { accent-color: #14513A; }
 
   .adm-modal__footer {
     display: flex; justify-content: flex-end; gap: 10px;

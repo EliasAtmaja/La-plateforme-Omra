@@ -48,6 +48,7 @@ export function mapGuide(row: any) {
     languages: row.languages || [],
     pricePerDay: row.price_per_day || 0,
     login: row.login || '',
+    services: row.services || [],
   };
 }
 

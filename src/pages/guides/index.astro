@@ -78,6 +78,7 @@ const lang = getLangFromUrl(Astro.url);
       const url = new URL(window.location.href);
       url.searchParams.delete('activite');
       history.replaceState(null, '', url.toString());
+      renderGuidesList();
     });
   }
   initActivityBanner();
@@ -147,13 +148,21 @@ const lang = getLangFromUrl(Astro.url);
     const empty = document.getElementById('guides-empty');
     if (!list) return;
 
-    const guides = CITY_FILTER ? getGuides().filter((g: any) => g.city === CITY_FILTER) : getGuides();
+    let guides = getGuides();
+    if (CITY_FILTER) guides = guides.filter((g: any) => g.city === CITY_FILTER);
+    // Activité choisie : seuls les guides affectés à ce service sont proposés
+    if (chosenActivitySlug) guides = guides.filter((g: any) => (g.services || []).includes(chosenActivitySlug));
     const existing = list.querySelectorAll('.gp-card');
     existing.forEach(el => el.remove());
     document.querySelectorAll('body > .gp-cal').forEach(el => el.remove());
 
     if (guides.length === 0) {
-      if (empty) empty.hidden = false;
+      if (empty) {
+        empty.textContent = chosenActivitySlug
+          ? 'Aucun guide ne propose cette activité pour le moment.'
+          : 'Aucun guide disponible pour le moment.';
+        empty.hidden = false;
+      }
       return;
     }
     if (empty) empty.hidden = true;
