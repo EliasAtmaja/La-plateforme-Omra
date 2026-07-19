@@ -394,13 +394,26 @@ const lang = getLangFromUrl(Astro.url);
     line-height: 1.2;
     margin-top: 6px;
   }
+  /* Ligne élégante sous le titre de section */
+  .hm-section-head--services::after {
+    content: '';
+    display: block;
+    width: 64px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #B99752, transparent);
+    margin: 16px auto 0;
+  }
   @media (max-width: 1023px) {
     .hm-eyebrow--lined {
       font-size: clamp(0.9rem, 2.6vw, 1.25rem);
       letter-spacing: 0.16em;
       padding: 0 16px;
     }
-    .hm-eyebrow__script { font-size: 2.1rem; }
+    .hm-eyebrow__script {
+      font-size: 2.1rem;
+      margin-top: 0;
+    }
+    .hm-section-head--services::after { margin-top: 12px; }
   }
   @media (max-width: 639px) {
     .hm-section-head--services { margin-bottom: 48px; }
