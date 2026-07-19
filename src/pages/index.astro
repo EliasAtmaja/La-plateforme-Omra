@@ -382,9 +382,23 @@ const lang = getLangFromUrl(Astro.url);
     color: #1C1C1A;
     white-space: nowrap;
   }
+  @media (max-width: 1023px) {
+    .hm-eyebrow--lined {
+      font-size: clamp(0.9rem, 2.2vw, 1.25rem);
+      letter-spacing: 0.18em;
+      white-space: normal;
+      line-height: 1.5;
+    }
+  }
   @media (max-width: 639px) {
     .hm-section-head--services { margin-bottom: 48px; }
-    .hm-eyebrow--lined { font-size: clamp(0.85rem, 4.3vw, 1.15rem); letter-spacing: 0.16em; }
+    .hm-eyebrow--lined {
+      font-size: clamp(0.85rem, 4.3vw, 1.15rem);
+      letter-spacing: 0.14em;
+      white-space: normal;
+      line-height: 1.5;
+      padding: 0 12px;
+    }
   }
 
   .hm-btn {
