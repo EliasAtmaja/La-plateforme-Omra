@@ -14,6 +14,16 @@ const navLinks = [
   { label: t(lang, 'nav.guides'), href: getLocalePath(lang, '/guides/') },
   { label: t(lang, 'nav.about'), href: getLocalePath(lang, '/a-propos/') },
 ];
+
+const mobileLinks = [
+  { label: 'Accueil', href: getLocalePath(lang, '/') },
+  { label: 'Vos Guides à Médine', href: getLocalePath(lang, '/guides/') + '?ville=medine' },
+  { label: 'Vos Guides à Makkah', href: getLocalePath(lang, '/guides/') + '?ville=makkah' },
+  { label: 'Visas', href: getLocalePath(lang, '/services/visa/') },
+  { label: 'Conseils / Optimisation', href: getLocalePath(lang, '/services/planification/') },
+  { label: 'Aide / Support', href: 'https://wa.me/966598665332?text=As-salamu%20alaykum%2C%20j%27ai%20besoin%20d%27aide.' },
+  { label: 'Qui sommes-nous', href: getLocalePath(lang, '/a-propos/') },
+];
 ---
 
 <header class:list={['header', { 'header--opaque': !transparent, 'header--transparent': transparent }]} role="banner">
@@ -82,7 +92,7 @@ const navLinks = [
   <div class="header__mobile-menu" id="mobile-menu" hidden>
     <nav aria-label="Menu mobile">
       <ul role="list">
-        {navLinks.map(link => (
+        {mobileLinks.map(link => (
           <li>
             <a href={link.href} class="header__mobile-link">{link.label}</a>
           </li>
@@ -507,11 +517,13 @@ const navLinks = [
     opacity: 0;
     animation: menuLinkIn 0.5s var(--ease-out-expo) forwards;
   }
-  .header__mobile-menu li:nth-child(1) { animation-delay: 60ms; }
-  .header__mobile-menu li:nth-child(2) { animation-delay: 120ms; }
-  .header__mobile-menu li:nth-child(3) { animation-delay: 180ms; }
-  .header__mobile-menu li:nth-child(4) { animation-delay: 240ms; }
-  .header__mobile-menu li:nth-child(5) { animation-delay: 300ms; }
+  .header__mobile-menu li:nth-child(1) { animation-delay: 50ms; }
+  .header__mobile-menu li:nth-child(2) { animation-delay: 100ms; }
+  .header__mobile-menu li:nth-child(3) { animation-delay: 150ms; }
+  .header__mobile-menu li:nth-child(4) { animation-delay: 200ms; }
+  .header__mobile-menu li:nth-child(5) { animation-delay: 250ms; }
+  .header__mobile-menu li:nth-child(6) { animation-delay: 300ms; }
+  .header__mobile-menu li:nth-child(7) { animation-delay: 350ms; }
 
   @keyframes menuLinkIn {
     from { opacity: 0; transform: translateY(16px); }
@@ -527,19 +539,39 @@ const navLinks = [
   }
 
   .header__mobile-link {
-    display: block;
-    padding: var(--space-5) 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: var(--space-4) 0;
     font-family: var(--font-heading);
-    font-size: var(--text-2xl);
-    font-weight: 500;
+    font-size: 1.35rem;
+    font-weight: 600;
+    font-style: italic;
+    letter-spacing: 0.015em;
     color: var(--color-text);
     border-bottom: 1px solid var(--color-border-light);
     transition: color 0.3s var(--ease-out-quart), padding-left 0.3s var(--ease-out-quart);
   }
 
+  .header__mobile-link::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: #B99752;
+    transform: rotate(45deg);
+    flex-shrink: 0;
+    opacity: 0.75;
+    transition: opacity 0.3s, background 0.3s;
+  }
+
   .header__mobile-link:hover {
     color: var(--color-primary);
-    padding-left: 8px;
+    padding-left: 6px;
+  }
+
+  .header__mobile-link:hover::before {
+    background: var(--color-primary);
+    opacity: 1;
   }
 
   @media (max-width: 1023px) {

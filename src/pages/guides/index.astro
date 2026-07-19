@@ -57,6 +57,10 @@ const lang = getLangFromUrl(Astro.url);
   let chosenActivitySlug: string | null = new URLSearchParams(window.location.search).get('activite');
   let chosenActivityName: string | null = chosenActivitySlug ? (ACTIVITY_NAMES[chosenActivitySlug] || chosenActivitySlug) : null;
 
+  // Filtre par ville (?ville=medine | makkah) — depuis le menu mobile
+  const VILLE_PARAM = new URLSearchParams(window.location.search).get('ville');
+  const CITY_FILTER = VILLE_PARAM === 'medine' ? 'medina' : VILLE_PARAM === 'makkah' ? 'mecca' : null;
+
   function initActivityBanner() {
     const banner = document.getElementById('activity-banner');
     const nameEl = document.getElementById('activity-banner-name');
@@ -143,7 +147,7 @@ const lang = getLangFromUrl(Astro.url);
     const empty = document.getElementById('guides-empty');
     if (!list) return;
 
-    const guides = getGuides();
+    const guides = CITY_FILTER ? getGuides().filter((g: any) => g.city === CITY_FILTER) : getGuides();
     const existing = list.querySelectorAll('.gp-card');
     existing.forEach(el => el.remove());
     document.querySelectorAll('body > .gp-cal').forEach(el => el.remove());
