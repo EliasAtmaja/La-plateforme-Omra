@@ -45,14 +45,26 @@ const service = services.find(s => s.slug === 'planification')!;
     </p>
 
     <div class="pl-benefits reveal">
-      <h3 class="pl-benefits__title">Ce que vous allez gagner gr&acirc;ce &agrave; cet appel :</h3>
+      <h3 class="pl-benefits__title">Ce que vous obtenez apr&egrave;s nos 30 minutes d'appel :</h3>
       <div class="pl-benefits__item">
-        <span class="pl-benefits__emoji" aria-hidden="true">🗺️</span>
-        <p><strong>Votre programme cl&eacute; en main :</strong> un itin&eacute;raire fluide et personnalis&eacute;, con&ccedil;u sp&eacute;cialement en fonction de vos dates r&eacute;elles de d&eacute;part.</p>
+        <span class="pl-benefits__emoji" aria-hidden="true">🚀</span>
+        <p><strong>L'avis d'un expert :</strong> vos questions sp&eacute;cifiques r&eacute;pondues en direct.</p>
       </div>
       <div class="pl-benefits__item">
-        <span class="pl-benefits__emoji" aria-hidden="true">⏳</span>
-        <p><strong>Une optimisation maximale de votre temps :</strong> moins de futilit&eacute;s et de transports mal g&eacute;r&eacute;s, pour vous concentrer sur l'essentiel : vos adorations et la d&eacute;couverte des Lieux Saints.</p>
+        <span class="pl-benefits__emoji" aria-hidden="true">⏱️</span>
+        <p><strong>Z&eacute;ro temps perdu :</strong> un s&eacute;jour optimis&eacute; selon votre rythme et votre budget.</p>
+      </div>
+      <div class="pl-benefits__item">
+        <span class="pl-benefits__emoji" aria-hidden="true">🗺️</span>
+        <p><strong>Votre planning visuel :</strong> une feuille de route claire &agrave; suivre sur place.</p>
+      </div>
+      <div class="pl-benefits__item">
+        <span class="pl-benefits__emoji" aria-hidden="true">💰</span>
+        <p><strong>Astuces budget :</strong> comment g&eacute;rer les transports et la vie locale sans surpayer.</p>
+      </div>
+      <div class="pl-benefits__item">
+        <span class="pl-benefits__emoji" aria-hidden="true">🎁</span>
+        <p><strong>BONUS :</strong> le Guide PDF &laquo;&nbsp;L'Indispensable&nbsp;&raquo; (Avant / Pendant / Apr&egrave;s le d&eacute;part).</p>
       </div>
       <p class="pl-benefits__closing">Repartez l'esprit 100&nbsp;% tranquille avant de prendre l'avion.</p>
     </div>
@@ -72,7 +84,7 @@ const service = services.find(s => s.slug === 'planification')!;
 
       <div class="pl-form__row">
         <div class="pl-form__field">
-          <label for="pl-group">Taille du groupe</label>
+          <label for="pl-group">Nombre de personnes</label>
           <input type="number" id="pl-group" name="groupSize" min="1" max="200" required />
         </div>
         <div class="pl-form__field">
@@ -97,10 +109,24 @@ const service = services.find(s => s.slug === 'planification')!;
         <input type="email" id="pl-email" name="email" required autocomplete="email" />
       </div>
 
+      <fieldset class="pl-form__field pl-form__tickets">
+        <legend>J'ai d&eacute;j&agrave; mes billets d'avion :</legend>
+        <div class="pl-form__radio-row">
+          <label class="pl-form__radio">
+            <input type="radio" name="hasTickets" value="oui" required />
+            <span>Oui</span>
+          </label>
+          <label class="pl-form__radio">
+            <input type="radio" name="hasTickets" value="non" required />
+            <span>Non</span>
+          </label>
+        </div>
+      </fieldset>
+
       <p class="pl-form__error is-hidden" id="planif-error">Merci de remplir tous les champs correctement.</p>
 
       <button type="submit" class="pl-form__submit">
-        R&eacute;server mon appel priv&eacute;
+        R&eacute;server mon appel
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </form>
@@ -151,6 +177,7 @@ const service = services.find(s => s.slug === 'planification')!;
         departure: data.get('departure') || null,
         phone: data.get('phone'),
         email: data.get('email'),
+        has_tickets: data.get('hasTickets') === 'oui',
       });
       submitBtn.disabled = false;
 
@@ -350,6 +377,34 @@ const service = services.find(s => s.slug === 'planification')!;
     border-color: #14513A;
     box-shadow: 0 0 0 3px rgba(20,81,58,0.1);
   }
+  .pl-form__tickets {
+    border: none; padding: 0; margin: 0 0 18px;
+  }
+  .pl-form__tickets legend {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; font-weight: 500;
+    color: #1C1C1A;
+    margin-bottom: 8px; padding: 0;
+  }
+  .pl-form__radio-row { display: flex; gap: 12px; }
+  .pl-form__radio {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 22px;
+    background: #FFFFFF;
+    border: 1px solid #E3E0D6;
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.88rem; font-weight: 400; color: #1C1C1A;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .pl-form__radio:hover { border-color: #14513A; }
+  .pl-form__radio:has(input:checked) {
+    border-color: #14513A;
+    background: #EDF5F0;
+  }
+  .pl-form__radio input { accent-color: #14513A; }
+
   .pl-form__error {
     font-family: 'Jost', sans-serif;
     font-size: 0.8rem; font-weight: 400;

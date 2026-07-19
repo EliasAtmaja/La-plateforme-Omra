@@ -96,7 +96,7 @@ const lang = getLangFromUrl(Astro.url);
         </div>
         <div class="xp__panel">
           <span class="xp__sub">Organisation</span>
-          <span class="xp__title">Conseil &amp; Optimisation : Votre appel priv&eacute;</span>
+          <span class="xp__title">📞 Conseils &amp; Optimisation : Votre appel priv&eacute;</span>
           <span class="xp__reveal">
             <span class="xp__desc">Un entretien privé de 30 minutes avec un expert pour structurer votre séjour, éviter les pièges logistiques et maîtriser votre budget.</span>
             <a href={getLocalePath(lang, '/services/planification/')} class="xp__cta">
@@ -107,7 +107,7 @@ const lang = getLangFromUrl(Astro.url);
         </div>
         <div class="xp__open" aria-hidden="true">
           <span class="xp__open-sub">Organisation</span>
-          <span class="xp__open-title">Conseil &amp; Optimisation : Votre appel priv&eacute;</span>
+          <span class="xp__open-title">📞 Conseils &amp; Optimisation : Votre appel priv&eacute;</span>
           <span class="xp__open-line"></span>
           <p class="xp__open-desc">Un entretien privé de 30 minutes avec un expert pour structurer votre séjour, éviter les pièges logistiques et maîtriser votre budget.</p>
           <a href={getLocalePath(lang, '/services/planification/')} class="xp__open-cta" aria-label="Découvrir : Planification">
@@ -119,8 +119,40 @@ const lang = getLangFromUrl(Astro.url);
         </a>
       </div>
 
-      <!-- 02 — Makkah -->
+      <!-- 02 — Visas & Formalités -->
       <div class="xp__card reveal" data-xp-card style="--i:1">
+        <div class="xp__visual">
+          <img src="/assets/images/visa-bg.png" alt="Visas et formalités" class="xp__img" loading="lazy" />
+          <span class="xp__veil" aria-hidden="true"></span>
+          <span class="xp__frame" aria-hidden="true"></span>
+        </div>
+        <div class="xp__panel">
+          <span class="xp__sub">Administratif</span>
+          <span class="xp__title">Visas &amp; Formalit&eacute;s</span>
+          <span class="xp__reveal">
+            <span class="xp__desc">Nous vous accompagnons dans toutes vos démarches administratives pour l'obtention de votre visa.</span>
+            <a href={getLocalePath(lang, '/services/visa/')} class="xp__cta">
+              <span>Découvrir</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </a>
+          </span>
+        </div>
+        <div class="xp__open" aria-hidden="true">
+          <span class="xp__open-sub">Administratif</span>
+          <span class="xp__open-title">Visas &amp; Formalit&eacute;s</span>
+          <span class="xp__open-line"></span>
+          <p class="xp__open-desc">Nous vous accompagnons dans toutes vos démarches administratives pour l'obtention de votre visa.</p>
+          <a href={getLocalePath(lang, '/services/visa/')} class="xp__open-cta" aria-label="Découvrir : Visas et formalités">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <a href={getLocalePath(lang, '/services/visa/')} class="xp__img-cta" aria-label="Découvrir : Visas et formalités">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <!-- 03 — Makkah -->
+      <div class="xp__card reveal" data-xp-card style="--i:2">
         <div class="xp__visual">
           <img src="/assets/images/makkah-bg.jpg" alt="Services à Makkah" class="xp__img" style="object-position: center 65%;" loading="lazy" />
           <span class="xp__veil" aria-hidden="true"></span>
@@ -151,8 +183,8 @@ const lang = getLangFromUrl(Astro.url);
         </a>
       </div>
 
-      <!-- 03 — Madinah -->
-      <div class="xp__card reveal" data-xp-card style="--i:2">
+      <!-- 04 — Madinah -->
+      <div class="xp__card reveal" data-xp-card style="--i:3">
         <div class="xp__visual">
           <img src="/assets/images/madinah-bg.jpg" alt="Services à al Madinah" class="xp__img" style="object-position: center 82%;" loading="lazy" />
           <span class="xp__veil" aria-hidden="true"></span>
@@ -183,37 +215,6 @@ const lang = getLangFromUrl(Astro.url);
         </a>
       </div>
 
-      <!-- 04 — Visa -->
-      <div class="xp__card reveal" data-xp-card style="--i:3">
-        <div class="xp__visual">
-          <img src="/assets/images/visa-bg.png" alt="Assistance visa" class="xp__img" loading="lazy" />
-          <span class="xp__veil" aria-hidden="true"></span>
-          <span class="xp__frame" aria-hidden="true"></span>
-        </div>
-        <div class="xp__panel">
-          <span class="xp__sub">Administratif</span>
-          <span class="xp__title">Assistance visa</span>
-          <span class="xp__reveal">
-            <span class="xp__desc">Nous vous accompagnons dans toutes vos démarches administratives pour l'obtention de votre visa.</span>
-            <a href={getLocalePath(lang, '/services/visa/')} class="xp__cta">
-              <span>Découvrir</span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-            </a>
-          </span>
-        </div>
-        <div class="xp__open" aria-hidden="true">
-          <span class="xp__open-sub">Administratif</span>
-          <span class="xp__open-title">Assistance visa</span>
-          <span class="xp__open-line"></span>
-          <p class="xp__open-desc">Nous vous accompagnons dans toutes vos démarches administratives pour l'obtention de votre visa.</p>
-          <a href={getLocalePath(lang, '/services/visa/')} class="xp__open-cta" aria-label="Découvrir : Visa">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-          </a>
-        </div>
-        <a href={getLocalePath(lang, '/services/visa/')} class="xp__img-cta" aria-label="Découvrir : Visa">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-        </a>
-      </div>
     </div>
   </div>
 </section>

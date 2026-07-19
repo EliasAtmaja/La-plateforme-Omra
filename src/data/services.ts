@@ -161,7 +161,7 @@ export const services: ServicePage[] = [
   {
     slug: 'visa',
     eyebrow: 'Administratif',
-    title: 'Assistance Visa',
+    title: 'Visas & Formalités',
     subtitle: 'Nous vous accompagnons dans toutes vos démarches administratives simplement et rapidement.',
     heroImage: '/assets/images/visa-bg.png',
     features: [
