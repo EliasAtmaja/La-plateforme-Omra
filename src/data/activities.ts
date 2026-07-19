@@ -91,12 +91,12 @@ export const activities: ActivityDetail[] = [
   {
     slug: 'omra-classique',
     parentSlug: 'makkah',
-    title: 'Omra classique',
+    title: 'Omra Privé Premium',
     eyebrow: 'Accompagnement à Makkah',
     subtitle: 'Accomplissez votre Omra avec un guide expérimenté qui vous accompagne à chaque rituel.',
     heroImage: '/assets/images/makkah-bg.jpg',
     city: 'mecca',
-    longDescription: 'L\'Omra classique est un accompagnement complet pour accomplir les rituels sacrés en toute sérénité. Votre guide francophone vous explique chaque étape, vous aide avec les invocations et veille à ce que votre expérience spirituelle soit la plus enrichissante possible.',
+    longDescription: 'L\'Omra Privé Premium est un accompagnement complet pour accomplir les rituels sacrés en toute sérénité. Votre guide francophone vous explique chaque étape, vous aide avec les invocations et veille à ce que votre expérience spirituelle soit la plus enrichissante possible.',
     timeline: [
       { title: 'Prise en charge à l\'hôtel', description: 'Votre guide vient vous chercher directement à votre hébergement.' },
       { title: 'Mise en état d\'Ihram', description: 'Préparation spirituelle et vestimentaire. Votre guide vous accompagne dans les invocations et l\'intention (niyyah).' },
@@ -114,7 +114,7 @@ export const activities: ActivityDetail[] = [
   {
     slug: 'guide-pmr-omra',
     parentSlug: 'makkah',
-    title: 'Guide PMR (Spécial Omra)',
+    title: 'Omra Privé Premium PMR',
     eyebrow: 'Accompagnement à Makkah',
     subtitle: 'Un service dédié aux personnes à mobilité réduite, avec assistance complète de A à Z.',
     heroImage: '/assets/images/omra-pmr.png',
