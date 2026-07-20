@@ -221,19 +221,21 @@ const lang = getLangFromUrl(Astro.url);
 
 <!-- ========== REJOIGNEZ-NOUS ========== -->
 <section class="hm-join">
-  <div class="hm-container">
-    <div class="hm-join__inner reveal">
-      <div class="hm-join__content">
-        <p class="hm-join__eyebrow">Rejoignez-nous</p>
-        <h2 class="hm-join__title">Devenez guide certifi&eacute;</h2>
-        <p class="hm-join__text">Envie de devenir guide certifi&eacute; et proposer votre expertise aux invit&eacute;s d'Allah&nbsp;? Faites-nous en part en remplissant le formulaire ci-dessous&nbsp;!</p>
-        <a href={getLocalePath(lang, '/rejoindre/')} class="hm-join__btn">
-          Je souhaite vous rejoindre
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
-      </div>
-      <div class="hm-join__icon" aria-hidden="true">
-        <svg viewBox="0 0 80 80" fill="none" width="80" height="80"><circle cx="40" cy="28" r="12" stroke="currentColor" stroke-width="2"/><path d="M18 68c0-12.2 9.8-22 22-22s22 9.8 22 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M52 28l8 8M60 28l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  <div class="hm-join__wrap">
+    <div class="hm-container">
+      <div class="hm-join__inner reveal">
+        <div class="hm-join__content">
+          <p class="hm-join__eyebrow">Rejoignez-nous</p>
+          <h2 class="hm-join__title">Devenez guide certifi&eacute;</h2>
+          <p class="hm-join__text">Envie de devenir guide certifi&eacute; et proposer votre expertise aux invit&eacute;s d'Allah&nbsp;? Faites-nous en part en remplissant le formulaire ci-dessous&nbsp;!</p>
+          <a href={getLocalePath(lang, '/rejoindre/')} class="hm-join__btn">
+            Je souhaite vous rejoindre
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
+        <div class="hm-join__icon" aria-hidden="true">
+          <svg viewBox="0 0 80 80" fill="none" width="80" height="80"><circle cx="40" cy="28" r="12" stroke="currentColor" stroke-width="2"/><path d="M18 68c0-12.2 9.8-22 22-22s22 9.8 22 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M52 28l8 8M60 28l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
       </div>
     </div>
   </div>
@@ -1159,18 +1161,18 @@ const lang = getLangFromUrl(Astro.url);
 
   /* ---- REJOIGNEZ-NOUS ---- */
   .hm-join {
-    padding: 0 0 0;
+    padding: 0;
     background: #FFFFFF;
+  }
+  .hm-join__wrap {
+    background: linear-gradient(135deg, #FAF8F4 0%, #F0EDE5 100%);
+    padding: 56px 0;
   }
   .hm-join__inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 40px;
-    padding: 52px 48px;
-    background: linear-gradient(135deg, #FAF8F4 0%, #F0EDE5 100%);
-    border: 1px solid #EFEDE6;
-    border-radius: 20px;
   }
   .hm-join__eyebrow {
     font-family: 'Jost', sans-serif;
@@ -1232,9 +1234,9 @@ const lang = getLangFromUrl(Astro.url);
     opacity: 0.25;
   }
   @media (max-width: 767px) {
+    .hm-join__wrap { padding: 40px 0; }
     .hm-join__inner {
       flex-direction: column;
-      padding: 36px 24px;
       text-align: center;
     }
     .hm-join__text { max-width: none; }
@@ -1244,7 +1246,7 @@ const lang = getLangFromUrl(Astro.url);
 
   /* ---- STATS BAR ---- */
   .hm-stats {
-    background: #14513A; padding: 40px 0;
+    background: #14513A; padding: 40px 0; margin-top: 32px;
   }
   .hm-stats__grid {
     display: grid; grid-template-columns: repeat(4, 1fr);
