@@ -1,0 +1,462 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getLangFromUrl, getLocalePath } from '../i18n/ui';
+
+const lang = getLangFromUrl(Astro.url);
+---
+
+<BaseLayout title="Devenir guide" description="Rejoignez notre équipe de guides certifiés et accompagnez les invités d'Allah dans leur pèlerinage.">
+
+<!-- Hero -->
+<section class="rj-hero">
+  <div class="rj-hero__bg">
+    <img src="/assets/images/makkah-bg.jpg" alt="" loading="eager" />
+  </div>
+  <div class="rj-hero__overlay"></div>
+  <a href={getLocalePath(lang, '/')} class="rj-hero__back" aria-label="Retour">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 4l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </a>
+  <div class="rj-hero__content">
+    <p class="rj-hero__eyebrow load-rise" style="--load-delay: 100ms">Rejoignez-nous</p>
+    <h1 class="rj-hero__title load-rise" style="--load-delay: 250ms">Devenez guide certifi&eacute;</h1>
+    <p class="rj-hero__sub load-rise" style="--load-delay: 400ms">Partagez votre savoir et accompagnez les p&egrave;lerins dans l'un des moments les plus importants de leur vie.</p>
+  </div>
+</section>
+
+<!-- Intro -->
+<section class="rj-intro">
+  <div class="rj-container">
+    <p class="rj-intro__eyebrow reveal">Pourquoi nous rejoindre</p>
+    <h2 class="rj-intro__title reveal">Une mission, une communaut&eacute;</h2>
+    <p class="rj-intro__text reveal">
+      La plateforme Omra met en relation des p&egrave;lerins francophones avec des guides locaux certifi&eacute;s,
+      passionn&eacute;s et bienveillants. Si vous r&eacute;sidez &agrave; Makkah ou &agrave; M&eacute;dine et que vous
+      souhaitez mettre votre expertise au service des invit&eacute;s d'Allah, nous serions honor&eacute;s de vous accueillir
+      dans notre &eacute;quipe.
+    </p>
+  </div>
+</section>
+
+<!-- Avantages -->
+<section class="rj-benefits">
+  <div class="rj-container">
+    <div class="rj-benefits__grid">
+      <div class="rj-benefit reveal">
+        <div class="rj-benefit__icon">
+          <svg viewBox="0 0 32 32" fill="none" width="28" height="28"><circle cx="16" cy="11" r="5" stroke="currentColor" stroke-width="1.4"/><path d="M7 27c0-5 4-9 9-9s9 4 9 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </div>
+        <h3 class="rj-benefit__title">Visibilit&eacute;</h3>
+        <p class="rj-benefit__text">Votre profil est visible par des milliers de p&egrave;lerins francophones &agrave; la recherche d'un guide de confiance.</p>
+      </div>
+      <div class="rj-benefit reveal">
+        <div class="rj-benefit__icon">
+          <svg viewBox="0 0 32 32" fill="none" width="28" height="28"><path d="M16 4l10 4v8c0 6.5-4.3 12.3-10 15.2C10.3 28.3 6 22.5 6 16V8l10-4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 16l3 3 5-6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3 class="rj-benefit__title">Certification</h3>
+        <p class="rj-benefit__text">Rejoignez un r&eacute;seau de guides v&eacute;rifi&eacute;s et b&eacute;n&eacute;ficiez du label &laquo;&nbsp;Guide certifi&eacute;&nbsp;&raquo;.</p>
+      </div>
+      <div class="rj-benefit reveal">
+        <div class="rj-benefit__icon">
+          <svg viewBox="0 0 32 32" fill="none" width="28" height="28"><rect x="4" y="8" width="24" height="16" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M4 14h24" stroke="currentColor" stroke-width="1.4"/><path d="M10 20h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </div>
+        <h3 class="rj-benefit__title">R&eacute;mun&eacute;ration</h3>
+        <p class="rj-benefit__text">Fixez vos tarifs et recevez vos paiements de mani&egrave;re simple et s&eacute;curis&eacute;e.</p>
+      </div>
+      <div class="rj-benefit reveal">
+        <div class="rj-benefit__icon">
+          <svg viewBox="0 0 32 32" fill="none" width="28" height="28"><circle cx="16" cy="16" r="11" stroke="currentColor" stroke-width="1.4"/><path d="M16 10v7l4 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3 class="rj-benefit__title">Flexibilit&eacute;</h3>
+        <p class="rj-benefit__text">G&eacute;rez vos disponibilit&eacute;s librement et acceptez les r&eacute;servations selon votre emploi du temps.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Formulaire -->
+<section class="rj-form-section">
+  <div class="rj-container">
+    <div class="rj-form-card">
+      <p class="rj-form__eyebrow">Candidature</p>
+      <h2 class="rj-form__title">Je souhaite vous rejoindre</h2>
+      <p class="rj-form__desc">Remplissez le formulaire ci-dessous et notre &eacute;quipe vous recontactera dans les meilleurs d&eacute;lais.</p>
+
+      <form class="rj-form" id="join-form" novalidate>
+        <div class="rj-form__row">
+          <div class="rj-form__field">
+            <label for="rj-prenom">Pr&eacute;nom</label>
+            <input type="text" id="rj-prenom" name="prenom" required autocomplete="given-name" />
+          </div>
+          <div class="rj-form__field">
+            <label for="rj-nom">Nom</label>
+            <input type="text" id="rj-nom" name="nom" required autocomplete="family-name" />
+          </div>
+        </div>
+
+        <div class="rj-form__row">
+          <div class="rj-form__field">
+            <label for="rj-email">E-mail</label>
+            <input type="email" id="rj-email" name="email" required autocomplete="email" />
+          </div>
+          <div class="rj-form__field">
+            <label for="rj-tel">T&eacute;l&eacute;phone (WhatsApp)</label>
+            <input type="tel" id="rj-tel" name="telephone" required autocomplete="tel" />
+          </div>
+        </div>
+
+        <div class="rj-form__field">
+          <label for="rj-ville">Ville de r&eacute;sidence</label>
+          <select id="rj-ville" name="ville" required>
+            <option value="">Choisir...</option>
+            <option value="mecca">Makkah</option>
+            <option value="medina">M&eacute;dine</option>
+          </select>
+        </div>
+
+        <div class="rj-form__field">
+          <label for="rj-langues">Langues parl&eacute;es</label>
+          <input type="text" id="rj-langues" name="langues" placeholder="Arabe, Fran&ccedil;ais, Anglais..." />
+        </div>
+
+        <div class="rj-form__field">
+          <label for="rj-experience">Parlez-nous de votre exp&eacute;rience</label>
+          <textarea id="rj-experience" name="experience" rows="4" placeholder="Votre parcours, vos comp&eacute;tences, votre motivation..."></textarea>
+        </div>
+
+        <p class="rj-form__error is-hidden" id="join-error">Merci de remplir tous les champs obligatoires.</p>
+
+        <button type="submit" class="rj-form__submit">
+          Envoyer ma candidature
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </form>
+
+      <div class="rj-success is-hidden" id="join-success">
+        <div class="rj-success__icon">
+          <svg viewBox="0 0 48 48" fill="none" width="48" height="48"><circle cx="24" cy="24" r="21" stroke="currentColor" stroke-width="2"/><path d="M15 24.5l6.5 6.5L33 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3 class="rj-success__title">Candidature envoy&eacute;e !</h3>
+        <p class="rj-success__text">
+          Merci pour votre int&eacute;r&ecirc;t ! Notre &eacute;quipe &eacute;tudiera votre candidature
+          et vous recontactera tr&egrave;s prochainement.
+        </p>
+        <a href={getLocalePath(lang, '/')} class="rj-success__home">
+          Retour &agrave; l'accueil
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</BaseLayout>
+
+<script>
+  import { supabase } from '../lib/supabase';
+
+  const form = document.getElementById('join-form') as HTMLFormElement | null;
+  const success = document.getElementById('join-success');
+  const errorMsg = document.getElementById('join-error');
+
+  if (form && success) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!form.checkValidity()) {
+        errorMsg?.classList.remove('is-hidden');
+        return;
+      }
+      errorMsg?.classList.add('is-hidden');
+
+      const submitBtn = form.querySelector('.rj-form__submit') as HTMLButtonElement;
+      submitBtn.disabled = true;
+
+      const data = new FormData(form);
+      const { error } = await supabase.from('guide_applications').insert({
+        first_name: data.get('prenom'),
+        last_name: data.get('nom'),
+        email: data.get('email'),
+        phone: data.get('telephone'),
+        city: data.get('ville'),
+        languages: data.get('langues'),
+        experience: data.get('experience'),
+      });
+      submitBtn.disabled = false;
+
+      if (error) {
+        if (errorMsg) {
+          errorMsg.textContent = "Une erreur est survenue. Veuillez réessayer.";
+          errorMsg.classList.remove('is-hidden');
+        }
+        return;
+      }
+
+      form.classList.add('is-hidden');
+      success.classList.remove('is-hidden');
+      success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+</script>
+
+<style is:global>
+  .is-hidden { display: none !important; }
+
+  .rj-container { max-width: 680px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---- HERO ---- */
+  .rj-hero {
+    position: relative;
+    overflow: hidden;
+    min-height: 380px;
+    display: flex;
+    align-items: flex-end;
+  }
+  .rj-hero__bg { position: absolute; inset: 0; }
+  .rj-hero__bg img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center 60%;
+  }
+  .rj-hero__overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(12,58,40,0.12) 0%, rgba(12,58,40,0.45) 60%, rgba(12,58,40,0.72) 100%);
+  }
+  .rj-hero__back {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(8px);
+    color: #FAF8F4;
+    position: absolute; top: 20px; left: 24px; z-index: 3;
+    transition: background 0.2s;
+    text-decoration: none;
+  }
+  .rj-hero__back:hover { background: rgba(255,255,255,0.22); color: #FAF8F4; }
+  .rj-hero__content {
+    position: relative; z-index: 2;
+    max-width: 800px; margin: 0 auto;
+    padding: 100px 24px 56px; width: 100%;
+  }
+  .rj-hero__eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.26em;
+    color: #CBA96A; margin-bottom: 12px;
+  }
+  .rj-hero__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.8rem; font-weight: 700;
+    color: #FAF8F4; line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .rj-hero__sub {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem; font-weight: 300;
+    color: rgba(250,248,244,0.78); line-height: 1.7;
+    max-width: 480px;
+  }
+
+  /* ---- INTRO ---- */
+  .rj-intro {
+    background: #FFFFFF;
+    padding: 56px 0 8px;
+  }
+  .rj-intro__eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.22em;
+    color: #B99752; margin: 0 0 8px;
+  }
+  .rj-intro__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.9rem; font-weight: 700;
+    color: #14513A; line-height: 1.15;
+    margin: 0 0 20px;
+  }
+  .rj-intro__text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem; font-weight: 300;
+    color: #4A4A42; line-height: 1.8;
+    margin: 0 0 16px;
+  }
+
+  /* ---- AVANTAGES ---- */
+  .rj-benefits {
+    background: #FFFFFF;
+    padding: 32px 0 56px;
+  }
+  .rj-benefits__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .rj-benefit {
+    padding: 28px 24px;
+    background: #FAF8F4;
+    border: 1px solid #EFEDE6;
+    border-radius: 16px;
+  }
+  .rj-benefit__icon {
+    color: #B99752;
+    margin-bottom: 12px;
+  }
+  .rj-benefit__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.2rem; font-weight: 700;
+    color: #14513A; margin: 0 0 6px;
+  }
+  .rj-benefit__text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.82rem; font-weight: 300;
+    color: #6B6B63; line-height: 1.65;
+    margin: 0;
+  }
+
+  /* ---- FORMULAIRE ---- */
+  .rj-form-section {
+    background: #FAF8F4;
+    padding: 56px 0 88px;
+  }
+  .rj-form-card {
+    background: #FFFFFF;
+    border: 1px solid #EFEDE6;
+    border-radius: 20px;
+    padding: 40px 36px;
+  }
+  .rj-form__eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.68rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.2em;
+    color: #B99752; margin: 0 0 8px;
+  }
+  .rj-form__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.6rem; font-weight: 700;
+    color: #1C1C1A; margin: 0 0 8px;
+  }
+  .rj-form__desc {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; font-weight: 300;
+    color: #6B6B63; line-height: 1.7;
+    margin: 0 0 28px;
+  }
+  .rj-form__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .rj-form__field { margin-bottom: 18px; }
+  .rj-form__field label {
+    display: block;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; font-weight: 500;
+    color: #1C1C1A;
+    margin-bottom: 6px;
+  }
+  .rj-form__field input,
+  .rj-form__field select,
+  .rj-form__field textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: #FAF8F4;
+    border: 1px solid #E3E0D6;
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.9rem; font-weight: 300;
+    color: #1C1C1A;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    resize: vertical;
+  }
+  .rj-form__field input:focus,
+  .rj-form__field select:focus,
+  .rj-form__field textarea:focus {
+    outline: none;
+    border-color: #14513A;
+    box-shadow: 0 0 0 3px rgba(20,81,58,0.1);
+  }
+  .rj-form__error {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem; font-weight: 400;
+    color: #B3261E;
+    margin: 0 0 14px;
+  }
+  .rj-form__submit {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 30px;
+    background: #14513A; color: #FAF8F4;
+    border: none; border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.82rem; font-weight: 500;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
+  }
+  .rj-form__submit:hover {
+    background: #0C3A28;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(20,81,58,0.25);
+  }
+  .rj-form__submit svg { transition: transform 0.3s; }
+  .rj-form__submit:hover svg { transform: translateX(4px); }
+
+  /* ---- SUCCÈS ---- */
+  .rj-success {
+    text-align: center;
+    padding: 56px 32px;
+    animation: rjSuccessIn 0.6s ease;
+  }
+  @keyframes rjSuccessIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .rj-success__icon {
+    color: #14513A;
+    margin-bottom: 16px;
+    display: inline-block;
+  }
+  .rj-success__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.7rem; font-weight: 700;
+    color: #14513A; margin: 0 0 12px;
+  }
+  .rj-success__text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem; font-weight: 300;
+    color: #4A4A42; line-height: 1.8;
+    max-width: 440px; margin: 0 auto;
+  }
+  .rj-success__home {
+    display: inline-flex; align-items: center; gap: 10px;
+    margin-top: 28px;
+    padding: 13px 28px;
+    background: #14513A; color: #FAF8F4;
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem; font-weight: 500;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
+  }
+  .rj-success__home:hover {
+    background: #0C3A28; color: #FAF8F4;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(20,81,58,0.25);
+  }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 639px) {
+    .rj-hero { min-height: 320px; }
+    .rj-hero__title { font-size: 2rem; }
+    .rj-hero__content { padding: 80px 24px 44px; }
+
+    .rj-intro { padding: 40px 0 4px; }
+    .rj-intro__title { font-size: 1.5rem; }
+
+    .rj-benefits { padding: 24px 0 40px; }
+    .rj-benefits__grid { grid-template-columns: 1fr; gap: 14px; }
+
+    .rj-form-section { padding: 40px 0 64px; }
+    .rj-form-card { padding: 28px 18px; }
+    .rj-form__row { grid-template-columns: 1fr; gap: 0; }
+    .rj-form__submit { width: 100%; justify-content: center; }
+    .rj-success { padding: 40px 20px; }
+  }
+</style>
