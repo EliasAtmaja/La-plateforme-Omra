@@ -165,6 +165,13 @@ import '../../../styles/global.css';
             </select>
           </div>
           <div class="adm-form-field">
+            <label>Genre</label>
+            <select name="gender" required>
+              <option value="homme">Homme</option>
+              <option value="femme">Femme</option>
+            </select>
+          </div>
+          <div class="adm-form-field">
             <label>Prix (€)</label>
             <input type="number" name="prix" min="1" required placeholder="150" />
           </div>
@@ -185,8 +192,8 @@ import '../../../styles/global.css';
             <label class="adm-form-service"><input type="checkbox" name="services" value="omra-masjid-aicha" /><span>Omra au d&eacute;part du Masjid A&iuml;cha</span></label>
             <label class="adm-form-service"><input type="checkbox" name="services" value="visite-historique-makkah" /><span>Visite historique de Makkah</span></label>
             <label class="adm-form-service"><input type="checkbox" name="services" value="visite-historique-medine" /><span>Visite historique de M&eacute;dine</span></label>
-            <label class="adm-form-service"><input type="checkbox" name="services" value="visite-masjid-nabawi" /><span>Visite du Masjid En-Nabawi</span></label>
-            <label class="adm-form-service"><input type="checkbox" name="services" value="shopping-guide-medine" /><span>Shopping guid&eacute; &agrave; M&eacute;dine</span></label>
+            <label class="adm-form-service"><input type="checkbox" name="services" value="visite-masjid-nabawi" /><span>Visite du Masjid An-Nabawi</span></label>
+            <label class="adm-form-service"><input type="checkbox" name="services" value="shopping-guide-medine" /><span>Orientation &amp; Shopping Privil&egrave;ge (Femmes)</span></label>
           </div>
         </div>
         <div class="adm-form-field">
@@ -937,6 +944,7 @@ import '../../../styles/global.css';
     (addGuideForm.querySelector('[name="prenom"]') as HTMLInputElement).value = guide.firstName || '';
     (addGuideForm.querySelector('[name="nom"]') as HTMLInputElement).value = guide.lastName || '';
     (addGuideForm.querySelector('[name="ville"]') as HTMLSelectElement).value = guide.city || '';
+    (addGuideForm.querySelector('[name="gender"]') as HTMLSelectElement).value = guide.gender || 'homme';
     (addGuideForm.querySelector('[name="prix"]') as HTMLInputElement).value = guide.pricePerDay ? String(guide.pricePerDay) : '';
     (addGuideForm.querySelector('[name="diplome"]') as HTMLInputElement).value = guide.diploma || '';
     (addGuideForm.querySelector('[name="langues"]') as HTMLInputElement).value = (guide.languages || []).join(', ');
@@ -990,6 +998,7 @@ import '../../../styles/global.css';
     const prenom = (form.querySelector('[name="prenom"]') as HTMLInputElement).value.trim();
     const nom = (form.querySelector('[name="nom"]') as HTMLInputElement).value.trim();
     const ville = (form.querySelector('[name="ville"]') as HTMLSelectElement).value;
+    const gender = (form.querySelector('[name="gender"]') as HTMLSelectElement).value;
     const prix = (form.querySelector('[name="prix"]') as HTMLInputElement).value;
     const diplome = (form.querySelector('[name="diplome"]') as HTMLInputElement).value.trim();
     const langues = (form.querySelector('[name="langues"]') as HTMLInputElement).value.trim();
@@ -1015,6 +1024,7 @@ import '../../../styles/global.css';
       first_name: prenom,
       last_name: nom,
       city: ville || 'medina',
+      gender: gender || 'homme',
       diploma: diplome || null,
       description: description || null,
       languages: langues ? langues.split(',').map((l: string) => l.trim()).filter(Boolean) : [],

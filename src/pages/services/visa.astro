@@ -15,10 +15,10 @@ const service = services.find(s => s.slug === 'visa')!;
     <img src={service.heroImage} alt="" loading="eager" />
   </div>
   <div class="sv-hero__overlay"></div>
+  <a href={getLocalePath(lang, '/')} class="sv-hero__back" aria-label="Retour">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 4l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </a>
   <div class="sv-hero__content">
-    <a href={getLocalePath(lang, '/')} class="sv-hero__back" aria-label="Retour">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 4l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </a>
     <p class="sv-hero__eyebrow load-rise" style="--load-delay: 100ms">{service.eyebrow}</p>
     <h1 class="sv-hero__title load-rise" style="--load-delay: 250ms">{service.title}</h1>
     <p class="sv-hero__sub load-rise" style="--load-delay: 400ms">{service.subtitle}</p>
@@ -215,7 +215,7 @@ const service = services.find(s => s.slug === 'visa')!;
   }
   .sv-hero__overlay {
     position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(12,58,40,0.3) 0%, rgba(12,58,40,0.75) 60%, rgba(12,58,40,0.92) 100%);
+    background: linear-gradient(180deg, rgba(12,58,40,0.12) 0%, rgba(12,58,40,0.45) 60%, rgba(12,58,40,0.72) 100%);
   }
   .sv-hero__content {
     position: relative; z-index: 2;
@@ -228,7 +228,7 @@ const service = services.find(s => s.slug === 'visa')!;
     background: rgba(255,255,255,0.12);
     backdrop-filter: blur(8px);
     color: #FAF8F4;
-    position: absolute; top: 100px; left: 24px;
+    position: absolute; top: 96px; left: 24px; z-index: 3;
     transition: background 0.2s;
     text-decoration: none;
   }

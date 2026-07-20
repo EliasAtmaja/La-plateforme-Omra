@@ -14,15 +14,49 @@ const lang = getLangFromUrl(Astro.url);
     </div>
   </div>
 
-  <div class="gp-activity-banner" id="activity-banner" hidden>
+  <!-- Filtres -->
+  <section class="gp-filters">
     <div class="gp-container">
-      <div class="gp-activity-banner__inner">
-        <span class="gp-activity-banner__label">Activit&eacute; choisie :</span>
-        <span class="gp-activity-banner__name" id="activity-banner-name"></span>
-        <a href="#" class="gp-activity-banner__clear" id="activity-banner-clear" aria-label="Retirer l'activité">&#10005;</a>
+      <div class="gp-filters__row">
+        <!-- Filtre 1 : Date -->
+        <div class="gp-filter">
+          <label class="gp-filter__label">Jour s&eacute;lectionn&eacute;</label>
+          <div class="gp-filter__date-wrap">
+            <button type="button" class="gp-filter__date-btn" id="filter-date-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="4" y="5.5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 10h16M8.5 3.5v3.5M15.5 3.5v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              <span id="filter-date-label">Toutes les dates</span>
+            </button>
+            <button type="button" class="gp-filter__date-clear is-hidden" id="filter-date-clear" aria-label="Retirer la date">&#10005;</button>
+          </div>
+          <div class="gp-filter__cal is-hidden" id="filter-cal">
+            <div class="gp-filter__cal-nav">
+              <button type="button" class="gp-filter__cal-arrow" id="filter-cal-prev" aria-label="Mois pr&eacute;c&eacute;dent">
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9L11 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span class="gp-filter__cal-month" id="filter-cal-month"></span>
+              <button type="button" class="gp-filter__cal-arrow" id="filter-cal-next" aria-label="Mois suivant">
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M7 4L12 9L7 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="gp-filter__cal-weekdays">
+              <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+            </div>
+            <div class="gp-filter__cal-grid" id="filter-cal-grid"></div>
+          </div>
+        </div>
+
+        <!-- Filtre 2 : Genre -->
+        <div class="gp-filter">
+          <label class="gp-filter__label">Je recherche un guide</label>
+          <div class="gp-filter__pills" id="filter-gender">
+            <button type="button" class="gp-filter__pill is-active" data-gender="">Tous</button>
+            <button type="button" class="gp-filter__pill" data-gender="homme">Homme</button>
+            <button type="button" class="gp-filter__pill" data-gender="femme">Femme</button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 
   <section class="gp-list">
     <div class="gp-container stagger" id="guides-list">
@@ -38,50 +72,99 @@ const lang = getLangFromUrl(Astro.url);
   const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const calStates: Record<string, { year: number; month: number; selectedDate: string | null; selectedSlot: string | null }> = {};
 
-  const ACTIVITY_NAMES: Record<string, string> = {
-    'formule-essentielle': 'Formule Essentielle',
-    'formule-confort': 'Formule Confort',
-    'formule-sur-mesure': 'Formule Sur Mesure',
-    'omra-classique': 'Omra Privé Premium',
-    'guide-pmr-omra': 'Omra Privé Premium PMR',
-    'omra-masjid-aicha': 'Omra au départ du Masjid Aïcha',
-    'visite-historique-makkah': 'Visite historique de Makkah',
-    'visite-historique-medine': 'Visite historique de Médine',
-    'visite-masjid-nabawi': 'Visite du Masjid En-Nabawi',
-    'shopping-guide-medine': 'Shopping guidé à Médine',
-    'visa-omra-standard': 'Visa Omra standard',
-    'visa-omra-express': 'Visa Omra express',
-    'visa-groupe-famille': 'Visa groupe / famille',
-  };
+  let filterGender: string = '';
+  let filterDate: string = '';
+  let filterCalYear = new Date().getFullYear();
+  let filterCalMonth = new Date().getMonth();
 
-  let chosenActivitySlug: string | null = new URLSearchParams(window.location.search).get('activite');
-  let chosenActivityName: string | null = chosenActivitySlug ? (ACTIVITY_NAMES[chosenActivitySlug] || chosenActivitySlug) : null;
+  function initFilters() {
+    const genderPills = document.getElementById('filter-gender');
+    const dateBtn = document.getElementById('filter-date-btn');
+    const dateLabel = document.getElementById('filter-date-label');
+    const dateClear = document.getElementById('filter-date-clear');
+    const calPanel = document.getElementById('filter-cal');
+    const calMonth = document.getElementById('filter-cal-month');
+    const calGrid = document.getElementById('filter-cal-grid');
+    const calPrev = document.getElementById('filter-cal-prev');
+    const calNext = document.getElementById('filter-cal-next');
+    if (!genderPills || !dateBtn || !dateLabel || !dateClear || !calPanel || !calMonth || !calGrid) return;
 
-  // Filtre par ville (?ville=medine | makkah) — depuis le menu mobile
-  const VILLE_PARAM = new URLSearchParams(window.location.search).get('ville');
-  const CITY_FILTER = VILLE_PARAM === 'medine' ? 'medina' : VILLE_PARAM === 'makkah' ? 'mecca' : null;
+    // --- Gender pills ---
+    genderPills.querySelectorAll('.gp-filter__pill').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const val = (btn as HTMLElement).dataset.gender || '';
+        filterGender = val;
+        genderPills.querySelectorAll('.gp-filter__pill').forEach((b) => {
+          (b as HTMLElement).classList.toggle('is-active', (b as HTMLElement).dataset.gender === val);
+        });
+        renderGuidesList();
+      });
+    });
 
-  function initActivityBanner() {
-    const banner = document.getElementById('activity-banner');
-    const nameEl = document.getElementById('activity-banner-name');
-    const clearBtn = document.getElementById('activity-banner-clear');
-    if (!banner || !nameEl || !clearBtn) return;
-    if (chosenActivitySlug && chosenActivityName) {
-      nameEl.textContent = chosenActivityName;
-      banner.hidden = false;
-    }
-    clearBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      chosenActivitySlug = null;
-      chosenActivityName = null;
-      banner.hidden = true;
-      const url = new URL(window.location.href);
-      url.searchParams.delete('activite');
-      history.replaceState(null, '', url.toString());
+    // --- Date calendar ---
+    dateBtn.addEventListener('click', () => {
+      calPanel.classList.toggle('is-hidden');
+    });
+
+    dateClear?.addEventListener('click', () => {
+      filterDate = '';
+      dateLabel.textContent = 'Toutes les dates';
+      dateClear.classList.add('is-hidden');
+      calPanel.classList.add('is-hidden');
       renderGuidesList();
     });
+
+    calPrev?.addEventListener('click', () => {
+      filterCalMonth--;
+      if (filterCalMonth < 0) { filterCalMonth = 11; filterCalYear--; }
+      renderFilterCal();
+    });
+    calNext?.addEventListener('click', () => {
+      filterCalMonth++;
+      if (filterCalMonth > 11) { filterCalMonth = 0; filterCalYear++; }
+      renderFilterCal();
+    });
+
+    function renderFilterCal() {
+      if (!calMonth || !calGrid) return;
+      calMonth.textContent = `${MONTH_NAMES[filterCalMonth]} ${filterCalYear}`;
+      const firstDay = new Date(filterCalYear, filterCalMonth, 1).getDay();
+      const daysInMonth = new Date(filterCalYear, filterCalMonth + 1, 0).getDate();
+      const offset = (firstDay + 6) % 7;
+      const today = new Date(); today.setHours(0,0,0,0);
+      let html = '';
+      for (let i = 0; i < offset; i++) html += '<span class="gp-filter__cal-empty"></span>';
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateObj = new Date(filterCalYear, filterCalMonth, d);
+        const dateStr = `${filterCalYear}-${String(filterCalMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const isPast = dateObj < today;
+        const isSelected = dateStr === filterDate;
+        html += `<button type="button" class="gp-filter__cal-day${isPast ? ' is-past' : ''}${isSelected ? ' is-selected' : ''}" data-date="${dateStr}"${isPast ? ' disabled' : ''}>${d}</button>`;
+      }
+      calGrid.innerHTML = html;
+      calGrid.querySelectorAll('.gp-filter__cal-day:not(.is-past)').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const ds = (btn as HTMLElement).dataset.date || '';
+          filterDate = ds;
+          const parts = ds.split('-');
+          dateLabel.textContent = `${parseInt(parts[2])} ${MONTH_NAMES[parseInt(parts[1]) - 1]} ${parts[0]}`;
+          dateClear.classList.remove('is-hidden');
+          calPanel.classList.add('is-hidden');
+          renderGuidesList();
+        });
+      });
+    }
+    renderFilterCal();
+
+    // Fermer le calendrier quand on clique en dehors
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (!calPanel.classList.contains('is-hidden') && !calPanel.contains(target) && target !== dateBtn && !dateBtn.contains(target)) {
+        calPanel.classList.add('is-hidden');
+      }
+    });
   }
-  initActivityBanner();
+  initFilters();
 
   function esc(s: string) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -149,17 +232,16 @@ const lang = getLangFromUrl(Astro.url);
     if (!list) return;
 
     let guides = getGuides();
-    if (CITY_FILTER) guides = guides.filter((g: any) => g.city === CITY_FILTER);
-    // Activité choisie : seuls les guides affectés à ce service sont proposés
-    if (chosenActivitySlug) guides = guides.filter((g: any) => (g.services || []).includes(chosenActivitySlug));
+    if (filterGender) guides = guides.filter((g: any) => g.gender === filterGender);
+    if (filterDate) guides = guides.filter((g: any) => freeSlotsFor(g.id, filterDate).length > 0);
     const existing = list.querySelectorAll('.gp-card');
     existing.forEach(el => el.remove());
     document.querySelectorAll('body > .gp-cal').forEach(el => el.remove());
 
     if (guides.length === 0) {
       if (empty) {
-        empty.textContent = chosenActivitySlug
-          ? 'Aucun guide ne propose cette activité pour le moment.'
+        empty.textContent = (filterGender || filterDate)
+          ? 'Aucun guide ne correspond à vos critères.'
           : 'Aucun guide disponible pour le moment.';
         empty.hidden = false;
       }
@@ -605,8 +687,8 @@ const lang = getLangFromUrl(Astro.url);
       p_guide_id: guideId,
       p_date: date,
       p_slot: slot,
-      p_activity_slug: chosenActivitySlug,
-      p_activity_name: chosenActivityName,
+      p_activity_slug: null,
+      p_activity_name: null,
     });
     if (error || !data) {
       alert("Cette date n'est plus disponible. Le calendrier a été mis à jour.");
@@ -628,7 +710,7 @@ const lang = getLangFromUrl(Astro.url);
       guidePhoto: guide?.photo || '',
       date,
       slot,
-      activityName: chosenActivityName || '',
+      activityName: '',
       price: guide?.pricePerDay || 0,
     });
     localStorage.setItem('omra-cart', JSON.stringify(cart));
@@ -644,43 +726,190 @@ const lang = getLangFromUrl(Astro.url);
 
   .gp-container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
 
-  /* ---- ACTIVITY BANNER ---- */
-  .gp-activity-banner {
-    background: #EDF5F0;
-    border-bottom: 1px solid #D4E8DB;
+  /* ---- FILTERS ---- */
+  .gp-filters {
+    background: #FFFFFF;
+    border-bottom: 1px solid #EFEDE6;
+    padding: 28px 0 24px;
   }
-  .gp-activity-banner__inner {
+  .gp-filters__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 32px;
+  }
+  .gp-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+  }
+  .gp-filter__label {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #9C9C93;
+  }
+  .gp-filter__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .gp-filter__pill {
+    padding: 7px 16px;
+    border: 1px solid #E3E0D6;
+    border-radius: 20px;
+    background: #FFFFFF;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: #6B6B63;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .gp-filter__pill:hover {
+    border-color: #14513A;
+    color: #14513A;
+  }
+  .gp-filter__pill.is-active {
+    background: #14513A;
+    border-color: #14513A;
+    color: #FAF8F4;
+    font-weight: 500;
+  }
+
+  /* Date filter */
+  .gp-filter__date-wrap {
     display: flex;
     align-items: center;
+    gap: 6px;
+  }
+  .gp-filter__date-btn {
+    display: inline-flex;
+    align-items: center;
     gap: 8px;
-    padding: 12px 0;
+    padding: 7px 16px;
+    border: 1px solid #E3E0D6;
+    border-radius: 20px;
+    background: #FFFFFF;
     font-family: 'Jost', sans-serif;
-    font-size: 0.85rem;
-  }
-  .gp-activity-banner__label {
-    color: #6B6B63;
+    font-size: 0.78rem;
     font-weight: 400;
+    color: #6B6B63;
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
-  .gp-activity-banner__name {
+  .gp-filter__date-btn:hover {
+    border-color: #14513A;
     color: #14513A;
-    font-weight: 600;
   }
-  .gp-activity-banner__clear {
-    margin-left: auto;
+  .gp-filter__date-clear {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 24px;
     height: 24px;
     border-radius: 50%;
+    border: none;
+    background: none;
     color: #9C9C93;
-    text-decoration: none;
     font-size: 0.75rem;
+    cursor: pointer;
     transition: background 0.15s, color 0.15s;
   }
-  .gp-activity-banner__clear:hover {
+  .gp-filter__date-clear:hover {
     background: rgba(20,81,58,0.08);
     color: #14513A;
+  }
+  .gp-filter__cal {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 8px;
+    background: #FFFFFF;
+    border: 1px solid #EFEDE6;
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+    padding: 20px;
+    z-index: 20;
+    width: 300px;
+  }
+  .gp-filter__cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .gp-filter__cal-month {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #14513A;
+  }
+  .gp-filter__cal-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    color: #14513A;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .gp-filter__cal-arrow:hover {
+    background: rgba(20,81,58,0.08);
+  }
+  .gp-filter__cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9C9C93;
+    margin-bottom: 6px;
+  }
+  .gp-filter__cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+  .gp-filter__cal-empty {
+    aspect-ratio: 1;
+  }
+  .gp-filter__cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    background: none;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: #1C1C1A;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .gp-filter__cal-day:hover:not(.is-past) {
+    background: rgba(20,81,58,0.08);
+  }
+  .gp-filter__cal-day.is-past {
+    color: #D0CFC8;
+    cursor: default;
+  }
+  .gp-filter__cal-day.is-selected {
+    background: #14513A;
+    color: #FAF8F4;
+    font-weight: 600;
   }
 
   /* ---- HERO ---- */
@@ -1342,6 +1571,11 @@ const lang = getLangFromUrl(Astro.url);
 
   /* ---- RESPONSIVE ---- */
   @media (max-width: 767px) {
+    .gp-filters { padding: 20px 0 16px; }
+    .gp-filters__row { gap: 16px; flex-direction: column; }
+    .gp-filter__pills { gap: 5px; }
+    .gp-filter__pill { padding: 6px 12px; font-size: 0.72rem; }
+    .gp-filter__cal { width: calc(100vw - 48px); left: 0; right: 0; }
     .gp-hero { padding: 56px 0 40px; }
     .gp-hero__title { font-size: 2rem; }
 

@@ -141,8 +141,8 @@ export const services: ServicePage[] = [
       },
       {
         slug: 'visite-masjid-nabawi',
-        title: 'Visite du Masjid En-Nabawi',
-        desc: 'Visite guidée complète du Masjid En-Nabawi, Rawdah et cimetière Al-Baqi.',
+        title: 'Visite du Masjid An-Nabawi',
+        desc: 'Visite guidée complète du Masjid An-Nabawi, Rawdah et cimetière Al-Baqi.',
         duration: '2 à 3h',
         type: 'Privé',
         typeIcon: 'private',
@@ -150,8 +150,8 @@ export const services: ServicePage[] = [
       },
       {
         slug: 'shopping-guide-medine',
-        title: 'Shopping guidé à Médine',
-        desc: 'Découvrez les meilleurs souks et boutiques de Médine avec un guide local qui connaît les bonnes adresses.',
+        title: 'Orientation & Shopping Privilège (Femmes)',
+        desc: 'Orientation au Masjid Nabawi et shopping guidé avec votre guide femme dédiée.',
         duration: '3 à 4h',
         type: 'Privé',
         typeIcon: 'private',

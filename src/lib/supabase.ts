@@ -49,6 +49,7 @@ export function mapGuide(row: any) {
     pricePerDay: row.price_per_day || 0,
     login: row.login || '',
     services: row.services || [],
+    gender: row.gender || 'homme',
   };
 }
 
