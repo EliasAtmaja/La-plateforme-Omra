@@ -94,7 +94,7 @@ export const activities: ActivityDetail[] = [
     title: 'Omra Privé Premium',
     eyebrow: 'Accompagnement à Makkah',
     subtitle: 'Accomplissez votre Omra avec un guide expérimenté qui vous accompagne à chaque rituel.',
-    heroImage: '/assets/images/makkah-bg.jpg',
+    heroImage: '/assets/images/hero-omra-prive.jpg',
     city: 'mecca',
     longDescription: 'L\'Omra Privé Premium est un accompagnement complet pour accomplir les rituels sacrés en toute sérénité. Votre guide francophone vous explique chaque étape, vous aide avec les invocations et veille à ce que votre expérience spirituelle soit la plus enrichissante possible.',
     timeline: [
@@ -117,7 +117,7 @@ export const activities: ActivityDetail[] = [
     title: 'Omra Privé Premium PMR',
     eyebrow: 'Accompagnement à Makkah',
     subtitle: 'Un service dédié aux personnes à mobilité réduite, avec assistance complète de A à Z.',
-    heroImage: '/assets/images/omra-pmr.png',
+    heroImage: '/assets/images/hero-omra-prive.jpg',
     city: 'mecca',
     longDescription: 'Ce service spécialisé garantit aux personnes à mobilité réduite un accomplissement serein de leur Omra. Un guide formé et attentionné vous accompagne à chaque instant, avec un fauteuil roulant mis à disposition et une assistance permanente.',
     timeline: [
@@ -141,7 +141,7 @@ export const activities: ActivityDetail[] = [
     title: 'Omra au départ du Masjid Aïcha',
     eyebrow: 'Accompagnement à Makkah',
     subtitle: 'Accomplissez votre Omra depuis le Miqat du Masjid Aïcha (Taneem).',
-    heroImage: '/assets/images/masjid-aicha.jpg',
+    heroImage: '/assets/images/hero-masjid-aicha.jpg',
     city: 'mecca',
     longDescription: 'Pour ceux qui sont déjà à Makkah et souhaitent accomplir une Omra supplémentaire, le départ se fait depuis le Masjid Aïcha (Taneem), le Miqat le plus proche. Votre guide vous accompagne depuis ce lieu sacré jusqu\'à l\'accomplissement complet des rituels.',
     timeline: [
@@ -164,7 +164,7 @@ export const activities: ActivityDetail[] = [
     title: 'Visite historique de Makkah',
     eyebrow: 'Accompagnement à Makkah',
     subtitle: 'Sur les traces de l\'histoire sacrée de La Mecque, du Mont de la Lumière à la plaine d\'Arafat.',
-    heroImage: '/assets/images/jabal-thawr.jpg',
+    heroImage: '/assets/images/hero-visite-makkah.jpg',
     city: 'mecca',
     longDescription: 'Explorez les sites historiques et spirituels de La Mecque avec un guide spécialisé. Du Jabal al-Nour, où le Prophète ﷺ reçut la première révélation, au Jabal Thawr, refuge de l\'Hégire, en passant par les lieux emblématiques du Hajj — Mina, Arafat et Muzdalifah — chaque étape vous plonge dans l\'histoire de l\'Islam. Votre guide francophone vous transmet les récits et les enseignements liés à chaque lieu.',
     timeline: [
@@ -197,7 +197,7 @@ export const activities: ActivityDetail[] = [
     title: 'Visite historique de Médine',
     eyebrow: 'Découverte de Médine',
     subtitle: 'Explorez les lieux historiques de Médine avec un guide passionné.',
-    heroImage: '/assets/images/visite-medine.jpeg',
+    heroImage: '/assets/images/hero-visite-medine.jpg',
     city: 'medina',
     longDescription: 'Plongez dans l\'histoire de la ville du Prophète ﷺ en visitant ses sites les plus emblématiques. De la première mosquée de l\'Islam au mont Uhud, chaque lieu raconte une page de l\'histoire islamique. Votre guide francophone vous transmet les récits et les enseignements liés à chaque endroit.',
     timeline: [
@@ -217,7 +217,7 @@ export const activities: ActivityDetail[] = [
     title: 'Visite du Masjid An-Nabawi',
     eyebrow: 'Découverte de Médine',
     subtitle: 'Session d\'orientation exclusive pour maîtriser le Masjid Nabawi et ses abords.',
-    heroImage: '/assets/images/madinah-bg.jpg',
+    heroImage: '/assets/images/hero-medine.jpg',
     city: 'medina',
     longDescription: 'Cette session d\'orientation exclusive est conçue pour permettre aux pèlerins de prendre immédiatement leurs marques à Médine et d\'optimiser chaque instant de leur séjour. Le guide local que vous aurez choisi vous accompagnera pour vous transmettre une parfaite maîtrise géographique du Masjid Nabawi et de ses abords. Grâce à ses conseils pratiques et ses astuces de terrain, vous saurez exactement comment vous repérer, où prier selon les moments de la journée, et comment circuler avec fluidité. Il vous guidera précisément pour situer les lieux fondamentaux : l\'accès à la Rawda Sharifa, l\'emplacement où repose le Prophète ﷺ, la porte dédiée aux salutations, ainsi que le cimetière du Baqî\'. Pour un séjour sans imprévu, votre guide vous montrera également les infrastructures essentielles comme le dispensaire, tout en vous orientant vers les différents musées culturels à proximité. Une fois ces repères solidement établis, vous disposerez d\'une autonomie totale pour vivre vos adorations en toute sérénité.',
     timeline: [],

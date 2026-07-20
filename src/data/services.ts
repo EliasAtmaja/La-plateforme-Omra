@@ -69,7 +69,7 @@ export const services: ServicePage[] = [
     eyebrow: 'Accompagnement',
     title: 'Vos accompagnements à Makkah Al Mukaramah',
     subtitle: 'Un accompagnement complet pour accomplir votre Omra en toute sérénité.',
-    heroImage: '/assets/images/makkah-bg.jpg',
+    heroImage: '/assets/images/hero-omra-prive.jpg',
     features: [
       { icon: 'guide', label: 'Encadrement personnalisé' },
       { icon: 'ritual', label: 'Rituels de l\'Omra' },
@@ -84,7 +84,7 @@ export const services: ServicePage[] = [
         duration: '3 à 5h',
         type: 'Privé',
         typeIcon: 'private',
-        image: '/assets/images/makkah-bg.jpg',
+        image: '/assets/images/hero-omra-prive.jpg',
         premium: true,
       },
       {
@@ -94,7 +94,7 @@ export const services: ServicePage[] = [
         duration: '5 à 6h',
         type: 'PMR',
         typeIcon: 'pmr',
-        image: '/assets/images/omra-pmr.png',
+        image: '/assets/images/hero-omra-prive.jpg',
         premium: true,
       },
       {
@@ -104,7 +104,7 @@ export const services: ServicePage[] = [
         duration: 'Journée complète',
         type: 'Groupe',
         typeIcon: 'group',
-        image: '/assets/images/jabal-thawr.jpg',
+        image: '/assets/images/hero-visite-makkah.jpg',
       },
       {
         slug: 'omra-masjid-aicha',
@@ -113,7 +113,7 @@ export const services: ServicePage[] = [
         duration: '4 à 5h',
         type: 'Privé',
         typeIcon: 'private',
-        image: '/assets/images/masjid-aicha.jpg',
+        image: '/assets/images/hero-masjid-aicha.jpg',
       },
     ],
   },
@@ -122,7 +122,7 @@ export const services: ServicePage[] = [
     eyebrow: 'Découverte',
     title: 'Vos accompagnements à Al-Madinah',
     subtitle: 'Découvrez la ville du Prophète avec des guides locaux passionnés et bienveillants.',
-    heroImage: '/assets/images/madinah-bg.jpg',
+    heroImage: '/assets/images/hero-medine.jpg',
     features: [
       { icon: 'guide', label: 'Guides locaux certifiés' },
       { icon: 'history', label: 'Visites historiques' },
@@ -137,7 +137,7 @@ export const services: ServicePage[] = [
         duration: '4 à 6h',
         type: 'Groupe',
         typeIcon: 'group',
-        image: '/assets/images/visite-medine.jpeg',
+        image: '/assets/images/hero-visite-medine.jpg',
       },
       {
         slug: 'visite-masjid-nabawi',
@@ -146,7 +146,7 @@ export const services: ServicePage[] = [
         duration: '2 à 3h',
         type: 'Privé',
         typeIcon: 'private',
-        image: '/assets/images/madinah-bg.jpg',
+        image: '/assets/images/hero-medine.jpg',
       },
       {
         slug: 'shopping-guide-medine',
