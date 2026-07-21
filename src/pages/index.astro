@@ -241,6 +241,44 @@ const lang = getLangFromUrl(Astro.url);
   </div>
 </section>
 
+<!-- ========== QUI SOMMES-NOUS ========== -->
+<section class="hm-about">
+  <div class="hm-about__wrap">
+    <div class="hm-container">
+      <div class="hm-about__grid reveal">
+        <div class="hm-about__content">
+          <p class="hm-about__eyebrow">Qui sommes-nous</p>
+          <h2 class="hm-about__title">Plus de 10 ans d'expertise au service de votre s&eacute;r&eacute;nit&eacute;</h2>
+          <p class="hm-about__text">La Plateforme Omra est le premier espace digital francophone qui connecte directement les invit&eacute;s d'Allah avec des professionnels locaux certifi&eacute;s. Nous ne vendons pas de voyages&nbsp;: nous mettons notre expertise &agrave; votre service pour vous guider physiquement et spirituellement une fois arriv&eacute; &agrave; destination.</p>
+          <p class="hm-about__text">Forts de plus de 10 ann&eacute;es de pr&eacute;sence continue en Arabie Saoudite et ayant accompagn&eacute; plus de 10&nbsp;000 p&egrave;lerins, nous connaissons le terrain dans ses moindres d&eacute;tails. Chaque professionnel est rigoureusement s&eacute;lectionn&eacute; pour ses comp&eacute;tences, sa ma&icirc;trise du terrain et sa connaissance des rites.</p>
+          <div class="hm-about__points">
+            <div class="hm-about__point">
+              <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M4 10l4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Accompagnement Omra pas &agrave; pas</span>
+            </div>
+            <div class="hm-about__point">
+              <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M4 10l4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Visites historiques &agrave; Makkah et M&eacute;dine</span>
+            </div>
+            <div class="hm-about__point">
+              <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M4 10l4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Assistance WhatsApp tout au long du s&eacute;jour</span>
+            </div>
+            <div class="hm-about__point">
+              <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M4 10l4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Professionnels v&eacute;rifi&eacute;s et certifi&eacute;s</span>
+            </div>
+          </div>
+          <a href={getLocalePath(lang, '/a-propos/')} class="hm-about__link">
+            En savoir plus
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ========== STATS BAR ========== -->
 <section class="hm-stats">
   <div class="hm-container">
@@ -1242,6 +1280,61 @@ const lang = getLangFromUrl(Astro.url);
     .hm-join__text { max-width: none; }
     .hm-join__icon { display: none; }
     .hm-join__btn { width: 100%; justify-content: center; }
+  }
+
+  /* ---- QUI SOMMES-NOUS ---- */
+  .hm-about { padding: 0; background: #FFFFFF; }
+  .hm-about__wrap {
+    background: #14513A;
+    padding: 64px 0;
+    box-shadow:
+      inset 0 18px 28px -12px rgba(0,0,0,0.35),
+      inset 0 -18px 28px -12px rgba(0,0,0,0.35);
+  }
+  .hm-about__grid { max-width: 640px; }
+  .hm-about__eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.68rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.22em;
+    color: #CBA96A; margin: 0 0 12px;
+  }
+  .hm-about__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.8rem; font-weight: 700;
+    color: #FAF8F4; line-height: 1.15;
+    margin: 0 0 20px;
+  }
+  .hm-about__text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.9rem; font-weight: 300;
+    color: rgba(250,248,244,0.75); line-height: 1.8;
+    margin: 0 0 16px;
+  }
+  .hm-about__points {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px 24px;
+    margin: 24px 0 28px;
+  }
+  .hm-about__point {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.82rem; font-weight: 400;
+    color: #FAF8F4;
+  }
+  .hm-about__point svg { color: #CBA96A; flex-shrink: 0; }
+  .hm-about__link {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: #CBA96A; text-decoration: none;
+    transition: color 0.2s, gap 0.3s;
+  }
+  .hm-about__link:hover { color: #E2C98A; gap: 12px; }
+  @media (max-width: 639px) {
+    .hm-about__wrap { padding: 48px 0; }
+    .hm-about__title { font-size: 1.45rem; }
+    .hm-about__points { grid-template-columns: 1fr; }
   }
 
   /* ---- STATS BAR ---- */
