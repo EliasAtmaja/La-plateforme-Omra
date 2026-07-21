@@ -1,0 +1,16 @@
+# Disable Hostinger LiteSpeed cache
+<IfModule LiteSpeed>
+  CacheLookup off
+</IfModule>
+
+# No-cache for HTML pages
+<FilesMatch "\.(html)$">
+  Header set Cache-Control "no-cache, no-store, must-revalidate"
+  Header set Pragma "no-cache"
+  Header set Expires 0
+</FilesMatch>
+
+# Short cache for CSS/JS (hashed filenames handle versioning)
+<FilesMatch "\.(css|js)$">
+  Header set Cache-Control "public, max-age=60"
+</FilesMatch>
