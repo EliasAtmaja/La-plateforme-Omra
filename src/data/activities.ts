@@ -117,7 +117,7 @@ export const activities: ActivityDetail[] = [
     title: 'Omra Privé Premium PMR',
     eyebrow: 'Accompagnement à Makkah',
     subtitle: 'Un service dédié aux personnes à mobilité réduite, avec assistance complète de A à Z.',
-    heroImage: '/assets/images/hero-omra-prive.jpg',
+    heroImage: '/assets/images/hero-omra-pmr.png',
     city: 'mecca',
     longDescription: 'Ce service spécialisé garantit aux personnes à mobilité réduite un accomplissement serein de leur Omra. Un guide formé et attentionné vous accompagne à chaque instant, avec un fauteuil roulant mis à disposition et une assistance permanente.',
     timeline: [

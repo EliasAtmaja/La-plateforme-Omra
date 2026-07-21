@@ -94,7 +94,7 @@ export const services: ServicePage[] = [
         duration: '5 à 6h',
         type: 'PMR',
         typeIcon: 'pmr',
-        image: '/assets/images/hero-omra-prive.jpg',
+        image: '/assets/images/hero-omra-pmr.png',
         premium: true,
       },
       {
