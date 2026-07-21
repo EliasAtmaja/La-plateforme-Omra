@@ -37,36 +37,12 @@ const lang = getLangFromUrl(Astro.url);
       <div class="about-block reveal">
         <h2>Quatre piliers d'accompagnement sur place</h2>
         <p>Pour vous garantir un s&eacute;jour fluide et enrichissant, nos professionnels interviennent exclusivement sur vos besoins r&eacute;els&nbsp;:</p>
-        <div class="about-pillars stagger">
-          <div class="about-pillar reveal">
-            <div class="about-pillar__icon" aria-hidden="true">
-              <svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="18" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M10 42c0-7.7 6.3-14 14-14s14 6.3 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-            </div>
-            <h3>L'accompagnement pour la Omra</h3>
-            <p>Un guide &agrave; vos c&ocirc;t&eacute;s pour accomplir vos rites pas &agrave; pas, en stricte conformit&eacute; avec la Sounnah et le suivi du proph&egrave;te Sallallahu Alayhi wa Sallam.</p>
-          </div>
-          <div class="about-pillar reveal">
-            <div class="about-pillar__icon" aria-hidden="true">
-              <svg viewBox="0 0 48 48" fill="none"><path d="M24 6l16 8v12c0 10-6.5 19-16 24C14.5 45 8 36 8 26V14l16-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 24l4 4 8-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <h3>Les visites historiques &agrave; La Mecque</h3>
-            <p>Une immersion culturelle pour comprendre l'histoire des lieux sacr&eacute;s et en tirer des le&ccedil;ons spirituelles profondes.</p>
-          </div>
-          <div class="about-pillar reveal">
-            <div class="about-pillar__icon" aria-hidden="true">
-              <svg viewBox="0 0 48 48" fill="none"><path d="M24 4v8M4 24h8M36 24h8M24 36v8M11 11l5.6 5.6M31.4 31.4L37 37M11 37l5.6-5.6M31.4 16.6L37 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5"/></svg>
-            </div>
-            <h3>Les visites historiques &agrave; M&eacute;dine</h3>
-            <p>Des explications riches et sourc&eacute;es lors de vos visites dans la ville du Messager Sallallahu Alayhi wa Sallam.</p>
-          </div>
-          <div class="about-pillar reveal">
-            <div class="about-pillar__icon" aria-hidden="true">
-              <svg viewBox="0 0 48 48" fill="none"><rect x="6" y="12" width="36" height="26" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M6 20h36" stroke="currentColor" stroke-width="1.5"/><path d="M14 28h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 32h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-            </div>
-            <h3>Les sorties shopping optimis&eacute;es</h3>
-            <p>Un accompagnement local pour effectuer vos achats efficacement, &eacute;viter les pi&egrave;ges et ne pas perdre un temps pr&eacute;cieux destin&eacute; &agrave; l'adoration.</p>
-          </div>
-        </div>
+        <ul class="about-list">
+          <li><strong>L'accompagnement pour la Omra&nbsp;:</strong> Un guide &agrave; vos c&ocirc;t&eacute;s pour accomplir vos rites pas &agrave; pas, en stricte conformit&eacute; avec la Sounnah et le suivi du proph&egrave;te Sallallahu Alayhi wa Sallam.</li>
+          <li><strong>Les visites historiques &agrave; La Mecque&nbsp;:</strong> Une immersion culturelle pour comprendre l'histoire des lieux sacr&eacute;s et en tirer des le&ccedil;ons spirituelles profondes.</li>
+          <li><strong>Les visites historiques &agrave; M&eacute;dine&nbsp;:</strong> Des explications riches et sourc&eacute;es lors de vos visites dans la ville du Messager Sallallahu Alayhi wa Sallam.</li>
+          <li><strong>Les sorties shopping optimis&eacute;es&nbsp;:</strong> Un accompagnement local pour effectuer vos achats efficacement, &eacute;viter les pi&egrave;ges et ne pas perdre un temps pr&eacute;cieux destin&eacute; &agrave; l'adoration.</li>
+        </ul>
       </div>
 
       <div class="about-block reveal">
@@ -116,43 +92,28 @@ const lang = getLangFromUrl(Astro.url);
     margin-bottom: var(--space-4);
   }
 
-  .about-pillars {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-6);
-    margin-top: var(--space-6);
+  .about-list {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-6) 0 0;
   }
-
-  .about-pillar {
-    padding: var(--space-6);
-    background: var(--color-primary-50, #F0F7F4);
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-xl);
-    transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  .about-list li {
+    font-size: var(--text-lg);
+    color: var(--color-text-muted);
+    line-height: var(--leading-relaxed);
+    margin-bottom: var(--space-4);
+    padding-left: 1.4em;
+    position: relative;
   }
-  .about-pillar:hover {
-    border-color: var(--color-primary-200);
-    box-shadow: 0 16px 40px rgba(20,81,58,0.08);
-  }
-
-  .about-pillar__icon {
-    width: 40px;
-    height: 40px;
-    margin-bottom: var(--space-3);
+  .about-list li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
     color: var(--color-accent-dark);
+    font-weight: 600;
   }
-  .about-pillar__icon svg { width: 100%; height: 100%; }
-
-  .about-pillar h3 {
-    font-size: var(--text-base);
-    margin-bottom: var(--space-2);
+  .about-list li strong {
     color: var(--color-secondary);
-  }
-
-  .about-pillar p {
-    font-size: var(--text-sm);
-    margin-bottom: 0;
-    line-height: 1.7;
   }
 
   .about-block--closing {
@@ -175,6 +136,5 @@ const lang = getLangFromUrl(Astro.url);
 
   @media (max-width: 639px) {
     .about-hero__title { font-size: var(--text-3xl); }
-    .about-pillars { grid-template-columns: 1fr; }
   }
 </style>
