@@ -19,6 +19,7 @@ const lang = getLangFromUrl(Astro.url);
       <span class="hm-hero__line-bar"></span>
     </div>
     <p class="hm-hero__sub load-rise" style="--load-delay: 450ms">Première plateforme française de mise en relation<br/><strong>entre les invités d'Allah et professionnels</strong></p>
+    <img src="/assets/images/test-hero-badge.png" alt="" class="hm-hero__badge load-rise" style="--load-delay: 600ms" />
     <a href="#services" class="hm-hero__cta load-rise" style="--load-delay: 700ms">
       <span>Choisir mon / ma guide</span>
       <span class="hm-hero__cta-arrow" aria-hidden="true">
@@ -599,6 +600,12 @@ const lang = getLangFromUrl(Astro.url);
       letter-spacing: 0.05em;
       white-space: nowrap;
     }
+  }
+  .hm-hero__badge {
+    display: block;
+    max-width: 220px;
+    height: auto;
+    margin: 0 auto 16px;
   }
   .hm-hero__cta {
     margin-top: auto;
