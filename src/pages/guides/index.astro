@@ -18,13 +18,14 @@ const lang = getLangFromUrl(Astro.url);
   <section class="gp-filters">
     <div class="gp-container">
       <div class="gp-filters__row">
-        <div class="gp-filter">
-          <label class="gp-filter__label">Je recherche un guide</label>
-          <div class="gp-filter__pills" id="filter-gender">
-            <button type="button" class="gp-filter__pill is-active" data-gender="">Tous</button>
-            <button type="button" class="gp-filter__pill" data-gender="homme">Homme</button>
-            <button type="button" class="gp-filter__pill" data-gender="femme">Femme</button>
-          </div>
+        <span class="gp-filter__text">Je recherche un guide</span>
+        <div class="gp-filter__select-wrap" id="filter-gender">
+          <select class="gp-filter__select" id="filter-gender-select">
+            <option value="">Tous</option>
+            <option value="homme">Homme</option>
+            <option value="femme">Femme</option>
+          </select>
+          <svg class="gp-filter__select-icon" width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M4 7l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
       </div>
     </div>
@@ -47,18 +48,11 @@ const lang = getLangFromUrl(Astro.url);
   let filterGender: string = '';
 
   function initFilters() {
-    const genderPills = document.getElementById('filter-gender');
-    if (!genderPills) return;
-
-    genderPills.querySelectorAll('.gp-filter__pill').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const val = (btn as HTMLElement).dataset.gender || '';
-        filterGender = val;
-        genderPills.querySelectorAll('.gp-filter__pill').forEach((b) => {
-          (b as HTMLElement).classList.toggle('is-active', (b as HTMLElement).dataset.gender === val);
-        });
-        renderGuidesList();
-      });
+    const sel = document.getElementById('filter-gender-select') as HTMLSelectElement | null;
+    if (!sel) return;
+    sel.addEventListener('change', () => {
+      filterGender = sel.value;
+      renderGuidesList();
     });
   }
   initFilters();
@@ -626,54 +620,55 @@ const lang = getLangFromUrl(Astro.url);
   .gp-filters {
     background: #FFFFFF;
     border-bottom: 1px solid #EFEDE6;
-    padding: 28px 0 24px;
+    padding: 24px 0;
   }
   .gp-filters__row {
     display: flex;
-    align-items: flex-start;
-    gap: 32px;
+    align-items: center;
+    gap: 14px;
   }
-  .gp-filter {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    position: relative;
-  }
-  .gp-filter__label {
-    font-family: 'Jost', sans-serif;
-    font-size: 0.68rem;
+  .gp-filter__text {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.25rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: #9C9C93;
-  }
-  .gp-filter__pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .gp-filter__pill {
-    padding: 7px 16px;
-    border: 1px solid #E3E0D6;
-    border-radius: 20px;
-    background: #FFFFFF;
-    font-family: 'Jost', sans-serif;
-    font-size: 0.78rem;
-    font-weight: 400;
-    color: #6B6B63;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    color: #1C1C1A;
     white-space: nowrap;
   }
-  .gp-filter__pill:hover {
-    border-color: #14513A;
-    color: #14513A;
+  .gp-filter__select-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
   }
-  .gp-filter__pill.is-active {
-    background: #14513A;
-    border-color: #14513A;
-    color: #FAF8F4;
+  .gp-filter__select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 9px 38px 9px 18px;
+    background: #FAF8F4;
+    border: 1.5px solid #E3E0D6;
+    border-radius: 28px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
     font-weight: 500;
+    color: #14513A;
+    cursor: pointer;
+    transition: border-color 0.25s, box-shadow 0.25s;
+    min-width: 110px;
+  }
+  .gp-filter__select:hover {
+    border-color: #14513A;
+  }
+  .gp-filter__select:focus {
+    outline: none;
+    border-color: #14513A;
+    box-shadow: 0 0 0 3px rgba(20,81,58,0.1);
+  }
+  .gp-filter__select-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #14513A;
   }
 
   /* ---- HERO ---- */
@@ -1335,10 +1330,10 @@ const lang = getLangFromUrl(Astro.url);
 
   /* ---- RESPONSIVE ---- */
   @media (max-width: 767px) {
-    .gp-filters { padding: 20px 0 16px; }
-    .gp-filters__row { gap: 16px; flex-direction: column; }
-    .gp-filter__pills { gap: 5px; }
-    .gp-filter__pill { padding: 6px 12px; font-size: 0.72rem; }
+    .gp-filters { padding: 18px 0 14px; }
+    .gp-filters__row { gap: 10px; }
+    .gp-filter__text { font-size: 1.05rem; }
+    .gp-filter__select { font-size: 0.8rem; padding: 8px 34px 8px 14px; min-width: 95px; }
     .gp-hero { padding: 56px 0 40px; }
     .gp-hero__title { font-size: 2rem; }
 
