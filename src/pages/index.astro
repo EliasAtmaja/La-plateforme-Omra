@@ -279,46 +279,26 @@ const lang = getLangFromUrl(Astro.url);
   </div>
 </section>
 
-<!-- ========== STATS BAR ========== -->
+<!-- ========== STATS PILLS ========== -->
 <section class="hm-stats">
   <div class="hm-container">
     <div class="hm-stats__grid stagger">
-      <div class="hm-stats__item reveal">
-        <div class="hm-stats__icon" aria-hidden="true">
-          <svg viewBox="0 0 28 28" fill="none"><path d="M14 3l10 4v7c0 6.5-4.3 12.3-10 15.2C8.3 26.3 4 20.5 4 14V7l10-4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9.5 14l3 3 6-6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <div>
-          <span class="hm-stats__value">Certifi&eacute; ✓</span>
-          <span class="hm-stats__label">professionnels v&eacute;rifi&eacute;s</span>
-        </div>
-      </div>
-      <div class="hm-stats__item reveal">
-        <div class="hm-stats__icon" aria-hidden="true">
-          <svg viewBox="0 0 28 28" fill="none"><circle cx="10" cy="10" r="4" stroke="currentColor" stroke-width="1.4"/><circle cx="18" cy="10" r="4" stroke="currentColor" stroke-width="1.4"/><path d="M3 24c0-4 3-7 7-7M25 24c0-4-3-7-7-7M10 17h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-        </div>
-        <div>
-          <span class="hm-stats__value">10K+</span>
-          <span class="hm-stats__label">p&egrave;lerins accompagn&eacute;s</span>
-        </div>
-      </div>
-      <div class="hm-stats__item reveal">
-        <div class="hm-stats__icon" aria-hidden="true">
-          <svg viewBox="0 0 28 28" fill="none"><path d="M14 3C7.9 3 3 7.9 3 14s4.9 11 11 11 11-4.9 11-11S20.1 3 14 3z" stroke="currentColor" stroke-width="1.4"/><path d="M10 17a6 6 0 0010-1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="10" cy="12" r="1.2" fill="currentColor"/><circle cx="18" cy="12" r="1.2" fill="currentColor"/></svg>
-        </div>
-        <div>
-          <span class="hm-stats__value">7j/7</span>
-          <span class="hm-stats__label">support d&eacute;di&eacute;</span>
-        </div>
-      </div>
-      <div class="hm-stats__item reveal">
-        <div class="hm-stats__icon" aria-hidden="true">
-          <svg viewBox="0 0 28 28" fill="none"><path d="M14 3l3.5 7.5L25 12l-5.5 5 1.3 7.5L14 21l-6.8 3.5L8.5 17 3 12l7.5-1.5L14 3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-        </div>
-        <div>
-          <span class="hm-stats__value">4.9/5</span>
-          <span class="hm-stats__label">satisfaction client</span>
-        </div>
-      </div>
+      <span class="hm-stats__pill reveal">
+        <svg viewBox="0 0 28 28" fill="none" width="16" height="16"><path d="M14 3l10 4v7c0 6.5-4.3 12.3-10 15.2C8.3 26.3 4 20.5 4 14V7l10-4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9.5 14l3 3 6-6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <strong>Certifi&eacute;</strong> pros v&eacute;rifi&eacute;s
+      </span>
+      <span class="hm-stats__pill reveal">
+        <svg viewBox="0 0 28 28" fill="none" width="16" height="16"><circle cx="10" cy="10" r="4" stroke="currentColor" stroke-width="1.4"/><circle cx="18" cy="10" r="4" stroke="currentColor" stroke-width="1.4"/><path d="M3 24c0-4 3-7 7-7M25 24c0-4-3-7-7-7M10 17h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <strong>10K+</strong> p&egrave;lerins
+      </span>
+      <span class="hm-stats__pill reveal">
+        <svg viewBox="0 0 28 28" fill="none" width="16" height="16"><path d="M14 3C7.9 3 3 7.9 3 14s4.9 11 11 11 11-4.9 11-11S20.1 3 14 3z" stroke="currentColor" stroke-width="1.4"/><path d="M10 17a6 6 0 0010-1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="10" cy="12" r="1.2" fill="currentColor"/><circle cx="18" cy="12" r="1.2" fill="currentColor"/></svg>
+        <strong>7j/7</strong> support
+      </span>
+      <span class="hm-stats__pill reveal">
+        <svg viewBox="0 0 28 28" fill="none" width="16" height="16"><path d="M14 3l3.5 7.5L25 12l-5.5 5 1.3 7.5L14 21l-6.8 3.5L8.5 17 3 12l7.5-1.5L14 3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <strong>4.9/5</strong> satisfaction
+      </span>
     </div>
   </div>
 </section>
@@ -1288,8 +1268,7 @@ const lang = getLangFromUrl(Astro.url);
     background: #14513A;
     padding: 64px 0;
     box-shadow:
-      inset 0 18px 28px -12px rgba(0,0,0,0.35),
-      inset 0 -18px 28px -12px rgba(0,0,0,0.35);
+      inset 0 18px 28px -12px rgba(0,0,0,0.35);
   }
   .hm-about__grid { max-width: 640px; }
   .hm-about__eyebrow {
@@ -1337,43 +1316,45 @@ const lang = getLangFromUrl(Astro.url);
     .hm-about__points { grid-template-columns: 1fr; }
   }
 
-  /* ---- STATS BAR ---- */
+  /* ---- STATS PILLS ---- */
   .hm-stats {
-    background: #14513A; padding: 40px 0; margin-top: 32px;
+    background: #14513A;
+    padding: 18px 0;
+    margin-top: 0;
+    box-shadow: inset 0 8px 16px -8px rgba(0,0,0,0.3);
   }
   .hm-stats__grid {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 0; text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
   }
-  .hm-stats__item {
-    display: flex; align-items: center; justify-content: center;
-    gap: 12px; padding: 12px 16px;
-    border-left: 1px solid rgba(250,248,244,0.12);
+  .hm-stats__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 16px;
+    background: rgba(250,248,244,0.08);
+    border: 1px solid rgba(250,248,244,0.12);
+    border-radius: 28px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 300;
+    color: rgba(250,248,244,0.7);
+    white-space: nowrap;
   }
-  .hm-stats__item:first-child { border-left: none; }
-
-  .hm-stats__icon {
-    width: 28px; height: 28px; flex-shrink: 0;
+  .hm-stats__pill svg {
     color: #CBA96A;
+    flex-shrink: 0;
   }
-  .hm-stats__icon svg { width: 100%; height: 100%; }
-
-  .hm-stats__value {
-    display: block;
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 1.2rem; font-weight: 600; color: #FAF8F4; line-height: 1.2;
-  }
-  .hm-stats__label {
-    display: block;
-    font-family: 'Jost', sans-serif; font-size: 0.62rem; font-weight: 400;
-    text-transform: uppercase; letter-spacing: 0.1em;
-    color: rgba(250,248,244,0.55); line-height: 1.3;
+  .hm-stats__pill strong {
+    font-weight: 600;
+    color: #FAF8F4;
   }
 
   @media (max-width: 767px) {
-    .hm-stats__grid { grid-template-columns: 1fr 1fr; gap: 20px 0; }
-    .hm-stats__item:nth-child(3) { border-left: none; }
-    .hm-stats__item { flex-direction: column; gap: 6px; text-align: center; }
+    .hm-stats__grid { gap: 8px; }
+    .hm-stats__pill { padding: 6px 12px; font-size: 0.66rem; gap: 5px; }
   }
 
   /* ---- TESTIMONIALS ---- */
