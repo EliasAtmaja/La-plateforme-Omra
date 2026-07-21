@@ -153,7 +153,7 @@ export const activities: ActivityDetail[] = [
       { title: 'Clôture & Enseignements', description: 'Synthèse des rites accomplis et partage d\'enseignements spirituels pour ancrer cette expérience.' },
       { title: 'Finalisation des Rites (Désacralisation)', description: 'Clôture de la Omra avec une orientation personnalisée vers les salons de coiffure pour les hommes ou un accompagnement vers l\'hôtel pour les femmes.' },
     ],
-    duration: '4 à 5h',
+    duration: '3 à 5h',
     tags: ['Omra', 'Taneem', 'Miqat'],
     type: 'Privé',
   },

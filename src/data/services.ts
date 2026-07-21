@@ -110,7 +110,7 @@ export const services: ServicePage[] = [
         slug: 'omra-masjid-aicha',
         title: 'Omra au départ du Masjid Aïcha (Taneem)',
         desc: 'Accomplissez votre Omra depuis le Masjid Aïcha (Taneem) avec notre accompagnement.',
-        duration: '4 à 5h',
+        duration: '3 à 5h',
         type: 'Privé',
         typeIcon: 'private',
         image: '/assets/images/hero-masjid-aicha.jpg',
