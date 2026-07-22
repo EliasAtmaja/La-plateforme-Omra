@@ -140,7 +140,7 @@ const lang = getLangFromUrl(Astro.url);
     }
     if (empty) empty.hidden = true;
 
-    guides.forEach((g: any) => {
+    guides.forEach((g: any, idx: number) => {
       const cityLabel = g.city === 'medina' ? 'Médine' : 'La Mecque';
       const initials = (g.firstName?.[0] || '') + (g.lastName?.[0] || '');
       const langCodes: string[] = (g.languages || []).map((l: string) => langCode(l));
@@ -196,7 +196,8 @@ const lang = getLangFromUrl(Astro.url);
           </div>`;
 
       const card = document.createElement('article');
-      card.className = 'gp-card reveal is-visible';
+      card.className = 'gp-card reveal';
+      card.style.transitionDelay = `${idx * 120}ms`;
       card.dataset.guideId = g.id;
       card.innerHTML = `
         <div class="gp-card__body">
@@ -313,6 +314,12 @@ const lang = getLangFromUrl(Astro.url);
         </div>
       `;
       list.appendChild(card);
+    });
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        list.querySelectorAll('.gp-card.reveal:not(.is-visible)').forEach(el => el.classList.add('is-visible'));
+      });
     });
 
     // Les popups calendrier vont dans <body> : le transform du hover
