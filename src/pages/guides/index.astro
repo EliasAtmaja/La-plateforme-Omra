@@ -40,7 +40,8 @@ const lang = getLangFromUrl(Astro.url);
 </BaseLayout>
 
 <script>
-  import { supabase, mapGuide, mapReview, ALL_SLOTS } from '../../lib/supabase';
+  import { supabase, mapGuide, mapReview, ALL_SLOTS, SUPABASE_URL, SUPABASE_ANON_KEY } from '../../lib/supabase';
+  fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, { method: 'OPTIONS', headers: { 'apikey': SUPABASE_ANON_KEY } }).catch(() => {});
 
   const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const calStates: Record<string, { year: number; month: number; selectedDate: string | null; selectedSlot: string | null }> = {};
@@ -614,7 +615,6 @@ const lang = getLangFromUrl(Astro.url);
     }));
 
     try {
-      const { SUPABASE_URL, SUPABASE_ANON_KEY } = await import('../../lib/supabase');
       const res = await fetch(
         `${SUPABASE_URL}/functions/v1/create-checkout`,
         {

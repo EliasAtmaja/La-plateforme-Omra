@@ -148,6 +148,10 @@ const lang = getLangFromUrl(Astro.url);
     });
   }
 
+  import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase';
+  const checkoutUrl = `${SUPABASE_URL}/functions/v1/create-checkout`;
+  fetch(checkoutUrl, { method: 'OPTIONS', headers: { 'apikey': SUPABASE_ANON_KEY } }).catch(() => {});
+
   document.getElementById('cart-page-pay')?.addEventListener('click', async () => {
     const items = getItems();
     if (items.length === 0) return;
@@ -156,7 +160,6 @@ const lang = getLangFromUrl(Astro.url);
     if (btn) { btn.disabled = true; btn.textContent = 'Redirection...'; }
 
     try {
-      const { SUPABASE_URL, SUPABASE_ANON_KEY } = await import('../lib/supabase');
       const cartItems = items.map((item: any) => ({
         bookingId: item.bookingId,
         guideName: item.guideName || 'Guide',
