@@ -148,8 +148,37 @@ const lang = getLangFromUrl(Astro.url);
     });
   }
 
-  document.getElementById('cart-page-pay')?.addEventListener('click', () => {
-    alert('Page de paiement à venir');
+  document.getElementById('cart-page-pay')?.addEventListener('click', async () => {
+    const items = getItems();
+    if (items.length === 0) return;
+    const bookingIds = items.map((item: any) => item.bookingId);
+    const btn = document.getElementById('cart-page-pay') as HTMLButtonElement;
+    if (btn) { btn.disabled = true; btn.textContent = 'Redirection...'; }
+
+    try {
+      const res = await fetch(
+        'https://sraygiyydntxazaaypno.supabase.co/functions/v1/create-checkout',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bookingIds,
+            successUrl: `${window.location.origin}/paiement/confirmation/?session_id={CHECKOUT_SESSION_ID}`,
+            cancelUrl: `${window.location.origin}/panier/`,
+          }),
+        },
+      );
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Erreur lors de la création du paiement.');
+        if (btn) { btn.disabled = false; btn.textContent = 'Procéder au paiement'; }
+      }
+    } catch {
+      alert('Erreur de connexion. Veuillez réessayer.');
+      if (btn) { btn.disabled = false; btn.textContent = 'Procéder au paiement'; }
+    }
   });
 
   renderCartPage();

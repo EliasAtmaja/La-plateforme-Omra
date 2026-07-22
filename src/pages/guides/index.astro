@@ -559,14 +559,7 @@ const lang = getLangFromUrl(Astro.url);
         const s = calStates[id]; if (!s?.selectedDate || !s.selectedSlot) return;
         const ok = await createBooking(id, s.selectedDate, s.selectedSlot);
         if (!ok) return;
-        alert(`Réservation confirmée pour le ${s.selectedDate} (${s.selectedSlot}).\n(Page de paiement à venir)`);
-        s.selectedDate = null;
-        s.selectedSlot = null;
-        renderCalendar(id);
-        const sel = document.getElementById(`cal-sel-${id}`);
-        if (sel) sel.classList.add('is-hidden');
-        const calEl = document.getElementById(`cal-${id}`);
-        if (calEl) closeCal(calEl);
+        await redirectToCheckout();
       });
     });
   }
@@ -606,6 +599,36 @@ const lang = getLangFromUrl(Astro.url);
     localStorage.setItem('omra-cart', JSON.stringify(cart));
     window.dispatchEvent(new Event('cart-updated'));
     return true;
+  }
+
+  async function redirectToCheckout() {
+    const cart = JSON.parse(localStorage.getItem('omra-cart') || '[]');
+    if (cart.length === 0) return;
+
+    const bookingIds = cart.map((item: any) => item.bookingId);
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.PUBLIC_SUPABASE_URL || 'https://sraygiyydntxazaaypno.supabase.co'}/functions/v1/create-checkout`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bookingIds,
+            successUrl: `${window.location.origin}/paiement/confirmation/?session_id={CHECKOUT_SESSION_ID}`,
+            cancelUrl: `${window.location.origin}/guides/`,
+          }),
+        },
+      );
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Erreur lors de la création du paiement.');
+      }
+    } catch {
+      alert('Erreur de connexion. Veuillez réessayer.');
+    }
   }
 
   loadData().then(renderGuidesList);

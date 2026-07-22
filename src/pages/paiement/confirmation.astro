@@ -1,0 +1,106 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getLangFromUrl, getLocalePath } from '../../i18n/ui';
+
+const lang = getLangFromUrl(Astro.url);
+---
+
+<BaseLayout title="Paiement confirmé" description="Votre paiement a été reçu avec succès.">
+
+<section class="pc-page">
+  <div class="pc-container">
+    <div class="pc-card">
+      <div class="pc-icon">
+        <svg viewBox="0 0 48 48" fill="none" width="56" height="56">
+          <circle cx="24" cy="24" r="21" stroke="currentColor" stroke-width="2"/>
+          <path d="M15 24.5l6.5 6.5L33 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1 class="pc-title">Paiement confirm&eacute; !</h1>
+      <p class="pc-text">
+        Merci pour votre confiance. Votre r&eacute;servation est confirm&eacute;e et votre guide a &eacute;t&eacute; notifi&eacute;.
+        Vous recevrez un r&eacute;capitulatif par email.
+      </p>
+      <p class="pc-text pc-text--small">
+        Notre &eacute;quipe vous contactera via WhatsApp pour coordonner les d&eacute;tails de votre accompagnement.
+      </p>
+      <a href={getLocalePath(lang, '/')} class="pc-home">
+        Retour &agrave; l'accueil
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+</BaseLayout>
+
+<script>
+  localStorage.removeItem('omra-cart');
+  window.dispatchEvent(new Event('cart-updated'));
+</script>
+
+<style is:global>
+  .pc-page {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FAF8F4;
+    padding: 80px 24px;
+  }
+  .pc-container { max-width: 520px; width: 100%; }
+  .pc-card {
+    text-align: center;
+    background: #FFFFFF;
+    border: 1px solid #EFEDE6;
+    border-radius: 22px;
+    padding: 56px 36px;
+    box-shadow: 0 10px 40px rgba(18,49,37,0.06);
+    animation: pcIn 0.6s ease;
+  }
+  @keyframes pcIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .pc-icon {
+    color: #14513A;
+    margin-bottom: 20px;
+  }
+  .pc-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.8rem; font-weight: 700;
+    color: #14513A; margin: 0 0 16px;
+  }
+  .pc-text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem; font-weight: 300;
+    color: #4A4A42; line-height: 1.8;
+    margin: 0 0 12px;
+  }
+  .pc-text--small {
+    font-size: 0.85rem;
+    color: #9C9C93;
+  }
+  .pc-home {
+    display: inline-flex; align-items: center; gap: 10px;
+    margin-top: 28px;
+    padding: 14px 28px;
+    background: #14513A; color: #FAF8F4;
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.82rem; font-weight: 500;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
+  }
+  .pc-home:hover {
+    background: #0C3A28; color: #FAF8F4;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(20,81,58,0.25);
+  }
+
+  @media (max-width: 639px) {
+    .pc-card { padding: 44px 20px; }
+    .pc-title { font-size: 1.5rem; }
+  }
+</style>
