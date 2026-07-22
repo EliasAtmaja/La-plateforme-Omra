@@ -25,7 +25,7 @@ export const services: ServicePage[] = [
     eyebrow: 'Organisation',
     title: 'Conseil & Optimisation : Votre appel privé',
     subtitle: 'Un entretien privé de 30 minutes avec un expert pour structurer l\'intégralité de votre séjour.',
-    heroImage: '/assets/images/planification-bg.png',
+    heroImage: '/assets/images/planification-bg.webp',
     features: [
       { icon: 'calendar', label: 'Planning personnalisé' },
       { icon: 'hotel', label: 'Hébergements' },
@@ -40,7 +40,7 @@ export const services: ServicePage[] = [
         duration: '1 à 2 semaines',
         type: 'Individuel',
         typeIcon: 'private',
-        image: '/assets/images/makkah-bg.jpg',
+        image: '/assets/images/makkah-bg.webp',
       },
       {
         slug: 'formule-confort',
@@ -49,7 +49,7 @@ export const services: ServicePage[] = [
         duration: '1 à 3 semaines',
         type: 'Famille',
         typeIcon: 'group',
-        image: '/assets/images/planification-bg.png',
+        image: '/assets/images/planification-bg.webp',
         premium: true,
       },
       {
@@ -59,7 +59,7 @@ export const services: ServicePage[] = [
         duration: 'Flexible',
         type: 'Privé',
         typeIcon: 'private',
-        image: '/assets/images/makkah-bg.jpg',
+        image: '/assets/images/makkah-bg.webp',
         premium: true,
       },
     ],
@@ -69,7 +69,7 @@ export const services: ServicePage[] = [
     eyebrow: 'Accompagnement',
     title: 'Vos accompagnements à Makkah Al Mukaramah',
     subtitle: 'Un accompagnement complet pour accomplir votre Omra en toute sérénité.',
-    heroImage: '/assets/images/hero-omra-prive.jpg',
+    heroImage: '/assets/images/hero-omra-prive.webp',
     features: [
       { icon: 'guide', label: 'Encadrement personnalisé' },
       { icon: 'ritual', label: 'Rituels de l\'Omra' },
@@ -84,7 +84,7 @@ export const services: ServicePage[] = [
         duration: '3 à 5h',
         type: 'Privé',
         typeIcon: 'private',
-        image: '/assets/images/hero-omra-prive.jpg',
+        image: '/assets/images/hero-omra-prive.webp',
         premium: true,
       },
       {
@@ -94,7 +94,7 @@ export const services: ServicePage[] = [
         duration: '5 à 6h',
         type: 'PMR',
         typeIcon: 'pmr',
-        image: '/assets/images/hero-omra-pmr.png',
+        image: '/assets/images/hero-omra-pmr.webp',
         premium: true,
       },
       {
@@ -104,7 +104,7 @@ export const services: ServicePage[] = [
         duration: 'Journée complète',
         type: 'Groupe',
         typeIcon: 'group',
-        image: '/assets/images/hero-visite-makkah.jpg',
+        image: '/assets/images/hero-visite-makkah.webp',
       },
       {
         slug: 'omra-masjid-aicha',
@@ -113,7 +113,7 @@ export const services: ServicePage[] = [
         duration: '3 à 5h',
         type: 'Privé',
         typeIcon: 'private',
-        image: '/assets/images/hero-masjid-aicha.jpg',
+        image: '/assets/images/hero-masjid-aicha.webp',
       },
     ],
   },
@@ -122,7 +122,7 @@ export const services: ServicePage[] = [
     eyebrow: 'Découverte',
     title: 'Vos accompagnements à Al-Madinah',
     subtitle: 'Découvrez la ville du Prophète avec des guides locaux passionnés et bienveillants.',
-    heroImage: '/assets/images/hero-medine.jpg',
+    heroImage: '/assets/images/hero-medine.webp',
     features: [
       { icon: 'guide', label: 'Guides locaux certifiés' },
       { icon: 'history', label: 'Visites historiques' },
@@ -137,7 +137,7 @@ export const services: ServicePage[] = [
         duration: '4 à 6h',
         type: 'Groupe',
         typeIcon: 'group',
-        image: '/assets/images/hero-visite-medine.jpg',
+        image: '/assets/images/hero-visite-medine.webp',
       },
       {
         slug: 'visite-masjid-nabawi',
@@ -146,7 +146,7 @@ export const services: ServicePage[] = [
         duration: '2 à 3h',
         type: 'Privé',
         typeIcon: 'private',
-        image: '/assets/images/hero-medine.jpg',
+        image: '/assets/images/hero-medine.webp',
       },
       {
         slug: 'shopping-guide-medine',
@@ -155,7 +155,7 @@ export const services: ServicePage[] = [
         duration: '3 à 4h',
         type: 'Privé',
         typeIcon: 'private',
-        image: '/assets/images/shopping-medine.jpg',
+        image: '/assets/images/shopping-medine.webp',
       },
     ],
   },
@@ -164,7 +164,7 @@ export const services: ServicePage[] = [
     eyebrow: 'Administratif',
     title: 'Visas & Formalités',
     subtitle: 'Nous vous accompagnons dans toutes vos démarches administratives simplement et rapidement.',
-    heroImage: '/assets/images/visa-bg.png',
+    heroImage: '/assets/images/visa-bg.webp',
     features: [
       { icon: 'document', label: 'Dossier complet' },
       { icon: 'fast', label: 'Traitement rapide' },
@@ -179,7 +179,7 @@ export const services: ServicePage[] = [
         duration: '5 à 10 jours',
         type: 'Individuel',
         typeIcon: 'private',
-        image: '/assets/images/visa-bg.png',
+        image: '/assets/images/visa-bg.webp',
       },
       {
         slug: 'visa-omra-express',
@@ -188,7 +188,7 @@ export const services: ServicePage[] = [
         duration: '2 à 3 jours',
         type: 'Individuel',
         typeIcon: 'private',
-        image: '/assets/images/visa-bg.png',
+        image: '/assets/images/visa-bg.webp',
         premium: true,
       },
       {
@@ -198,7 +198,7 @@ export const services: ServicePage[] = [
         duration: '7 à 14 jours',
         type: 'Groupe',
         typeIcon: 'group',
-        image: '/assets/images/visa-bg.png',
+        image: '/assets/images/visa-bg.webp',
       },
     ],
   },

@@ -151,7 +151,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   function renderProfile(guide: any) {
     const cityLabel = guide.city === 'medina' ? 'Medine' : 'La Mecque';
     const initials = (guide.firstName?.[0] || '') + (guide.lastName?.[0] || '');
-    const heroImg = guide.city === 'medina' ? '/assets/images/madinah-bg.jpg' : '/assets/images/makkah-bg.jpg';
+    const heroImg = guide.city === 'medina' ? '/assets/images/madinah-bg.webp' : '/assets/images/makkah-bg.webp';
 
     const guideReviews = getReviews().filter((r: any) => r.guideId === guide.id && r.status === 'approved');
     const avgRating = guideReviews.length > 0
