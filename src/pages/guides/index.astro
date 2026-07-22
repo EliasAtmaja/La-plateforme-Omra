@@ -605,7 +605,13 @@ const lang = getLangFromUrl(Astro.url);
     const cart = JSON.parse(localStorage.getItem('omra-cart') || '[]');
     if (cart.length === 0) return;
 
-    const bookingIds = cart.map((item: any) => item.bookingId);
+    const cartItems = cart.map((item: any) => ({
+      bookingId: item.bookingId,
+      guideName: item.guideName || 'Guide',
+      price: item.price || 0,
+      date: item.date || '',
+      slot: item.slot || '',
+    }));
 
     try {
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = await import('../../lib/supabase');
@@ -619,7 +625,7 @@ const lang = getLangFromUrl(Astro.url);
             'apikey': SUPABASE_ANON_KEY,
           },
           body: JSON.stringify({
-            bookingIds,
+            items: cartItems,
             successUrl: `${window.location.origin}/paiement/confirmation/?session_id={CHECKOUT_SESSION_ID}`,
             cancelUrl: `${window.location.origin}/guides/`,
           }),

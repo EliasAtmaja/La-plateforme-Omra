@@ -157,6 +157,13 @@ const lang = getLangFromUrl(Astro.url);
 
     try {
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = await import('../lib/supabase');
+      const cartItems = items.map((item: any) => ({
+        bookingId: item.bookingId,
+        guideName: item.guideName || 'Guide',
+        price: item.price || 0,
+        date: item.date || '',
+        slot: item.slot || '',
+      }));
       const res = await fetch(
         `${SUPABASE_URL}/functions/v1/create-checkout`,
         {
@@ -167,7 +174,7 @@ const lang = getLangFromUrl(Astro.url);
             'apikey': SUPABASE_ANON_KEY,
           },
           body: JSON.stringify({
-            bookingIds,
+            items: cartItems,
             successUrl: `${window.location.origin}/paiement/confirmation/?session_id={CHECKOUT_SESSION_ID}`,
             cancelUrl: `${window.location.origin}/panier/`,
           }),
