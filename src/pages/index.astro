@@ -4,12 +4,12 @@ import { getLangFromUrl, t, getLocalePath } from '../i18n/ui';
 const lang = getLangFromUrl(Astro.url);
 ---
 
-<BaseLayout title={t(lang, 'nav.home')} description={t(lang, 'hero.subtitle')} hasHero={true}>
+<BaseLayout title={t(lang, 'nav.home')} description={t(lang, 'hero.subtitle')} hasHero={true} preloadImage="/assets/images/hero-mecca.webp">
 
 <!-- ========== HERO ========== -->
 <section class="hm-hero">
   <div class="hm-hero__bg" aria-hidden="true">
-    <img src="/assets/images/hero-mecca.webp" alt="" loading="eager" />
+    <img src="/assets/images/hero-mecca.webp" alt="" loading="eager" fetchpriority="high" decoding="async" />
   </div>
   <div class="hm-hero__content">
     <p class="hm-hero__pre load-rise" style="--load-delay: 150ms">La plateforme</p>
