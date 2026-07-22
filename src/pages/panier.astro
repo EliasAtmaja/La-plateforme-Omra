@@ -149,15 +149,84 @@ const lang = getLangFromUrl(Astro.url);
   }
 
   import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase';
-  const checkoutUrl = `${SUPABASE_URL}/functions/v1/create-checkout`;
-  fetch(checkoutUrl, { method: 'OPTIONS', headers: { 'apikey': SUPABASE_ANON_KEY } }).catch(() => {});
+
+  let preloadedCheckoutUrl: string | null = null;
+  let preloadError: string | null = null;
+  let preloading = false;
+
+  async function preloadCheckout() {
+    const items = getItems();
+    if (items.length === 0) return;
+    preloading = true;
+    preloadedCheckoutUrl = null;
+    preloadError = null;
+    try {
+      const cartItems = items.map((item: any) => ({
+        bookingId: item.bookingId,
+        guideName: item.guideName || 'Guide',
+        price: item.price || 0,
+        date: item.date || '',
+        slot: item.slot || '',
+      }));
+      const res = await fetch(
+        `${SUPABASE_URL}/functions/v1/create-checkout`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'apikey': SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            items: cartItems,
+            successUrl: `${window.location.origin}/paiement/confirmation/?session_id={CHECKOUT_SESSION_ID}`,
+            cancelUrl: `${window.location.origin}/panier/`,
+          }),
+        },
+      );
+      const data = await res.json();
+      if (data.url) {
+        preloadedCheckoutUrl = data.url;
+      } else {
+        preloadError = data.error || 'Erreur lors de la création du paiement.';
+      }
+    } catch {
+      preloadError = 'Erreur de connexion.';
+    }
+    preloading = false;
+  }
+
+  if (getItems().length > 0) preloadCheckout();
 
   document.getElementById('cart-page-pay')?.addEventListener('click', async () => {
     const items = getItems();
     if (items.length === 0) return;
-    const bookingIds = items.map((item: any) => item.bookingId);
     const btn = document.getElementById('cart-page-pay') as HTMLButtonElement;
+
+    if (preloadedCheckoutUrl) {
+      window.location.href = preloadedCheckoutUrl;
+      return;
+    }
+
     if (btn) { btn.disabled = true; btn.textContent = 'Redirection...'; }
+
+    if (preloading) {
+      const wait = () => new Promise<void>((resolve) => {
+        const iv = setInterval(() => {
+          if (!preloading) { clearInterval(iv); resolve(); }
+        }, 100);
+      });
+      await wait();
+      if (preloadedCheckoutUrl) {
+        window.location.href = preloadedCheckoutUrl;
+        return;
+      }
+      if (preloadError) {
+        alert(preloadError);
+        if (btn) { btn.disabled = false; btn.textContent = 'Procéder au paiement'; }
+        return;
+      }
+    }
 
     try {
       const cartItems = items.map((item: any) => ({
