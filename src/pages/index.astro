@@ -2149,12 +2149,12 @@ const lang = getLangFromUrl(Astro.url);
 
       const progress = 1 - (rect.bottom / (viewH + rect.height));
 
-      if (progress < 0.45) {
+      if (progress < 0.3) {
         setStep(0);
         setFill(0);
-      } else if (progress < 0.58) {
+      } else if (progress < 0.5) {
         setStep(1);
-        const local = (progress - 0.45) / 0.13;
+        const local = (progress - 0.3) / 0.2;
         setFill(local * 45);
       } else if (progress < 0.72) {
         setStep(2);
