@@ -305,7 +305,7 @@ const lang = getLangFromUrl(Astro.url);
               </div>
             </div>
             <div class="gp-cal__actions">
-              <button type="button" class="gp-cal__action gp-cal__action--secondary" data-action="browse" data-guide-id="${g.id}" disabled>R&eacute;server et continuer de surfer</button>
+              <button type="button" class="gp-cal__action gp-cal__action--secondary" data-action="browse" data-guide-id="${g.id}" disabled>R&eacute;server et continuer de naviguer</button>
               <button type="button" class="gp-cal__action gp-cal__action--primary" data-action="pay" data-guide-id="${g.id}" disabled>Proc&eacute;der au paiement</button>
             </div>
           </div>
@@ -567,12 +567,7 @@ const lang = getLangFromUrl(Astro.url);
         const s = calStates[id]; if (!s?.selectedDate || !s.selectedSlot) return;
         const ok = await createBooking(id, s.selectedDate, s.selectedSlot);
         if (!ok) return;
-        const payBtn = btn as HTMLButtonElement;
-        payBtn.disabled = true;
-        payBtn.innerHTML = '<span class="pay-dots"><span></span><span></span><span></span></span>';
-        await redirectToCheckout();
-        payBtn.disabled = false;
-        payBtn.textContent = 'Procéder au paiement';
+        window.location.href = '/panier/';
       });
     });
   }
