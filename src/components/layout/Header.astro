@@ -69,6 +69,20 @@ const mobileLinks = [
               <span>Total</span>
               <strong id="cart-total"></strong>
             </div>
+            <div class="hc-breakdown" id="hc-breakdown">
+              <div class="hc-breakdown__row">
+                <span class="hc-breakdown__dot hc-breakdown__dot--green"></span>
+                <span class="hc-breakdown__label">Aujourd'hui</span>
+                <span class="hc-breakdown__line"></span>
+                <strong class="hc-breakdown__value" id="hc-pay-today"></strong>
+              </div>
+              <div class="hc-breakdown__row">
+                <span class="hc-breakdown__dot hc-breakdown__dot--gold"></span>
+                <span class="hc-breakdown__label">Sur place</span>
+                <span class="hc-breakdown__line"></span>
+                <strong class="hc-breakdown__value hc-breakdown__value--muted" id="hc-pay-onsite"></strong>
+              </div>
+            </div>
             <a href={getLocalePath(lang, '/panier/')} class="header__cart-view">Voir le panier</a>
             <button type="button" class="header__cart-pay" id="cart-pay">Proc&eacute;der au paiement</button>
           </div>
@@ -215,6 +229,15 @@ const mobileLinks = [
       `;
     }).join('');
     totalEl.textContent = total + '€';
+
+    const hcToday = document.getElementById('hc-pay-today');
+    const hcOnsite = document.getElementById('hc-pay-onsite');
+    if (hcToday && hcOnsite) {
+      const todayAmount = total;
+      const onsiteAmount = 0;
+      hcToday.textContent = todayAmount + '€';
+      hcOnsite.textContent = onsiteAmount + '€';
+    }
 
     itemsEl.querySelectorAll('[data-cart-remove]').forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -764,6 +787,51 @@ const mobileLinks = [
   .header__cart-total strong {
     font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 1.5rem; font-weight: 700; color: #14513A;
+  }
+  /* Breakdown mini-panier */
+  .hc-breakdown {
+    padding: 10px 12px;
+    background: #F7F6F2;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .hc-breakdown__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hc-breakdown__dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .hc-breakdown__dot--green { background: #14513A; }
+  .hc-breakdown__dot--gold { background: #B99752; }
+  .hc-breakdown__label {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 400;
+    color: #888;
+    white-space: nowrap;
+  }
+  .hc-breakdown__line {
+    flex: 1;
+    height: 1px;
+    background: repeating-linear-gradient(to right, #D5D2CA 0, #D5D2CA 3px, transparent 3px, transparent 7px);
+    min-width: 20px;
+  }
+  .hc-breakdown__value {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #14513A;
+    white-space: nowrap;
+  }
+  .hc-breakdown__value--muted {
+    color: #999;
+    font-weight: 500;
   }
   .header__cart-view {
     display: block;
