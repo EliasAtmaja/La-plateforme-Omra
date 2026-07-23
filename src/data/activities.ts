@@ -140,7 +140,7 @@ export const activities: ActivityDetail[] = [
     parentSlug: 'makkah',
     title: 'Seconde Omra vers Masjid Aïcha',
     eyebrow: 'Accompagnement à Makkah',
-    subtitle: 'Accomplissez votre Omra depuis le Miqat du Masjid Aïcha (Taneem).',
+    subtitle: 'Réalisez une seconde Omra dédiée à vos défunts. Un service privé sur mesure avec chauffeur et guide au choix du Masjid Al-Haram à la Mosquée Aïcha.',
     heroImage: '/assets/images/hero-masjid-aicha.webp',
     city: 'mecca',
     longDescription: 'Pour ceux qui sont déjà à Makkah et souhaitent accomplir une Omra supplémentaire, le départ se fait depuis le Masjid Aïcha (Taneem), le Miqat le plus proche. Votre guide vous accompagne depuis ce lieu sacré jusqu\'à l\'accomplissement complet des rituels.',
