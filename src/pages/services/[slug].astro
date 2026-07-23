@@ -63,7 +63,6 @@ const typeIconMap: Record<string, string> = {
         <a href={getLocalePath(lang, `/activites/${sub.slug}/`)} class="sv-card reveal">
           <div class="sv-card__image">
             <img src={sub.image} alt={sub.title} loading="lazy" />
-            {sub.premium && <span class="sv-card__badge">Service premium</span>}
           </div>
           <div class="sv-card__body">
             <h3 class="sv-card__title">{sub.title}</h3>
