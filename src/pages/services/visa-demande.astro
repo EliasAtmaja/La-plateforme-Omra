@@ -55,12 +55,24 @@ const lang = getLangFromUrl(Astro.url);
 
         <div class="pl-form__row">
           <div class="pl-form__field">
-            <label for="vs-country">Pays d'origine</label>
+            <label for="vs-country">Pays de r&eacute;sidence</label>
             <input type="text" id="vs-country" name="country" required autocomplete="country-name" />
           </div>
           <div class="pl-form__field">
             <label for="vs-passport">Num&eacute;ro de passeport</label>
             <input type="text" id="vs-passport" name="passport" required autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="pl-form__field">
+          <label>Type de passeport&nbsp;:</label>
+          <div class="vs-type-picker">
+            <button type="button" class="vs-type-pill is-active" data-passport="Européen">
+              <span class="vs-type-pill__label">Europ&eacute;en</span>
+            </button>
+            <button type="button" class="vs-type-pill" data-passport="Non européen">
+              <span class="vs-type-pill__label">Non europ&eacute;en</span>
+            </button>
           </div>
         </div>
 
@@ -109,7 +121,7 @@ const lang = getLangFromUrl(Astro.url);
   const form = document.getElementById('visa-form') as HTMLFormElement | null;
   const success = document.getElementById('visa-success');
   const errorMsg = document.getElementById('visa-error');
-  const pills = document.querySelectorAll('.vs-type-pill');
+  const pills = document.querySelectorAll('.vs-type-pill[data-visa]');
   let visaType = 'Visa Omra';
 
   pills.forEach(pill => {
@@ -117,6 +129,17 @@ const lang = getLangFromUrl(Astro.url);
       pills.forEach(p => p.classList.remove('is-active'));
       pill.classList.add('is-active');
       visaType = (pill as HTMLElement).dataset.visa!;
+    });
+  });
+
+  const passportPills = document.querySelectorAll('.vs-type-pill[data-passport]');
+  let passportType = 'Européen';
+
+  passportPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      passportPills.forEach(p => p.classList.remove('is-active'));
+      pill.classList.add('is-active');
+      passportType = (pill as HTMLElement).dataset.passport!;
     });
   });
 
@@ -138,6 +161,7 @@ const lang = getLangFromUrl(Astro.url);
         name: data.get('name'),
         country: data.get('country'),
         passport: data.get('passport'),
+        passport_type: passportType,
         arrival: data.get('arrival') || null,
         departure: data.get('departure') || null,
       });
