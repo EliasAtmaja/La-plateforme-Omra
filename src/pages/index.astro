@@ -1055,7 +1055,7 @@ const lang = getLangFromUrl(Astro.url);
   /* ===== TABLET & MOBILE: click-to-expand with slide ===== */
   @media (max-width: 1099px) {
     .xp__grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-    .xp__card { aspect-ratio: 4 / 4.5; }
+    .xp__card { aspect-ratio: 4 / 5.4; }
     .xp__card:hover { transform: none; box-shadow: 0 8px 30px rgba(20,81,58,0.14); }
 
     .xp__img {
@@ -1067,7 +1067,7 @@ const lang = getLangFromUrl(Astro.url);
 
     /* Expanded: image slides right */
     .xp__card.is-expanded .xp__img {
-      transform: translate(26%) scale(1);
+      transform: translate(34%) scale(1);
       filter: brightness(1.07);
     }
 
@@ -1097,7 +1097,7 @@ const lang = getLangFromUrl(Astro.url);
       flex-direction: column;
       justify-content: center;
       align-items: flex-start;
-      padding: 20px 38% 20px 24px;
+      padding: 22px 28% 22px 26px;
       background: #FFFFFF;
       clip-path: url(#xpCurve);
       transform: translateX(-101%);
@@ -1148,20 +1148,20 @@ const lang = getLangFromUrl(Astro.url);
 
     .xp__open-line {
       display: block;
-      width: 32px;
+      width: 30px;
       height: 2px;
-      background: #14513A;
-      margin: 12px 0;
+      background: #B99752;
+      margin: 10px 0;
       flex-shrink: 0;
     }
 
     .xp__open-desc {
       font-family: 'Jost', sans-serif;
-      font-size: 0.7rem;
+      font-size: 0.72rem;
       font-weight: 400;
-      color: #6B6B64;
-      line-height: 1.45;
-      margin-bottom: 12px;
+      color: #5A5A52;
+      line-height: 1.55;
+      margin-bottom: 0;
     }
 
     .xp__open-cta {
@@ -1206,9 +1206,11 @@ const lang = getLangFromUrl(Astro.url);
 
   @media (max-width: 639px) {
     .xp__grid { grid-template-columns: 1fr; }
-    .xp__card { aspect-ratio: 16 / 11; }
-    .xp__card.is-expanded .xp__img { transform: translate(30%) scale(1); }
-    .xp__open { width: 58%; padding-right: 15%; }
+    .xp__card { aspect-ratio: 16 / 13; }
+    .xp__card.is-expanded .xp__img { transform: translate(42%) scale(1); }
+    .xp__open { width: 66%; padding: 22px 9% 22px 26px; }
+    .xp__open-desc { font-size: 0.76rem; line-height: 1.6; }
+    .xp__open-title { font-size: clamp(1.05rem, 5vw, 1.35rem); }
   }
 
   @media (prefers-reduced-motion: reduce) {
