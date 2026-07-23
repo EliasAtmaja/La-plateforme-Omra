@@ -39,6 +39,16 @@ const lang = getLangFromUrl(Astro.url);
             <span>Total</span>
             <strong id="cart-page-total"></strong>
           </div>
+          <div class="cart-summary__breakdown" id="cart-breakdown">
+            <div class="cart-summary__breakdown-row">
+              <span class="cart-summary__breakdown-label">Montant que vous payerez aujourd'hui</span>
+              <strong class="cart-summary__breakdown-value" id="cart-pay-today"></strong>
+            </div>
+            <div class="cart-summary__breakdown-row">
+              <span class="cart-summary__breakdown-label">Montant que vous payerez sur place</span>
+              <strong class="cart-summary__breakdown-value cart-summary__breakdown-value--muted" id="cart-pay-onsite"></strong>
+            </div>
+          </div>
           <button type="button" class="cart-summary__pay" id="cart-page-pay">
             Proc&eacute;der au paiement
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -130,6 +140,18 @@ const lang = getLangFromUrl(Astro.url);
       return `<div class="cart-summary__row"><span>${esc(b.guideName || 'Guide')}</span><span>${price ? price + '€' : '—'}</span></div>`;
     }).join('');
     total.textContent = sum + '€';
+
+    // Breakdown (calcul à personnaliser)
+    const payToday = document.getElementById('cart-pay-today');
+    const payOnsite = document.getElementById('cart-pay-onsite');
+    const breakdown = document.getElementById('cart-breakdown');
+    if (payToday && payOnsite && breakdown) {
+      const todayAmount = sum;
+      const onsiteAmount = 0;
+      payToday.textContent = todayAmount + '€';
+      payOnsite.textContent = onsiteAmount + '€';
+      breakdown.style.display = sum > 0 ? '' : 'none';
+    }
 
     list.querySelectorAll('[data-remove]').forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -448,7 +470,7 @@ const lang = getLangFromUrl(Astro.url);
     display: flex; justify-content: space-between; align-items: baseline;
     padding-top: 14px;
     border-top: 1px solid #E7E4DB;
-    margin-bottom: 18px;
+    margin-bottom: 0;
   }
   .cart-summary__total span {
     font-family: 'Jost', sans-serif;
@@ -457,6 +479,40 @@ const lang = getLangFromUrl(Astro.url);
   .cart-summary__total strong {
     font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 1.9rem; font-weight: 700; color: #14513A;
+  }
+  .cart-summary__breakdown {
+    margin-top: 14px;
+    padding: 14px 16px;
+    background: #F7F6F2;
+    border-radius: 10px;
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cart-summary__breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .cart-summary__breakdown-label {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #666;
+    line-height: 1.3;
+  }
+  .cart-summary__breakdown-value {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #14513A;
+    white-space: nowrap;
+  }
+  .cart-summary__breakdown-value--muted {
+    color: #888;
+    font-weight: 500;
   }
   .cart-summary__pay {
     display: flex; align-items: center; justify-content: center; gap: 10px;

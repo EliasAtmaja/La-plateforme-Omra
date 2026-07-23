@@ -233,6 +233,12 @@ const mobileLinks = [
   const cartWrap = cartToggle?.closest('.header__cart-wrap');
   if (cartToggle && cartPanel) {
     cartToggle.addEventListener('click', () => {
+      // Fermer le burger s'il est ouvert
+      if (toggle && menu && toggle.getAttribute('aria-expanded') === 'true') {
+        toggle.setAttribute('aria-expanded', 'false');
+        menu.hidden = true;
+        document.body.style.overflow = '';
+      }
       const isOpen = !cartPanel.hidden;
       cartPanel.hidden = isOpen;
       cartToggle.setAttribute('aria-expanded', String(!isOpen));
