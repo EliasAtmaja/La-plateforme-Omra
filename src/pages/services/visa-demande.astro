@@ -59,20 +59,16 @@ const lang = getLangFromUrl(Astro.url);
             <input type="text" id="vs-country" name="country" required autocomplete="country-name" />
           </div>
           <div class="pl-form__field">
-            <label for="vs-passport">Num&eacute;ro de passeport</label>
+            <label for="vs-passport">Num&eacute;ro de passeport <span class="pl-form__hint">(valide 6 mois apr&egrave;s le retour)</span></label>
             <input type="text" id="vs-passport" name="passport" required autocomplete="off" />
           </div>
         </div>
 
-        <div class="pl-form__field">
-          <label>Type de passeport&nbsp;:</label>
-          <div class="vs-type-picker">
-            <button type="button" class="vs-type-pill is-active" data-passport="Européen">
-              <span class="vs-type-pill__label">Europ&eacute;en</span>
-            </button>
-            <button type="button" class="vs-type-pill" data-passport="Non européen">
-              <span class="vs-type-pill__label">Non europ&eacute;en</span>
-            </button>
+        <div class="pl-form__field pl-form__passport-row">
+          <label>Type de passeport</label>
+          <div class="vs-passport-toggle">
+            <button type="button" class="vs-passport-btn is-active" data-passport="Européen">Europ&eacute;en</button>
+            <button type="button" class="vs-passport-btn" data-passport="Non européen">Non europ&eacute;en</button>
           </div>
         </div>
 
@@ -132,14 +128,14 @@ const lang = getLangFromUrl(Astro.url);
     });
   });
 
-  const passportPills = document.querySelectorAll('.vs-type-pill[data-passport]');
+  const passportBtns = document.querySelectorAll('.vs-passport-btn[data-passport]');
   let passportType = 'Européen';
 
-  passportPills.forEach(pill => {
-    pill.addEventListener('click', () => {
-      passportPills.forEach(p => p.classList.remove('is-active'));
-      pill.classList.add('is-active');
-      passportType = (pill as HTMLElement).dataset.passport!;
+  passportBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      passportBtns.forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      passportType = (btn as HTMLElement).dataset.passport!;
     });
   });
 
@@ -318,6 +314,52 @@ const lang = getLangFromUrl(Astro.url);
   .vs-type-pill.is-active .vs-type-pill__icon { color: #14513A; }
   .vs-type-pill:not(.is-active) { opacity: 0.45; }
   .vs-type-pill:not(.is-active):hover { opacity: 0.7; border-color: #B99752; }
+
+  /* ---- PASSPORT INLINE TOGGLE ---- */
+  .pl-form__passport-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .pl-form__passport-row > label {
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
+  .vs-passport-toggle {
+    display: flex;
+    gap: 6px;
+  }
+  .vs-passport-btn {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1.5px solid #E3E0D6;
+    background: #FAF8F4;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.02em;
+  }
+  .vs-passport-btn.is-active {
+    border-color: #14513A;
+    background: rgba(20,81,58,0.08);
+    color: #14513A;
+    font-weight: 600;
+  }
+  .vs-passport-btn:not(.is-active):hover {
+    border-color: #B99752;
+    color: #555;
+  }
+
+  /* ---- HINT ---- */
+  .pl-form__hint {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #999;
+    letter-spacing: 0;
+  }
 
   .pl-form__error {
     font-family: 'Jost', sans-serif;
