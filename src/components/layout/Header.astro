@@ -72,16 +72,17 @@ const mobileLinks = [
             <div class="hc-breakdown" id="hc-breakdown">
               <div class="hc-breakdown__row">
                 <span class="hc-breakdown__dot hc-breakdown__dot--green"></span>
-                <span class="hc-breakdown__label">Aujourd'hui</span>
+                <span class="hc-breakdown__label">&Agrave; payer aujourd'hui</span>
                 <span class="hc-breakdown__line"></span>
                 <strong class="hc-breakdown__value" id="hc-pay-today"></strong>
               </div>
               <div class="hc-breakdown__row">
                 <span class="hc-breakdown__dot hc-breakdown__dot--gold"></span>
-                <span class="hc-breakdown__label">Sur place</span>
+                <span class="hc-breakdown__label">&Agrave; payer sur place</span>
                 <span class="hc-breakdown__line"></span>
                 <strong class="hc-breakdown__value hc-breakdown__value--muted" id="hc-pay-onsite"></strong>
               </div>
+              <button type="button" class="hc-breakdown__info" id="hc-info-btn">En savoir plus</button>
             </div>
             <a href={getLocalePath(lang, '/panier/')} class="header__cart-view">Voir le panier</a>
             <button type="button" class="header__cart-pay" id="cart-pay">Proc&eacute;der au paiement</button>
@@ -101,6 +102,25 @@ const mobileLinks = [
         <span class="header__burger-line"></span>
         <span class="header__burger-line"></span>
       </button>
+    </div>
+  </div>
+
+  <!-- Modal "En savoir plus" -->
+  <div class="hc-modal-overlay" id="hc-modal" hidden>
+    <div class="hc-modal">
+      <button type="button" class="hc-modal__close" id="hc-modal-close" aria-label="Fermer">
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M4 4l10 10M14 4L4 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <h3 class="hc-modal__title">Comment fonctionne le paiement ?</h3>
+      <p class="hc-modal__text">
+        Le montant que vous r&eacute;glez aujourd'hui correspond aux <strong>frais de service</strong> li&eacute;s &agrave; la mise en relation avec votre guide.
+      </p>
+      <p class="hc-modal__text">
+        Le reste du montant sera pay&eacute; <strong>directement au guide, sur place</strong>, le jour de votre accompagnement.
+      </p>
+      <p class="hc-modal__text hc-modal__text--muted">
+        Ce fonctionnement vous garantit transparence et flexibilit&eacute;.
+      </p>
     </div>
   </div>
 
@@ -302,6 +322,18 @@ const mobileLinks = [
     renderCart();
   });
   window.addEventListener('storage', renderCart);
+
+  // Modal "En savoir plus"
+  const hcModal = document.getElementById('hc-modal');
+  document.getElementById('hc-info-btn')?.addEventListener('click', () => {
+    if (hcModal) hcModal.hidden = false;
+  });
+  document.getElementById('hc-modal-close')?.addEventListener('click', () => {
+    if (hcModal) hcModal.hidden = true;
+  });
+  hcModal?.addEventListener('click', (e) => {
+    if (e.target === hcModal) hcModal.hidden = true;
+  });
 </script>
 
 <style>
@@ -833,6 +865,84 @@ const mobileLinks = [
     color: #999;
     font-weight: 500;
   }
+  .hc-breakdown__info {
+    display: inline-flex;
+    margin-top: 8px;
+    padding: 0;
+    background: none;
+    border: none;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: #B99752;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.2s;
+  }
+  .hc-breakdown__info:hover { color: #14513A; }
+
+  /* Modal */
+  .hc-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: hcModalFade 0.2s ease;
+  }
+  .hc-modal-overlay[hidden] { display: none; }
+  .hc-modal {
+    position: relative;
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 32px 28px 24px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+    animation: hcModalSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .hc-modal__close {
+    position: absolute;
+    top: 12px; right: 12px;
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: color 0.2s, background 0.2s;
+  }
+  .hc-modal__close:hover { color: #1C1C1A; background: #F0EDE6; }
+  .hc-modal__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #14513A;
+    margin: 0 0 14px;
+  }
+  .hc-modal__text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 300;
+    color: #4A4A42;
+    line-height: 1.6;
+    margin: 0 0 8px;
+  }
+  .hc-modal__text strong { font-weight: 600; color: #1C1C1A; }
+  .hc-modal__text--muted {
+    color: #999;
+    font-size: 0.75rem;
+    font-style: italic;
+    margin-top: 12px;
+    margin-bottom: 0;
+  }
+  @keyframes hcModalFade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes hcModalSlide { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
   .header__cart-view {
     display: block;
     padding: 11px;
