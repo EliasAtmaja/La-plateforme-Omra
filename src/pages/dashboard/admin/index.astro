@@ -172,8 +172,12 @@ import '../../../styles/global.css';
             </select>
           </div>
           <div class="adm-form-field">
-            <label>Prix (€)</label>
-            <input type="number" name="prix" min="1" required placeholder="150" />
+            <label>Prix du guide (€)</label>
+            <input type="number" name="prix" min="0" required placeholder="120" />
+          </div>
+          <div class="adm-form-field">
+            <label>Prix du service (€)</label>
+            <input type="number" name="service_prix" min="0" required placeholder="30" />
           </div>
         </div>
         <div class="adm-form-field">
@@ -946,6 +950,7 @@ import '../../../styles/global.css';
     (addGuideForm.querySelector('[name="ville"]') as HTMLSelectElement).value = guide.city || '';
     (addGuideForm.querySelector('[name="gender"]') as HTMLSelectElement).value = guide.gender || 'homme';
     (addGuideForm.querySelector('[name="prix"]') as HTMLInputElement).value = guide.pricePerDay ? String(guide.pricePerDay) : '';
+    (addGuideForm.querySelector('[name="service_prix"]') as HTMLInputElement).value = guide.servicePrice ? String(guide.servicePrice) : '';
     (addGuideForm.querySelector('[name="diplome"]') as HTMLInputElement).value = guide.diploma || '';
     (addGuideForm.querySelector('[name="langues"]') as HTMLInputElement).value = (guide.languages || []).join(', ');
     (addGuideForm.querySelector('[name="description"]') as HTMLTextAreaElement).value = guide.description || '';
@@ -1000,6 +1005,7 @@ import '../../../styles/global.css';
     const ville = (form.querySelector('[name="ville"]') as HTMLSelectElement).value;
     const gender = (form.querySelector('[name="gender"]') as HTMLSelectElement).value;
     const prix = (form.querySelector('[name="prix"]') as HTMLInputElement).value;
+    const servicePrix = (form.querySelector('[name="service_prix"]') as HTMLInputElement).value;
     const diplome = (form.querySelector('[name="diplome"]') as HTMLInputElement).value.trim();
     const langues = (form.querySelector('[name="langues"]') as HTMLInputElement).value.trim();
     const description = (form.querySelector('[name="description"]') as HTMLTextAreaElement).value.trim();
@@ -1029,6 +1035,7 @@ import '../../../styles/global.css';
       description: description || null,
       languages: langues ? langues.split(',').map((l: string) => l.trim()).filter(Boolean) : [],
       price_per_day: prix ? parseInt(prix) : 0,
+      service_price: servicePrix ? parseInt(servicePrix) : 0,
       services: servicesChecked,
     };
 

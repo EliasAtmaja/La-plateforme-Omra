@@ -166,13 +166,12 @@ const lang = getLangFromUrl(Astro.url);
     }).join('');
     total.textContent = sum + '€';
 
-    // Breakdown (calcul à personnaliser)
     const payToday = document.getElementById('cart-pay-today');
     const payOnsite = document.getElementById('cart-pay-onsite');
     const breakdown = document.getElementById('cart-breakdown');
     if (payToday && payOnsite && breakdown) {
-      const todayAmount = sum;
-      const onsiteAmount = 0;
+      const todayAmount = items.reduce((s: number, b: any) => s + (b.servicePrice || 0), 0);
+      const onsiteAmount = items.reduce((s: number, b: any) => s + (b.guidePrice || 0), 0);
       payToday.textContent = todayAmount + '€';
       payOnsite.textContent = onsiteAmount + '€';
       breakdown.style.display = sum > 0 ? '' : 'none';

@@ -210,7 +210,7 @@ const lang = getLangFromUrl(Astro.url);
               ${ratingHtml}
             </div>
             <div class="gp-card__right">
-              ${g.pricePerDay ? `<div class="gp-card__price"><span class="gp-card__amount">${esc(String(g.pricePerDay))}&euro;</span><span class="gp-card__unit">Frais inclus</span></div>` : ''}
+              ${(g.pricePerDay || g.servicePrice) ? `<div class="gp-card__price"><span class="gp-card__amount">${esc(String((g.pricePerDay || 0) + (g.servicePrice || 0)))}&euro;</span><span class="gp-card__unit">Frais inclus</span></div>` : ''}
               <button class="gp-card__avail-btn" type="button" data-open-cal="${g.id}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="4" y="5.5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 10h16M8.5 3.5v3.5M15.5 3.5v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 Les disponibilit&eacute;s
@@ -602,7 +602,9 @@ const lang = getLangFromUrl(Astro.url);
       date,
       slot,
       activityName: '',
-      price: guide?.pricePerDay || 0,
+      price: (guide?.pricePerDay || 0) + (guide?.servicePrice || 0),
+      servicePrice: guide?.servicePrice || 0,
+      guidePrice: guide?.pricePerDay || 0,
     });
     localStorage.setItem('omra-cart', JSON.stringify(cart));
     window.dispatchEvent(new Event('cart-updated'));

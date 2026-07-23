@@ -253,8 +253,8 @@ const mobileLinks = [
     const hcToday = document.getElementById('hc-pay-today');
     const hcOnsite = document.getElementById('hc-pay-onsite');
     if (hcToday && hcOnsite) {
-      const todayAmount = total;
-      const onsiteAmount = 0;
+      const todayAmount = items.reduce((s: number, b: any) => s + (b.servicePrice || 0), 0);
+      const onsiteAmount = items.reduce((s: number, b: any) => s + (b.guidePrice || 0), 0);
       hcToday.textContent = todayAmount + '€';
       hcOnsite.textContent = onsiteAmount + '€';
     }
