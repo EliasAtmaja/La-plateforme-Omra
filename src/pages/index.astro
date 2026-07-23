@@ -2158,7 +2158,7 @@ const lang = getLangFromUrl(Astro.url);
         setFill(local * 45);
       } else if (progress < 0.72) {
         setStep(2);
-        const local = (progress - 0.58) / 0.14;
+        const local = (progress - 0.5) / 0.22;
         setFill(45 + local * 45);
       } else {
         setStep(3);
