@@ -22,6 +22,10 @@ const service = services.find(s => s.slug === 'visa')!;
     <p class="sv-hero__eyebrow load-rise" style="--load-delay: 100ms">{service.eyebrow}</p>
     <h1 class="sv-hero__title load-rise" style="--load-delay: 250ms">{service.title}</h1>
     <p class="sv-hero__sub load-rise" style="--load-delay: 400ms">{service.subtitle}</p>
+    <div class="sv-hero__price load-rise" style="--load-delay: 550ms">
+      <span class="sv-hero__price-label">&Agrave; partir de</span>
+      <span class="sv-hero__price-value">149&nbsp;&euro;</span>
+    </div>
   </div>
 </section>
 
@@ -103,6 +107,26 @@ const service = services.find(s => s.slug === 'visa')!;
     font-size: 0.95rem; font-weight: 300;
     color: rgba(250,248,244,0.78); line-height: 1.7;
     max-width: 480px;
+  }
+  .sv-hero__price {
+    display: inline-flex; align-items: baseline; gap: 8px;
+    margin-top: 22px;
+    padding: 10px 20px;
+    background: rgba(185,151,82,0.16);
+    border: 1px solid rgba(203,169,106,0.55);
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+  }
+  .sv-hero__price-label {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem; font-weight: 400;
+    text-transform: uppercase; letter-spacing: 0.16em;
+    color: rgba(250,248,244,0.85);
+  }
+  .sv-hero__price-value {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.35rem; font-weight: 700;
+    color: #E9D9AE; line-height: 1;
   }
 
   /* ---- INTRO ---- */
