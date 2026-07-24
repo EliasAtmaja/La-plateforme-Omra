@@ -7,7 +7,7 @@ const lang = getLangFromUrl(Astro.url);
 const service = services.find(s => s.slug === 'planification')!;
 ---
 
-<BaseLayout title={service.title} description={service.subtitle}>
+<BaseLayout title={service.title} description={service.subtitle} hasHero>
 
 <!-- Hero -->
 <section class="sv-hero">
