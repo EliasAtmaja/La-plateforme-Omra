@@ -10,7 +10,7 @@
   Header set Expires 0
 </FilesMatch>
 
-# Short cache for CSS/JS (hashed filenames handle versioning)
-<FilesMatch "\.(css|js)$">
+# Short cache for CSS/JS/images (hashed filenames handle versioning)
+<FilesMatch "\.(css|js|webp|jpg|jpeg|png|svg)$">
   Header set Cache-Control "public, max-age=60"
 </FilesMatch>
