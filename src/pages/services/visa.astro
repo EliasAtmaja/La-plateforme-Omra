@@ -7,7 +7,7 @@ const lang = getLangFromUrl(Astro.url);
 const service = services.find(s => s.slug === 'visa')!;
 ---
 
-<BaseLayout title={service.title} description={service.subtitle} hasHero>
+<BaseLayout title={service.title} description={service.subtitle}>
 
 <!-- Hero -->
 <section class="sv-hero">
@@ -81,7 +81,7 @@ const service = services.find(s => s.slug === 'visa')!;
     background: rgba(0,0,0,0.45);
     backdrop-filter: blur(8px);
     color: #FFFFFF;
-    position: absolute; top: 90px; left: 24px; z-index: 3;
+    position: absolute; top: 16px; left: 24px; z-index: 3;
     transition: background 0.2s;
     text-decoration: none;
   }

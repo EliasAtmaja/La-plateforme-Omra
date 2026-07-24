@@ -13,7 +13,7 @@ const activity = activities.find(a => a.slug === slug)!;
 const totalSteps = activity.timeline.length;
 ---
 
-<BaseLayout title={activity.title} description={activity.subtitle} hasHero>
+<BaseLayout title={activity.title} description={activity.subtitle}>
   <!-- Hero -->
   <section class="act-hero" style={`background-image: url(${activity.heroImage})`}>
     <div class="act-hero__overlay"></div>
@@ -152,7 +152,7 @@ const totalSteps = activity.timeline.length;
     backdrop-filter: blur(8px);
     color: #FFFFFF;
     position: absolute;
-    top: 90px;
+    top: 16px;
     left: 24px;
     z-index: 3;
     text-decoration: none;
