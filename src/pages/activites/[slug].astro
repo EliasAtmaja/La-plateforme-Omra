@@ -43,6 +43,10 @@ const totalSteps = activity.timeline.length;
             <span>Type : <strong>{activity.type}</strong></span>
           </div>
         </div>
+        <div class="act-guide-note reveal">
+          <p class="act-guide-note__title">Votre guide, votre choix.</p>
+          <p class="act-guide-note__sub">Vous pourrez le s&eacute;lectionner en bas de page <span aria-hidden="true">&darr;</span></p>
+        </div>
       </div>
     </div>
   </section>
@@ -241,6 +245,31 @@ const totalSteps = activity.timeline.length;
   }
   .act-desc__meta-item svg { color: #B99752; flex-shrink: 0; }
   .act-desc__meta-item strong { color: #1C1C1A; font-weight: 600; }
+
+  /* ---- Guide note (non-cliquable) ---- */
+  .act-guide-note {
+    margin-top: 28px;
+    padding: 26px 28px;
+    text-align: center;
+    background: #FAF8F4;
+    border: 1px solid #E7DFC9;
+    border-radius: 16px;
+  }
+  .act-guide-note__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #14513A;
+    margin: 0 0 6px;
+  }
+  .act-guide-note__sub {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: #6B6B63;
+    margin: 0;
+  }
+  .act-guide-note__sub span { color: #B99752; font-weight: 500; }
 
   /* ============ TIMELINE ============ */
   .act-tl {
