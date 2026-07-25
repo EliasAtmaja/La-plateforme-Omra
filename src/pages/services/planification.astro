@@ -151,8 +151,6 @@ const service = services.find(s => s.slug === 'planification')!;
 </BaseLayout>
 
 <script>
-  import { supabase } from '../../lib/supabase';
-
   const form = document.getElementById('planif-form') as HTMLFormElement | null;
   const success = document.getElementById('planif-success');
   const errorMsg = document.getElementById('planif-error');
@@ -170,6 +168,7 @@ const service = services.find(s => s.slug === 'planification')!;
       submitBtn.disabled = true;
 
       const data = new FormData(form);
+      const { supabase } = await import('../../lib/supabase');
       const { error } = await supabase.from('planif_requests').insert({
         name: data.get('name'),
         group_size: parseInt(String(data.get('groupSize'))) || null,

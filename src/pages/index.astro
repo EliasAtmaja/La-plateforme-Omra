@@ -97,7 +97,7 @@ const lang = getLangFromUrl(Astro.url);
         </div>
         <div class="xp__panel">
           <span class="xp__sub">Organisation</span>
-          <span class="xp__title">📞 Conseils &amp; Optimisation : Votre appel priv&eacute;</span>
+          <span class="xp__title xp__title--icon"><span class="xp__title-icon" aria-hidden="true">📞</span><span class="xp__title-text">Conseils &amp; Optimisation : Votre appel priv&eacute;</span></span>
           <span class="xp__reveal">
             <span class="xp__desc">Un entretien privé de 30 minutes avec votre spécialiste Omra/Hajj : il structurera votre séjour, vous évitera les pièges logistiques et vous permettra de maîtriser votre budget.</span>
             <a href={getLocalePath(lang, '/services/planification/')} class="xp__cta">
@@ -108,7 +108,7 @@ const lang = getLangFromUrl(Astro.url);
         </div>
         <div class="xp__open" aria-hidden="true">
           <span class="xp__open-sub">Organisation</span>
-          <span class="xp__open-title">📞 Conseils &amp; Optimisation : Votre appel priv&eacute;</span>
+          <span class="xp__open-title xp__title--icon"><span class="xp__title-icon" aria-hidden="true">📞</span><span class="xp__title-text">Conseils &amp; Optimisation : Votre appel priv&eacute;</span></span>
           <span class="xp__open-line"></span>
           <p class="xp__open-desc">Un entretien privé de 30 minutes avec votre spécialiste Omra/Hajj : il structurera votre séjour, vous évitera les pièges logistiques et vous permettra de maîtriser votre budget.</p>
           <a href={getLocalePath(lang, '/services/planification/')} class="xp__open-cta" aria-label="Découvrir : Planification">
@@ -999,6 +999,14 @@ const lang = getLangFromUrl(Astro.url);
     line-height: 1.18;
     letter-spacing: 0.02em;
   }
+
+  /* Titre avec icône : les lignes suivantes s'alignent sous le texte, pas sous l'icône */
+  .xp__title--icon {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .xp__title--icon .xp__title-icon { flex-shrink: 0; }
 
   .xp__reveal {
     display: grid;

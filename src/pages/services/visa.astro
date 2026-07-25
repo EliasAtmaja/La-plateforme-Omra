@@ -22,10 +22,6 @@ const service = services.find(s => s.slug === 'visa')!;
     <p class="sv-hero__eyebrow load-rise" style="--load-delay: 100ms">{service.eyebrow}</p>
     <h1 class="sv-hero__title load-rise" style="--load-delay: 250ms">{service.title}</h1>
     <p class="sv-hero__sub load-rise" style="--load-delay: 400ms">{service.subtitle}</p>
-    <div class="sv-hero__price load-rise" style="--load-delay: 550ms">
-      <span class="sv-hero__price-label">&Agrave; partir de</span>
-      <span class="sv-hero__price-value">149&nbsp;&euro;</span>
-    </div>
   </div>
 </section>
 
@@ -34,6 +30,10 @@ const service = services.find(s => s.slug === 'visa')!;
   <div class="pl-container">
     <p class="pl-intro__eyebrow reveal">Vos d&eacute;marches simplifi&eacute;es</p>
     <h2 class="pl-intro__title reveal">Nous vous accompagnons pour l'obtention de votre visa</h2>
+    <div class="pl-intro__price reveal">
+      <span class="pl-intro__price-from">&Agrave; partir de</span>
+      <span class="pl-intro__price-amount">149&nbsp;&euro;</span>
+    </div>
     <p class="pl-intro__text reveal">
       Pour entrer en Arabie Saoudite, un visa est indispensable. Les d&eacute;marches peuvent sembler
       complexes&nbsp;: formulaires, documents, d&eacute;lais&hellip; Notre &eacute;quipe vous accompagne de A &agrave; Z
@@ -108,25 +108,24 @@ const service = services.find(s => s.slug === 'visa')!;
     color: rgba(250,248,244,0.78); line-height: 1.7;
     max-width: 480px;
   }
-  .sv-hero__price {
-    display: inline-flex; align-items: baseline; gap: 8px;
-    margin-top: 22px;
-    padding: 10px 20px;
-    background: rgba(185,151,82,0.16);
-    border: 1px solid rgba(203,169,106,0.55);
-    border-radius: 999px;
-    backdrop-filter: blur(6px);
+  .pl-intro__price {
+    display: inline-flex; align-items: baseline; gap: 10px;
+    background: #FAF8F4;
+    border: 1px solid #EFEDE6;
+    border-radius: 14px;
+    padding: 12px 22px;
+    margin: 4px 0 22px;
   }
-  .sv-hero__price-label {
+  .pl-intro__price-from {
     font-family: 'Jost', sans-serif;
-    font-size: 0.72rem; font-weight: 400;
-    text-transform: uppercase; letter-spacing: 0.16em;
-    color: rgba(250,248,244,0.85);
+    font-size: 0.78rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: #B99752;
   }
-  .sv-hero__price-value {
+  .pl-intro__price-amount {
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 1.35rem; font-weight: 700;
-    color: #E9D9AE; line-height: 1;
+    font-size: 2rem; font-weight: 700; color: #14513A;
+    line-height: 1;
   }
 
   /* ---- INTRO ---- */
