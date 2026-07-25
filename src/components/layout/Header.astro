@@ -154,6 +154,7 @@ const mobileLinks = [
 
   const header = document.querySelector('.header');
   if (header) {
+    let lastY = 0;
     const onScroll = () => {
       const y = window.scrollY;
       if (y > 60) {
@@ -161,6 +162,14 @@ const mobileLinks = [
       } else {
         header.classList.remove('is-scrolled');
       }
+      // Ne pas masquer le header quand le menu burger est ouvert
+      const menuOpen = toggle?.getAttribute('aria-expanded') === 'true';
+      if (y > lastY && y > 120 && !menuOpen) {
+        header.classList.add('is-hidden');
+      } else {
+        header.classList.remove('is-hidden');
+      }
+      lastY = y;
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
