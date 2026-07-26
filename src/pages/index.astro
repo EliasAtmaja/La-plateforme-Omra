@@ -363,6 +363,10 @@ const lang = getLangFromUrl(Astro.url);
           </label>
         </div>
         <label class="hm-testi__guide-check">
+          <input type="checkbox" id="review-is-site" checked />
+          <span>Cet avis concerne le site</span>
+        </label>
+        <label class="hm-testi__guide-check">
           <input type="checkbox" id="review-is-guide" />
           <span>Cet avis concerne un guide</span>
         </label>
@@ -2020,13 +2024,19 @@ const lang = getLangFromUrl(Astro.url);
     guidesLoaded = true;
   }
 
-  isGuideCheck?.addEventListener('change', () => {
-    const forGuide = isGuideCheck.checked;
+  const isSiteCheck = document.getElementById('review-is-site') as HTMLInputElement | null;
+
+  // Les deux cases sont exclusives : soit le site, soit un guide.
+  function setForGuide(forGuide: boolean) {
+    if (isGuideCheck) isGuideCheck.checked = forGuide;
+    if (isSiteCheck) isSiteCheck.checked = !forGuide;
     if (guideLabel) guideLabel.style.display = forGuide ? '' : 'none';
     if (serviceLabel) serviceLabel.style.display = forGuide ? 'none' : '';
     if (serviceInput) serviceInput.required = !forGuide;
     if (forGuide) loadGuidesList();
-  });
+  }
+  isGuideCheck?.addEventListener('change', () => setForGuide(isGuideCheck.checked));
+  isSiteCheck?.addEventListener('change', () => setForGuide(!isSiteCheck.checked));
 
   // Submit review → Supabase (statut « en attente », modéré par l'admin)
   reviewForm?.addEventListener('submit', async (e) => {
