@@ -1,16 +1,27 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getLangFromUrl, t, getLocalePath } from '../../i18n/ui';
+import { activities } from '../../data/activities';
 
 const lang = getLangFromUrl(Astro.url);
+const activityMap: Record<string, string> = Object.fromEntries(activities.map(a => [a.slug, a.title]));
 ---
 
 <BaseLayout title={t(lang, 'nav.guides')} description={t(lang, 'guides.subtitle')}>
+
+  <script type="application/json" id="activities-map" set:html={JSON.stringify(activityMap)}></script>
 
   <div class="gp-hero">
     <div class="gp-container">
       <h1 class="gp-hero__title reveal">Nos guides</h1>
       <p class="gp-hero__sub reveal">Choisissez votre guide certifi&eacute; et r&eacute;servez en quelques clics</p>
+    </div>
+  </div>
+
+  <div class="gp-activity-banner is-hidden" id="gp-activity-banner">
+    <div class="gp-container">
+      <span class="gp-activity-banner__label">Vous r&eacute;servez un guide pour</span>
+      <span class="gp-activity-banner__name" id="gp-activity-name"></span>
     </div>
   </div>
 
@@ -22,6 +33,16 @@ const lang = getLangFromUrl(Astro.url);
         <div class="gp-gender-toggle" role="group" aria-label="Genre du guide">
           <button type="button" class="gp-gender-btn" data-gender="homme">Homme</button>
           <button type="button" class="gp-gender-btn" data-gender="femme">Femme</button>
+        </div>
+      </div>
+      <div class="gp-filters__row gp-filters__row--group">
+        <span class="gp-filter__text">Pour un groupe de</span>
+        <div class="gp-group-controls">
+          <div class="gp-gender-toggle" role="group" aria-label="Taille du groupe">
+            <button type="button" class="gp-group-btn" data-group="small">1 &agrave; 7</button>
+            <button type="button" class="gp-group-btn" data-group="large">+ de 7</button>
+          </div>
+          <input type="number" min="1" inputmode="numeric" class="gp-group-input" id="group-size-input" placeholder="Nb de personnes" aria-label="Nombre de personnes" />
         </div>
       </div>
     </div>
@@ -56,6 +77,25 @@ const lang = getLangFromUrl(Astro.url);
   const currentActivity = new URLSearchParams(window.location.search).get('activite') || '';
   const allowedSlots: string[] | null = ACTIVITY_SLOTS[currentActivity] || null;
 
+  // Nom lisible de l'activité choisie (injecté côté serveur)
+  let currentActivityName = '';
+  try {
+    const mapEl = document.getElementById('activities-map');
+    if (mapEl && currentActivity) {
+      const map = JSON.parse(mapEl.textContent || '{}');
+      currentActivityName = map[currentActivity] || '';
+    }
+  } catch (_) {}
+  // Bandeau en haut : activité pour laquelle on réserve
+  if (currentActivityName) {
+    const banner = document.getElementById('gp-activity-banner');
+    const nameEl = document.getElementById('gp-activity-name');
+    if (banner && nameEl) {
+      nameEl.textContent = currentActivityName;
+      banner.classList.remove('is-hidden');
+    }
+  }
+
   // Boutons de créneaux (on n'affiche que ceux autorisés pour l'activité)
   const SLOT_ICONS: Record<string, string> = {
     'Matin': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="14" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M12 6.5V4.5M5.5 14h-2M20.5 14h-2M7.4 9.4L6 8M16.6 9.4L18 8M3 18.5h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
@@ -76,10 +116,10 @@ const lang = getLangFromUrl(Astro.url);
   }
 
   let filterGender: string = '';
+  let groupSize: number | null = null; // nombre de personnes choisi
 
   function initFilters() {
     const btns = Array.from(document.querySelectorAll('.gp-gender-btn')) as HTMLButtonElement[];
-    if (!btns.length) return;
     btns.forEach(btn => {
       btn.addEventListener('click', () => {
         const val = btn.dataset.gender || '';
@@ -89,6 +129,33 @@ const lang = getLangFromUrl(Astro.url);
         renderGuidesList();
       });
     });
+
+    // ---- Taille du groupe (2 boutons + champ manuel synchronisés) ----
+    const groupBtns = Array.from(document.querySelectorAll('.gp-group-btn')) as HTMLButtonElement[];
+    const groupInput = document.getElementById('group-size-input') as HTMLInputElement | null;
+    function syncGroupButtons() {
+      groupBtns.forEach(b => {
+        const isSmall = b.dataset.group === 'small';
+        const active = groupSize != null && (isSmall ? groupSize <= 7 : groupSize > 7);
+        b.classList.toggle('is-active', active);
+      });
+    }
+    groupBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const kind = btn.dataset.group;
+        // Un préréglage rapide : 1 à 7 → 1, + de 7 → 8 (modifiable ensuite au champ)
+        groupSize = (kind === 'large') ? 8 : 1;
+        if (groupInput) groupInput.value = String(groupSize);
+        syncGroupButtons();
+      });
+    });
+    if (groupInput) {
+      groupInput.addEventListener('input', () => {
+        const n = parseInt(groupInput.value, 10);
+        groupSize = Number.isFinite(n) && n > 0 ? n : null;
+        syncGroupButtons();
+      });
+    }
   }
   initFilters();
 
@@ -628,8 +695,8 @@ const lang = getLangFromUrl(Astro.url);
       p_guide_id: guideId,
       p_date: date,
       p_slot: slot,
-      p_activity_slug: null,
-      p_activity_name: null,
+      p_activity_slug: currentActivity || null,
+      p_activity_name: currentActivityName || null,
     });
     if (error || !data) {
       alert("Cette date n'est plus disponible. Le calendrier a été mis à jour.");
@@ -651,7 +718,8 @@ const lang = getLangFromUrl(Astro.url);
       guidePhoto: guide?.photo || '',
       date,
       slot,
-      activityName: '',
+      activityName: currentActivityName || '',
+      groupSize: groupSize || null,
       price: (guide?.pricePerDay || 0) + (guide?.servicePrice || 0),
       servicePrice: guide?.servicePrice || 0,
       guidePrice: guide?.pricePerDay || 0,
@@ -727,12 +795,33 @@ const lang = getLangFromUrl(Astro.url);
     color: #1C1C1A;
     white-space: nowrap;
   }
+  /* ---- Bandeau activité choisie ---- */
+  .gp-activity-banner {
+    background: #14513A;
+    padding: 14px 0;
+  }
+  .gp-activity-banner .gp-container {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; flex-wrap: wrap; text-align: center;
+  }
+  .gp-activity-banner__label {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.14em;
+    color: rgba(250,248,244,0.75);
+  }
+  .gp-activity-banner__name {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.35rem; font-weight: 700;
+    color: #E9D9AE;
+  }
+
   /* ---- Filtre genre : 2 boutons (sélection unique) ---- */
   .gp-gender-toggle {
     display: inline-flex;
     gap: 8px;
   }
-  .gp-gender-btn {
+  .gp-gender-btn, .gp-group-btn {
     padding: 9px 22px;
     background: #FAF8F4;
     border: 1.5px solid #E3E0D6;
@@ -744,14 +833,38 @@ const lang = getLangFromUrl(Astro.url);
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
   }
-  .gp-gender-btn:hover {
+  .gp-gender-btn:hover, .gp-group-btn:hover {
     border-color: #14513A;
   }
-  .gp-gender-btn.is-active {
+  .gp-gender-btn.is-active, .gp-group-btn.is-active {
     background: #14513A;
     border-color: #14513A;
     color: #FAF8F4;
     box-shadow: 0 4px 14px rgba(20,81,58,0.22);
+  }
+
+  /* ---- Taille du groupe ---- */
+  .gp-filters__row--group { margin-top: 12px; }
+  .gp-group-controls {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .gp-group-input {
+    width: 150px;
+    padding: 9px 16px;
+    background: #FAF8F4;
+    border: 1.5px solid #E3E0D6;
+    border-radius: 28px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #14513A;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .gp-group-input::placeholder { color: #9B9B92; font-weight: 400; }
+  .gp-group-input:focus {
+    outline: none;
+    border-color: #14513A;
+    box-shadow: 0 0 0 3px rgba(20,81,58,0.1);
   }
 
   /* ---- Chargement ---- */

@@ -209,7 +209,7 @@ export const activities: ActivityDetail[] = [
     ],
     duration: '3 à 4h',
     tags: ['Histoire', 'Spiritualité', 'Découverte'],
-    type: 'Groupe',
+    type: 'Privé',
   },
   {
     slug: 'visite-masjid-nabawi',
@@ -241,7 +241,7 @@ export const activities: ActivityDetail[] = [
       { title: 'Accompagnement à votre hôtel', description: 'Fin de l\'activité et retour vers votre hôtel, accompagnée en toute sérénité par votre guide.' },
     ],
     duration: '3 à 4h',
-    tags: ['Shopping', 'Souks', 'Découverte'],
+    tags: ['Shopping', 'Souks', 'Découverte', 'Détente'],
     type: 'Privé',
   },
 

@@ -30,9 +30,15 @@ const service = services.find(s => s.slug === 'visa')!;
   <div class="pl-container">
     <p class="pl-intro__eyebrow reveal">Vos d&eacute;marches simplifi&eacute;es</p>
     <h2 class="pl-intro__title reveal">Nous vous accompagnons pour l'obtention de votre visa</h2>
-    <div class="pl-intro__price reveal">
-      <span class="pl-intro__price-from">&Agrave; partir de</span>
-      <span class="pl-intro__price-amount">149&nbsp;&euro;</span>
+    <div class="pl-intro__prices reveal">
+      <div class="pl-intro__price">
+        <span class="pl-intro__price-amount">149&nbsp;&euro;</span>
+        <span class="pl-intro__price-label">Visa touristique</span>
+      </div>
+      <div class="pl-intro__price">
+        <span class="pl-intro__price-amount">279&nbsp;&euro;</span>
+        <span class="pl-intro__price-label">Visa Omra</span>
+      </div>
     </div>
     <p class="pl-intro__text reveal">
       Pour entrer en Arabie Saoudite, un visa est indispensable. Les d&eacute;marches peuvent sembler
@@ -108,24 +114,28 @@ const service = services.find(s => s.slug === 'visa')!;
     color: rgba(250,248,244,0.78); line-height: 1.7;
     max-width: 480px;
   }
+  .pl-intro__prices {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    margin: 4px 0 22px;
+  }
   .pl-intro__price {
-    display: inline-flex; align-items: baseline; gap: 10px;
+    display: flex; flex-direction: column; gap: 4px;
     background: #FAF8F4;
     border: 1px solid #EFEDE6;
     border-radius: 14px;
-    padding: 12px 22px;
-    margin: 4px 0 22px;
-  }
-  .pl-intro__price-from {
-    font-family: 'Jost', sans-serif;
-    font-size: 0.78rem; font-weight: 500;
-    text-transform: uppercase; letter-spacing: 0.08em;
-    color: #B99752;
+    padding: 14px 22px;
+    min-width: 150px;
   }
   .pl-intro__price-amount {
     font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 2rem; font-weight: 700; color: #14513A;
     line-height: 1;
+  }
+  .pl-intro__price-label {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: #B99752;
   }
 
   /* ---- INTRO ---- */

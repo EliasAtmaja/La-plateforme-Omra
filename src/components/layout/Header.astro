@@ -116,7 +116,7 @@ const mobileLinks = [
         Le montant r&eacute;gl&eacute; en ligne correspond aux <strong>frais de service et de gestion</strong>. Ils nous permettent de s&eacute;curiser votre r&eacute;servation, d'assurer le suivi de votre visite et de rester &agrave; votre enti&egrave;re disposition pour vous conseiller et r&eacute;pondre &agrave; vos questions durant votre voyage.
       </p>
       <p class="hc-modal__text">
-        Le solde sera &agrave; verser <strong>directement &agrave; votre guide sur place</strong>.
+        Le reste &agrave; payer sera &agrave; r&eacute;gler <strong>directement &agrave; votre guide sur place</strong>.
       </p>
       <p class="hc-modal__text hc-modal__text--muted">
         Un accompagnement fluide, transparent et sans surprise.
@@ -250,9 +250,10 @@ const mobileLinks = [
             <span class="hc-item__name">${cartEsc(b.guideName || 'Guide')}</span>
             <span class="hc-item__date">${cartEsc(cartFormatDate(b.date))}${b.slot ? ' &middot; ' + cartEsc(b.slot) : ''}</span>
             ${b.activityName ? `<span class="hc-item__activity">${cartEsc(b.activityName)}</span>` : ''}
+            ${b.groupSize ? `<span class="hc-item__activity">${cartEsc(String(b.groupSize))} personne${b.groupSize > 1 ? 's' : ''}</span>` : ''}
           </div>
           <div class="hc-item__right">
-            ${price ? `<span class="hc-item__price">${price}&euro;</span>` : ''}
+            ${price ? `<span class="hc-item__price-box"><span class="hc-item__price">${price}&euro;</span><span class="hc-item__price-note">Frais inclus</span></span>` : ''}
             <button type="button" class="hc-item__remove" data-cart-remove="${cartEsc(b.bookingId)}" aria-label="Retirer du panier">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
             </button>
@@ -798,9 +799,16 @@ const mobileLinks = [
   .hc-item__right {
     display: flex; align-items: center; gap: 10px; flex-shrink: 0;
   }
+  .hc-item__price-box {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 1px;
+  }
   .hc-item__price {
     font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 1.1rem; font-weight: 700; color: #14513A;
+  }
+  .hc-item__price-note {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.62rem; font-weight: 400; color: #9B9B92;
   }
   .hc-item__remove {
     display: flex; align-items: center; justify-content: center;
