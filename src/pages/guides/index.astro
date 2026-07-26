@@ -680,8 +680,18 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
       btn.addEventListener('click', async () => {
         const id = (btn as HTMLElement).dataset.guideId!;
         const s = calStates[id]; if (!s?.selectedDate || !s.selectedSlot) return;
+        const b = btn as HTMLButtonElement;
+        const original = b.innerHTML;
+        b.disabled = true;
+        b.classList.add('is-loading');
+        b.innerHTML = 'Traitement<span class="gp-dots"><span>.</span><span>.</span><span>.</span></span>';
         const ok = await createBooking(id, s.selectedDate, s.selectedSlot);
-        if (!ok) return;
+        if (!ok) {
+          b.disabled = false;
+          b.classList.remove('is-loading');
+          b.innerHTML = original;
+          return;
+        }
         window.location.href = '/panier/';
       });
     });
@@ -1547,6 +1557,21 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
     background: #B99752; color: #16130B;
   }
   .gp-cal__action--primary:hover { background: #CBA96A; transform: translateY(-1px); }
+  .gp-cal__action.is-loading { opacity: 0.85; cursor: wait; }
+
+  /* Animation « ... » de chargement sur le bouton paiement */
+  .gp-dots { display: inline-block; }
+  .gp-dots span {
+    display: inline-block;
+    animation: gpDot 1.2s infinite ease-in-out both;
+  }
+  .gp-dots span:nth-child(1) { animation-delay: 0s; }
+  .gp-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .gp-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes gpDot {
+    0%, 80%, 100% { opacity: 0.2; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-2px); }
+  }
 
   /* ---- RESPONSIVE ---- */
   @media (max-width: 767px) {

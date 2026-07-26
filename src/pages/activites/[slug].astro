@@ -92,23 +92,6 @@ const showTransportVip = ['visite-historique-medine', 'visite-historique-makkah'
   </section>
   )}
 
-  <!-- Infos supplémentaires -->
-  {activity.extraInfo && (
-    <section class="act-info">
-      <div class="act-container">
-        <h2 class="act-info__heading reveal">{activity.extraInfo.title}</h2>
-        <div class="act-info__list">
-          {activity.extraInfo.items.map(item => (
-            <div class="act-info__item reveal">
-              <span class="act-info__label">{item.label}</span>
-              <p class="act-info__value">{item.value}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )}
-
   {showTransportVip && (
     <section class="act-transport">
       <div class="act-container">
@@ -138,6 +121,23 @@ const showTransportVip = ['visite-historique-medine', 'visite-historique-makkah'
       </div>
     </div>
   </section>
+
+  <!-- Infos supplémentaires (sous le bouton) -->
+  {activity.extraInfo && (
+    <section class="act-info">
+      <div class="act-container">
+        <h2 class="act-info__heading reveal">{activity.extraInfo.title}</h2>
+        <div class="act-info__list">
+          {activity.extraInfo.items.map(item => (
+            <div class="act-info__item reveal">
+              <span class="act-info__label">{item.label}</span>
+              <p class="act-info__value">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
 </BaseLayout>
 
 <style>
