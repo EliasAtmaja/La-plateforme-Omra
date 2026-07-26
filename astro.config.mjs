@@ -3,7 +3,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://www.laplateforme-omra.com',
+  site: 'https://www.laplateformeomra.com',
   output: 'static',
   integrations: [sitemap()],
   i18n: {

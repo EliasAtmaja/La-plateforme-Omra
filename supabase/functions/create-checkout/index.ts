@@ -102,8 +102,8 @@ serve(async (req) => {
       payment_method_types: ['card', 'paypal'],
       mode: 'payment',
       line_items,
-      success_url: successUrl || 'https://www.laplateforme-omra.com/paiement/confirmation/?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: cancelUrl || 'https://www.laplateforme-omra.com/guides/',
+      success_url: successUrl || 'https://www.laplateformeomra.com/paiement/confirmation/?session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: cancelUrl || 'https://www.laplateformeomra.com/guides/',
       metadata: {
         booking_ids: JSON.stringify(ids),
       },
