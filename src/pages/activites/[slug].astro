@@ -11,6 +11,9 @@ const lang = getLangFromUrl(Astro.url);
 const { slug } = Astro.params;
 const activity = activities.find(a => a.slug === slug)!;
 const totalSteps = activity.timeline.length;
+
+// Activités concernées par l'encart « Transport VIP »
+const showTransportVip = ['visite-historique-medine', 'visite-historique-makkah', 'omra-masjid-aicha'].includes(activity.slug);
 ---
 
 <BaseLayout title={activity.title} description={activity.subtitle}>
@@ -101,6 +104,22 @@ const totalSteps = activity.timeline.length;
               <p class="act-info__value">{item.value}</p>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {showTransportVip && (
+    <section class="act-transport">
+      <div class="act-container">
+        <div class="act-transport__card reveal">
+          <h2 class="act-transport__title">Transport VIP &amp; Mobilit&eacute; Sur Mesure en Arabie Saoudite</h2>
+          <p class="act-transport__text">
+            Pour l'ensemble de vos d&eacute;placements au sein du Royaume, b&eacute;n&eacute;ficiez d'un accompagnement
+            d'exception. Notre &eacute;quipe se tient &agrave; votre enti&egrave;re disposition par WhatsApp ou par email
+            pour vous conseiller et vous orienter vers les services de transport les plus prestigieux et exclusifs.
+            Confort, confidentialit&eacute; et r&eacute;activit&eacute; garantis.
+          </p>
         </div>
       </div>
     </section>
@@ -433,6 +452,35 @@ const totalSteps = activity.timeline.length;
     font-weight: 300;
     color: #4A4A42;
     line-height: 1.7;
+    margin: 0;
+  }
+
+  /* ============ TRANSPORT VIP ============ */
+  .act-transport {
+    padding: 8px 0 8px;
+    background: #FAF8F4;
+  }
+  .act-transport__card {
+    background: #FFFFFF;
+    border: 1px solid #E7DFC9;
+    border-left: 3px solid #B99752;
+    border-radius: 16px;
+    padding: 28px 30px;
+  }
+  .act-transport__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #14513A;
+    margin: 0 0 12px;
+    line-height: 1.25;
+  }
+  .act-transport__text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: #4A4A42;
+    line-height: 1.8;
     margin: 0;
   }
 

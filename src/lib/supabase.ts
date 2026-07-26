@@ -48,6 +48,7 @@ export function mapGuide(row: any) {
     languages: row.languages || [],
     pricePerDay: row.price_per_day || 0,
     servicePrice: row.service_price || 0,
+    supplement710: row.supplement_7_10 || 0,
     login: row.login || '',
     services: row.services || [],
     gender: row.gender || 'homme',

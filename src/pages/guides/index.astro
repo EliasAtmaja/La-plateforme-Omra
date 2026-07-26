@@ -35,14 +35,14 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
           <button type="button" class="gp-gender-btn" data-gender="femme">Femme</button>
         </div>
       </div>
-      <div class="gp-filters__row gp-filters__row--group">
+      <div class="gp-filters__row gp-filters__row--group is-hidden" id="gp-group-row">
         <span class="gp-filter__text">Pour un groupe de</span>
-        <div class="gp-group-controls">
-          <div class="gp-gender-toggle" role="group" aria-label="Taille du groupe">
-            <button type="button" class="gp-group-btn" data-group="small">1 &agrave; 7</button>
-            <button type="button" class="gp-group-btn" data-group="large">+ de 7</button>
-          </div>
-          <input type="number" min="1" inputmode="numeric" class="gp-group-input" id="group-size-input" placeholder="Nb de personnes" aria-label="Nombre de personnes" />
+        <div class="gp-group-select-wrap">
+          <select class="gp-group-select" id="group-size-select" aria-label="Taille du groupe">
+            <option value="1-7">1 &agrave; 7 personnes</option>
+            <option value="7-10">7 &agrave; 10 personnes</option>
+          </select>
+          <svg class="gp-group-select-icon" width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M4 7l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
       </div>
     </div>
@@ -76,6 +76,21 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
   };
   const currentActivity = new URLSearchParams(window.location.search).get('activite') || '';
   const allowedSlots: string[] | null = ACTIVITY_SLOTS[currentActivity] || null;
+
+  // Activités où l'on propose un choix de taille de groupe (1 à 7 / 7 à 10).
+  const GROUP_ACTIVITIES = ['visite-historique-medine', 'visite-historique-makkah', 'omra-masjid-aicha'];
+  const groupApplies = GROUP_ACTIVITIES.includes(currentActivity);
+  let groupTier: '1-7' | '7-10' = '1-7';
+  function groupLabel(): string {
+    return groupTier === '7-10' ? '7 à 10 personnes' : '1 à 7 personnes';
+  }
+  // Prix total affiché / facturé pour un guide selon la taille de groupe choisie.
+  function guideGuidePrice(g: any): number {
+    return (g?.pricePerDay || 0) + (groupApplies && groupTier === '7-10' ? (g?.supplement710 || 0) : 0);
+  }
+  function guideTotal(g: any): number {
+    return guideGuidePrice(g) + (g?.servicePrice || 0);
+  }
 
   // Nom lisible de l'activité choisie (injecté côté serveur)
   let currentActivityName = '';
@@ -116,7 +131,6 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
   }
 
   let filterGender: string = '';
-  let groupSize: number | null = null; // nombre de personnes choisi
 
   function initFilters() {
     const btns = Array.from(document.querySelectorAll('.gp-gender-btn')) as HTMLButtonElement[];
@@ -130,30 +144,14 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
       });
     });
 
-    // ---- Taille du groupe (2 boutons + champ manuel synchronisés) ----
-    const groupBtns = Array.from(document.querySelectorAll('.gp-group-btn')) as HTMLButtonElement[];
-    const groupInput = document.getElementById('group-size-input') as HTMLInputElement | null;
-    function syncGroupButtons() {
-      groupBtns.forEach(b => {
-        const isSmall = b.dataset.group === 'small';
-        const active = groupSize != null && (isSmall ? groupSize <= 7 : groupSize > 7);
-        b.classList.toggle('is-active', active);
-      });
-    }
-    groupBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const kind = btn.dataset.group;
-        // Un préréglage rapide : 1 à 7 → 1, + de 7 → 8 (modifiable ensuite au champ)
-        groupSize = (kind === 'large') ? 8 : 1;
-        if (groupInput) groupInput.value = String(groupSize);
-        syncGroupButtons();
-      });
-    });
-    if (groupInput) {
-      groupInput.addEventListener('input', () => {
-        const n = parseInt(groupInput.value, 10);
-        groupSize = Number.isFinite(n) && n > 0 ? n : null;
-        syncGroupButtons();
+    // ---- Taille du groupe (uniquement pour les activités concernées) ----
+    const groupRow = document.getElementById('gp-group-row');
+    const groupSelect = document.getElementById('group-size-select') as HTMLSelectElement | null;
+    if (groupApplies && groupRow) groupRow.classList.remove('is-hidden');
+    if (groupSelect) {
+      groupSelect.addEventListener('change', () => {
+        groupTier = (groupSelect.value === '7-10') ? '7-10' : '1-7';
+        renderGuidesList(); // met à jour les prix affichés
       });
     }
   }
@@ -343,7 +341,7 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
               ${ratingHtml}
             </div>
             <div class="gp-card__right">
-              ${(g.pricePerDay || g.servicePrice) ? `<div class="gp-card__price"><span class="gp-card__amount">${esc(String((g.pricePerDay || 0) + (g.servicePrice || 0)))}&euro;</span><span class="gp-card__unit">Frais inclus</span></div>` : ''}
+              ${(g.pricePerDay || g.servicePrice) ? `<div class="gp-card__price"><span class="gp-card__amount">${esc(String(guideTotal(g)))}&euro;</span><span class="gp-card__unit">Frais inclus</span></div>` : ''}
               <button class="gp-card__avail-btn" type="button" data-open-cal="${g.id}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="4" y="5.5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 10h16M8.5 3.5v3.5M15.5 3.5v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 Les disponibilit&eacute;s
@@ -719,10 +717,10 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
       date,
       slot,
       activityName: currentActivityName || '',
-      groupSize: groupSize || null,
-      price: (guide?.pricePerDay || 0) + (guide?.servicePrice || 0),
+      groupLabel: groupApplies ? groupLabel() : '',
+      price: guideTotal(guide),
       servicePrice: guide?.servicePrice || 0,
-      guidePrice: guide?.pricePerDay || 0,
+      guidePrice: guideGuidePrice(guide),
     });
     localStorage.setItem('omra-cart', JSON.stringify(cart));
     window.dispatchEvent(new Event('cart-updated'));
@@ -821,7 +819,7 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
     display: inline-flex;
     gap: 8px;
   }
-  .gp-gender-btn, .gp-group-btn {
+  .gp-gender-btn {
     padding: 9px 22px;
     background: #FAF8F4;
     border: 1.5px solid #E3E0D6;
@@ -833,24 +831,22 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
   }
-  .gp-gender-btn:hover, .gp-group-btn:hover {
+  .gp-gender-btn:hover {
     border-color: #14513A;
   }
-  .gp-gender-btn.is-active, .gp-group-btn.is-active {
+  .gp-gender-btn.is-active {
     background: #14513A;
     border-color: #14513A;
     color: #FAF8F4;
     box-shadow: 0 4px 14px rgba(20,81,58,0.22);
   }
 
-  /* ---- Taille du groupe ---- */
+  /* ---- Taille du groupe (liste déroulante) ---- */
   .gp-filters__row--group { margin-top: 12px; }
-  .gp-group-controls {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  }
-  .gp-group-input {
-    width: 150px;
-    padding: 9px 16px;
+  .gp-group-select-wrap { position: relative; display: inline-flex; align-items: center; }
+  .gp-group-select {
+    appearance: none; -webkit-appearance: none;
+    padding: 9px 40px 9px 18px;
     background: #FAF8F4;
     border: 1.5px solid #E3E0D6;
     border-radius: 28px;
@@ -858,13 +854,18 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
     font-size: 0.85rem;
     font-weight: 500;
     color: #14513A;
+    cursor: pointer;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .gp-group-input::placeholder { color: #9B9B92; font-weight: 400; }
-  .gp-group-input:focus {
+  .gp-group-select:hover { border-color: #14513A; }
+  .gp-group-select:focus {
     outline: none;
     border-color: #14513A;
     box-shadow: 0 0 0 3px rgba(20,81,58,0.1);
+  }
+  .gp-group-select-icon {
+    position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+    pointer-events: none; color: #14513A;
   }
 
   /* ---- Chargement ---- */
@@ -1553,6 +1554,7 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
     .gp-filters__row { gap: 10px; }
     .gp-filter__text { font-size: 1.05rem; }
     .gp-gender-btn { font-size: 0.8rem; padding: 8px 16px; }
+    .gp-group-select { font-size: 0.8rem; padding: 8px 36px 8px 14px; }
     .gp-hero { padding: 56px 0 40px; }
     .gp-hero__title { font-size: 2rem; }
 

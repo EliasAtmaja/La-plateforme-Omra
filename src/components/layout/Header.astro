@@ -250,7 +250,7 @@ const mobileLinks = [
             <span class="hc-item__name">${cartEsc(b.guideName || 'Guide')}</span>
             <span class="hc-item__date">${cartEsc(cartFormatDate(b.date))}${b.slot ? ' &middot; ' + cartEsc(b.slot) : ''}</span>
             ${b.activityName ? `<span class="hc-item__activity">${cartEsc(b.activityName)}</span>` : ''}
-            ${b.groupSize ? `<span class="hc-item__activity">${cartEsc(String(b.groupSize))} personne${b.groupSize > 1 ? 's' : ''}</span>` : ''}
+            ${b.groupLabel ? `<span class="hc-item__activity">${cartEsc(b.groupLabel)}</span>` : ''}
           </div>
           <div class="hc-item__right">
             ${price ? `<span class="hc-item__price-box"><span class="hc-item__price">${price}&euro;</span><span class="hc-item__price-note">Frais inclus</span></span>` : ''}
