@@ -14,10 +14,10 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 // ---- Config email (à renseigner en secrets Supabase) ----
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') || '';
 // Adresse d'expéditeur : doit appartenir à un domaine vérifié dans Resend.
-// Ex : "La plateforme Omra <contact@laplateforme-omra.com>"
+// ⚠️ Vérifie l'orthographe exacte du domaine (avec ou sans tiret).
 const SENDER = Deno.env.get('SENDER_EMAIL') || 'La plateforme Omra <contact@laplateforme-omra.com>';
-// Copie cachée reçue par l'équipe (optionnel) — ex : elias@atmaja.be
-const BCC_EMAIL = Deno.env.get('BCC_EMAIL') || '';
+// Copie cachée reçue par l'équipe (optionnel).
+const BCC_EMAIL = Deno.env.get('BCC_EMAIL') || 'contact@laplateforme-omra.com';
 
 const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 function formatDate(d: string): string {
