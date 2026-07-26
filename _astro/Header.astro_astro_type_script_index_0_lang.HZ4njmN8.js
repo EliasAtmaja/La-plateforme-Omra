@@ -6,9 +6,10 @@ import{t as e}from"./preload-helper.L5lOfJxi.js";var t=document.querySelector(`.
             <span class="hc-item__name">${i(e.guideName||`Guide`)}</span>
             <span class="hc-item__date">${i(s(e.date))}${e.slot?` &middot; `+i(e.slot):``}</span>
             ${e.activityName?`<span class="hc-item__activity">${i(e.activityName)}</span>`:``}
+            ${e.groupSize?`<span class="hc-item__activity">${i(String(e.groupSize))} personne${e.groupSize>1?`s`:``}</span>`:``}
           </div>
           <div class="hc-item__right">
-            ${t?`<span class="hc-item__price">${t}&euro;</span>`:``}
+            ${t?`<span class="hc-item__price-box"><span class="hc-item__price">${t}&euro;</span><span class="hc-item__price-note">Frais inclus</span></span>`:``}
             <button type="button" class="hc-item__remove" data-cart-remove="${i(e.bookingId)}" aria-label="Retirer du panier">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
             </button>

@@ -10,10 +10,11 @@ import{i as e,l as t,r as n}from"./supabase.8vOxOfkT.js";function r(e){return St
               </span>
               ${e.slot?`<span class="cart-item__detail"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M10 6.5V10l3 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>${r(e.slot)}</span>`:``}
               ${e.activityName?`<span class="cart-item__detail"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M10 2l2.4 5 5.6.8-4 4 1 5.7-5-2.7-5 2.7 1-5.7-4-4L7.6 7 10 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>${r(e.activityName)}</span>`:``}
+              ${e.groupSize?`<span class="cart-item__detail"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="7" cy="7" r="2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="13" cy="7" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 16c0-2.5 2-4.5 5-4.5M18 16c0-2.5-2-4.5-5-4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>${r(String(e.groupSize))} personne${e.groupSize>1?`s`:``}</span>`:``}
             </div>
           </div>
           <div class="cart-item__right">
-            ${t?`<span class="cart-item__price">${t}&euro;</span>`:``}
+            ${t?`<div class="cart-item__price-wrap"><span class="cart-item__price">${t}&euro;</span><span class="cart-item__price-note">Frais inclus</span></div>`:``}
             <button type="button" class="cart-item__remove" data-remove="${r(e.bookingId)}">
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 4h8M5.5 4V3a1 1 0 011-1h1a1 1 0 011 1v1M4.5 4v7a1.5 1.5 0 001.5 1.5h2a1.5 1.5 0 001.5-1.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               Retirer

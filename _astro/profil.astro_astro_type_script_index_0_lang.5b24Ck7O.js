@@ -220,7 +220,7 @@ import{a as e,c as t,l as n,o as r,s as i,t as a}from"./supabase.8vOxOfkT.js";va
               <textarea name="reviewer-text" class="gpr__rf-textarea" rows="3" placeholder="Partagez votre experience..." required></textarea>
               <button type="submit" class="gpr__rf-submit" id="rf-submit" disabled>Publier mon avis</button>
               <div class="gpr__rf-success is-hidden" id="rf-success">
-                <p>Merci ! Votre avis a &eacute;t&eacute; envoy&eacute; et sera publi&eacute; apr&egrave;s validation.</p>
+                <p>Merci pour votre avis. Il sera pris en compte tr&egrave;s prochainement dans La plateforme Omra.</p>
               </div>
             </form>
           </div>
@@ -253,7 +253,7 @@ import{a as e,c as t,l as n,o as r,s as i,t as a}from"./supabase.8vOxOfkT.js";va
             ${n?`<span class="gpr__booking-pending-label">En attente de validation admin</span>`:``}
           </div>
           <div class="gpr__booking-actions">
-            ${e.seen?`<span class="gpr__booking-seen"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Vu</span>`:`<button type="button" class="gpr__booking-info" data-booking-id="${c(e.id)}">Marquer comme vu</button>`}
+            ${e.seen?`<span class="gpr__booking-seen"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Vu</span>`:`<button type="button" class="gpr__booking-info" data-booking-id="${c(e.id)}">Marquer comme pris en compte</button>`}
             ${n?``:`<button type="button" class="gpr__booking-refuse" data-booking-id="${c(e.id)}" data-booking-date="${c(t)}">Faire part d'un emp&ecirc;chement</button>`}
           </div>
         </div>
