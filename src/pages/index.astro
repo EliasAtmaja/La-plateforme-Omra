@@ -352,6 +352,14 @@ const lang = getLangFromUrl(Astro.url);
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
       <form class="hm-testi__form" id="review-form" hidden>
+        <label class="hm-testi__guide-check">
+          <input type="checkbox" id="review-is-site" checked />
+          <span>Cet avis concerne le site</span>
+        </label>
+        <label class="hm-testi__guide-check">
+          <input type="checkbox" id="review-is-guide" />
+          <span>Cet avis concerne un guide</span>
+        </label>
         <div class="hm-testi__form-row">
           <label class="hm-testi__label">
             Votre prénom
@@ -362,14 +370,6 @@ const lang = getLangFromUrl(Astro.url);
             <input type="text" class="hm-testi__input" id="review-service" required />
           </label>
         </div>
-        <label class="hm-testi__guide-check">
-          <input type="checkbox" id="review-is-site" checked />
-          <span>Cet avis concerne le site</span>
-        </label>
-        <label class="hm-testi__guide-check">
-          <input type="checkbox" id="review-is-guide" />
-          <span>Cet avis concerne un guide</span>
-        </label>
         <label class="hm-testi__label" id="review-guide-label" style="display:none">
           Choisissez le guide
           <select class="hm-testi__input" id="review-guide">
@@ -1748,7 +1748,9 @@ const lang = getLangFromUrl(Astro.url);
   }
 
   .hm-testi__submit {
-    display: inline-block;
+    display: block;
+    width: fit-content;
+    margin: 0 auto;
     padding: 14px 36px;
     background: #14513A;
     color: #FAF8F4;
