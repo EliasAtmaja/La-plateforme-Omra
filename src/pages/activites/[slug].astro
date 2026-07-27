@@ -14,6 +14,9 @@ const totalSteps = activity.timeline.length;
 
 // Activités concernées par l'encart « Transport VIP »
 const showTransportVip = ['visite-historique-medine', 'visite-historique-makkah', 'omra-masjid-aicha'].includes(activity.slug);
+// Activités avec guide femme (accord au féminin sur le bouton de réservation)
+const isFemaleGuide = ['shopping-guide-medine'].includes(activity.slug);
+const guideCtaLabel = isFemaleGuide ? 'Je réserve ma guide' : 'Je réserve mon guide';
 ---
 
 <BaseLayout title={activity.title} description={activity.subtitle}>
@@ -115,7 +118,7 @@ const showTransportVip = ['visite-historique-medine', 'visite-historique-makkah'
         <h2 class="act-cta__title">Int&eacute;ress&eacute;(e) par cette activit&eacute; ?</h2>
         <p class="act-cta__text">R&eacute;servez votre guide et vivez cette exp&eacute;rience en toute s&eacute;r&eacute;nit&eacute;.</p>
         <a href={getLocalePath(lang, `/guides/?activite=${activity.slug}`)} class="act-cta__btn">
-          Je r&eacute;serve mon guide
+          {guideCtaLabel}
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
       </div>
