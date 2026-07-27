@@ -149,8 +149,9 @@ const service = services.find(s => s.slug === 'planification')!;
           <p class="pl-cal__empty is-hidden" id="pl-cal-empty">Aucune disponibilit&eacute; pour le moment. Revenez bient&ocirc;t.</p>
         </div>
         <div class="pl-slots is-hidden" id="pl-slots">
-          <p class="pl-slots__label">Cr&eacute;neaux disponibles le <strong id="pl-slots-date"></strong></p>
+          <p class="pl-slots__label">Cr&eacute;neau disponible le <strong id="pl-slots-date"></strong></p>
           <div class="pl-slots__list" id="pl-slots-list"></div>
+          <p class="pl-slots__note">L'&eacute;quipe vous contactera par WhatsApp afin de convenir de l'heure que vous pr&eacute;f&eacute;rez ce jour-l&agrave;.</p>
         </div>
         </div>
         <input type="hidden" name="callDate" id="pl-call-date" />
@@ -317,6 +318,13 @@ const service = services.find(s => s.slug === 'planification')!;
         });
         slotsListEl.appendChild(b);
       });
+      // Un seul créneau possible ("Le matin") → on le pré-sélectionne
+      const only = (freeSlots[dateStr] || []);
+      if (only.length === 1) {
+        const firstBtn = slotsListEl.querySelector('.pl-slot') as HTMLButtonElement | null;
+        firstBtn?.classList.add('pl-slot--active');
+        if (callTimeInput) callTimeInput.value = only[0];
+      }
     }
     slotsWrap?.classList.remove('is-hidden');
     updateCalLabel();
@@ -820,6 +828,10 @@ const service = services.find(s => s.slug === 'planification')!;
   .pl-slot:hover { background: #EDF5F0; border-color: #14513A; transform: translateY(-1px); }
   .pl-slot--active {
     background: #14513A; color: #FAF8F4; border-color: #14513A;
+  }
+  .pl-slots__note {
+    font-family: 'Jost', sans-serif; font-size: 0.8rem; font-weight: 300;
+    color: #6B6B63; line-height: 1.6; margin: 12px 0 0;
   }
 
   /* Points animés du bouton pendant le traitement */

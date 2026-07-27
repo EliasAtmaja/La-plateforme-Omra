@@ -37,9 +37,9 @@ async function verifyStripeSignature(body: string, signature: string, secret: st
   return expected === sig;
 }
 
-const LOGO_URL = 'https://www.laplateformeomra.com/assets/images/logo-v2.png';
+const LOGO_URL = 'https://raw.githubusercontent.com/EliasAtmaja/La-plateforme-Omra/master/public/assets/images/logo-v2.png';
 const GREETING = "As-salamu 'aleykom wa rahmatoulLahi wa barakaatouh,";
-const LOGO_BADGE = `<div style="display:inline-block;background:#FFFFFF;border-radius:12px;padding:9px 16px;margin:0 auto 12px;"><img src="${LOGO_URL}" alt="La plateforme Omra" width="150" style="display:block;max-width:150px;height:auto;" /></div>`;
+const LOGO_BADGE = `<div style="display:inline-block;background:#FFFFFF;border-radius:12px;padding:10px 18px;margin:0 auto 12px;"><img src="${LOGO_URL}" alt="La plateforme Omra" width="58" height="73" style="display:block;width:58px;height:73px;" /></div>`;
 
 function buildEmail(opts: {
   clientName: string;

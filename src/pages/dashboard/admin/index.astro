@@ -114,6 +114,10 @@ import '../../../styles/global.css';
           </div>
         </div>
         <p class="adm-card__hint is-hidden" id="call-cal-hint"></p>
+        <div class="adm-callcal__monthactions is-hidden" id="call-cal-monthactions">
+          <button type="button" class="adm-monthbtn" id="call-cal-selectall">S&eacute;lectionner tout le mois</button>
+          <button type="button" class="adm-monthbtn adm-monthbtn--ghost" id="call-cal-clearall">Tout effacer</button>
+        </div>
         <div class="adm-callcal is-hidden" id="call-cal-container">
           <div class="adm-callcal__head">
             <button type="button" class="adm-callcal__nav" id="call-cal-prev" aria-label="Mois pr&eacute;c&eacute;dent">
@@ -126,14 +130,7 @@ import '../../../styles/global.css';
           </div>
           <div class="adm-callcal__weekdays"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
           <div class="adm-callcal__grid" id="call-cal-grid"></div>
-        </div>
-        <div class="adm-dayeditor is-hidden" id="call-day-editor">
-          <p class="adm-dayeditor__title">Cr&eacute;neaux du <strong id="call-day-label"></strong></p>
-          <div class="adm-dayeditor__slots" id="call-day-slots"></div>
-          <div class="adm-dayeditor__add">
-            <input type="time" id="call-day-time" class="adm-dayeditor__time" />
-            <button type="button" class="adm-dayeditor__addbtn" id="call-day-add">Ajouter le cr&eacute;neau</button>
-          </div>
+          <p class="adm-callcal__legend">Les jours en vert sont ouverts &agrave; la r&eacute;servation (appel <strong>le matin</strong>).</p>
         </div>
       </section>
 
@@ -1355,16 +1352,19 @@ import '../../../styles/global.css';
     });
   });
 
-  // ---- Calendrier des créneaux d'appel ----
-  const callCal = { year: 0, month: 0, editing: false, selectedDay: null as string | null };
+  // ---- Calendrier des créneaux d'appel (un jour ouvert = appel "Le matin") ----
+  const CALL_SLOT_LABEL = 'Le matin';
+  const callCal = { year: 0, month: 0, editing: false };
+  let callBusy = false;
 
-  function slotsByDate(): Record<string, { id: string; time: string }[]> {
-    const map: Record<string, { id: string; time: string }[]> = {};
-    DB_CALL_SLOTS.forEach((s: any) => {
-      (map[s.date] = map[s.date] || []).push({ id: s.id, time: s.time });
-    });
-    Object.values(map).forEach((arr) => arr.sort((a, b) => a.time.localeCompare(b.time)));
-    return map;
+  function openDays(): Set<string> {
+    const set = new Set<string>();
+    DB_CALL_SLOTS.forEach((s: any) => set.add(s.date));
+    return set;
+  }
+  function slotIdForDate(dateStr: string): string | null {
+    const s = DB_CALL_SLOTS.find((x: any) => x.date === dateStr);
+    return s ? s.id : null;
   }
 
   function renderCallCal() {
@@ -1377,7 +1377,7 @@ import '../../../styles/global.css';
       callCal.month = now.getMonth();
     }
     monthEl.textContent = `${MONTHS_HOME[callCal.month]} ${callCal.year}`;
-    const byDate = slotsByDate();
+    const open = openDays();
     const todayStr = toYMD(new Date());
     gridEl.innerHTML = '';
     const firstDow = (new Date(callCal.year, callCal.month, 1).getDay() + 6) % 7;
@@ -1389,18 +1389,17 @@ import '../../../styles/global.css';
     }
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${callCal.year}-${String(callCal.month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const count = (byDate[dateStr] || []).length;
+      const isOpen = open.has(dateStr);
       const isPast = dateStr < todayStr;
       const cell = document.createElement('button');
       cell.type = 'button';
       cell.className = 'adm-callcal__cell';
-      cell.innerHTML = `<span>${d}</span>${count ? `<span class="adm-callcal__count">${count}</span>` : ''}`;
-      if (count) cell.classList.add('adm-callcal__cell--has');
+      cell.innerHTML = `<span>${d}</span>`;
+      if (isOpen) cell.classList.add('adm-callcal__cell--has');
       if (isPast) cell.classList.add('adm-callcal__cell--past');
-      if (dateStr === callCal.selectedDay) cell.classList.add('adm-callcal__cell--sel');
       if (callCal.editing && !isPast) {
         cell.classList.add('adm-callcal__cell--edit');
-        cell.addEventListener('click', () => { callCal.selectedDay = dateStr; renderCallCal(); renderDayEditor(); });
+        cell.addEventListener('click', () => toggleDay(dateStr));
       } else {
         cell.disabled = true;
       }
@@ -1408,65 +1407,64 @@ import '../../../styles/global.css';
     }
   }
 
-  function renderDayEditor() {
-    const editor = document.getElementById('call-day-editor');
-    const label = document.getElementById('call-day-label');
-    const slotsEl = document.getElementById('call-day-slots');
-    if (!editor || !label || !slotsEl) return;
-    if (!callCal.editing || !callCal.selectedDay) { editor.classList.add('is-hidden'); return; }
-    editor.classList.remove('is-hidden');
-    label.textContent = formatDayFr(callCal.selectedDay);
-    const byDate = slotsByDate();
-    const slots = byDate[callCal.selectedDay] || [];
-    if (slots.length === 0) {
-      slotsEl.innerHTML = '<span class="adm-dayeditor__empty">Aucun créneau. Ajoutez-en un ci-dessous.</span>';
+  async function toggleDay(dateStr: string) {
+    if (callBusy) return;
+    callBusy = true;
+    const existingId = slotIdForDate(dateStr);
+    if (existingId) {
+      const booked = DB_CALL_BOOKINGS.some((b: any) => b.status === 'paid' && b.slot_date === dateStr);
+      if (booked && !confirm('Ce jour a une réservation payée. Le fermer ne supprime pas la réservation. Continuer ?')) { callBusy = false; return; }
+      const { error } = await supabase.from('call_slots').delete().eq('id', existingId);
+      if (!error) DB_CALL_SLOTS = DB_CALL_SLOTS.filter((s: any) => s.id !== existingId);
+      else alert('Erreur. Réessayez.');
     } else {
-      slotsEl.innerHTML = slots.map((s) => `
-        <span class="adm-slotchip" data-slot-id="${s.id}">
-          ${escHtml(s.time)}
-          <button type="button" class="adm-slotchip__x" data-remove-slot="${s.id}" aria-label="Retirer">&times;</button>
-        </span>`).join('');
+      const { data, error } = await supabase.from('call_slots').insert({ date: dateStr, time: CALL_SLOT_LABEL }).select().single();
+      if (!error && data) DB_CALL_SLOTS.push(data);
+      else alert('Erreur. Réessayez.');
     }
+    callBusy = false;
+    renderCallCal();
   }
 
-  async function addCallSlot() {
-    if (!callCal.selectedDay) return;
-    const input = document.getElementById('call-day-time') as HTMLInputElement | null;
-    const time = input?.value;
-    if (!time) { alert('Choisissez une heure.'); return; }
-    const byDate = slotsByDate();
-    if ((byDate[callCal.selectedDay] || []).some((s) => s.time === time)) {
-      alert('Ce créneau existe déjà.');
-      return;
+  async function selectAllMonth() {
+    if (callBusy) return;
+    callBusy = true;
+    const todayStr = toYMD(new Date());
+    const open = openDays();
+    const daysInMonth = new Date(callCal.year, callCal.month + 1, 0).getDate();
+    const toAdd: any[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${callCal.year}-${String(callCal.month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      if (dateStr >= todayStr && !open.has(dateStr)) toAdd.push({ date: dateStr, time: CALL_SLOT_LABEL });
     }
-    const { data, error } = await supabase
-      .from('call_slots')
-      .insert({ date: callCal.selectedDay, time })
-      .select()
-      .single();
-    if (error || !data) { alert('Erreur lors de l\'ajout. Réessayez.'); return; }
-    DB_CALL_SLOTS.push(data);
-    if (input) input.value = '';
+    if (toAdd.length) {
+      const { data, error } = await supabase.from('call_slots').insert(toAdd).select();
+      if (!error && data) DB_CALL_SLOTS.push(...data);
+      else alert('Erreur. Réessayez.');
+    }
+    callBusy = false;
     renderCallCal();
-    renderDayEditor();
   }
 
-  async function removeCallSlot(id: string) {
-    const slot = DB_CALL_SLOTS.find((s: any) => s.id === id);
-    const booked = DB_CALL_BOOKINGS.some((b: any) => b.status === 'paid' && slot && b.slot_date === slot.date && b.slot_time === slot.time);
-    if (booked && !confirm('Ce créneau a une réservation payée. Le retirer ne supprime pas la réservation. Continuer ?')) return;
-    const { error } = await supabase.from('call_slots').delete().eq('id', id);
-    if (error) { alert('Erreur lors de la suppression. Réessayez.'); return; }
-    DB_CALL_SLOTS = DB_CALL_SLOTS.filter((s: any) => s.id !== id);
+  async function clearMonth() {
+    if (callBusy) return;
+    const prefix = `${callCal.year}-${String(callCal.month + 1).padStart(2, '0')}-`;
+    const monthSlots = DB_CALL_SLOTS.filter((s: any) => s.date.startsWith(prefix));
+    if (monthSlots.length === 0) return;
+    const hasBooked = DB_CALL_BOOKINGS.some((b: any) => b.status === 'paid' && b.slot_date.startsWith(prefix));
+    if (hasBooked && !confirm('Certains jours ont des réservations payées. Les fermer ne supprime pas les réservations. Continuer ?')) return;
+    if (!confirm('Fermer tous les jours de ce mois ?')) return;
+    callBusy = true;
+    const ids = monthSlots.map((s: any) => s.id);
+    const { error } = await supabase.from('call_slots').delete().in('id', ids);
+    if (!error) DB_CALL_SLOTS = DB_CALL_SLOTS.filter((s: any) => !s.date.startsWith(prefix));
+    else alert('Erreur. Réessayez.');
+    callBusy = false;
     renderCallCal();
-    renderDayEditor();
   }
 
-  document.getElementById('call-day-add')?.addEventListener('click', addCallSlot);
-  document.getElementById('call-day-slots')?.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest('[data-remove-slot]');
-    if (btn) removeCallSlot((btn as HTMLElement).dataset.removeSlot!);
-  });
+  document.getElementById('call-cal-selectall')?.addEventListener('click', selectAllMonth);
+  document.getElementById('call-cal-clearall')?.addEventListener('click', clearMonth);
   document.getElementById('call-cal-prev')?.addEventListener('click', () => {
     callCal.month--; if (callCal.month < 0) { callCal.month = 11; callCal.year--; } renderCallCal();
   });
@@ -1480,22 +1478,21 @@ import '../../../styles/global.css';
     const editBtn = document.getElementById('call-cal-edit')!;
     const container = document.getElementById('call-cal-container')!;
     const hint = document.getElementById('call-cal-hint');
+    const monthActions = document.getElementById('call-cal-monthactions');
     if (callCalVisible) {
       container.classList.remove('is-hidden');
       editBtn.classList.remove('is-hidden');
       showBtn.textContent = 'Masquer';
       renderCallCal();
     } else {
-      // On masque tout et on quitte l'édition
       callCal.editing = false;
-      callCal.selectedDay = null;
       container.classList.add('is-hidden');
       editBtn.classList.add('is-hidden');
       editBtn.textContent = 'Modifier';
       editBtn.classList.remove('adm-cal-toggle--on');
       hint?.classList.add('is-hidden');
+      monthActions?.classList.add('is-hidden');
       showBtn.textContent = 'Voir le calendrier';
-      renderDayEditor();
     }
   });
 
@@ -1503,15 +1500,15 @@ import '../../../styles/global.css';
     callCal.editing = !callCal.editing;
     const btn = document.getElementById('call-cal-edit')!;
     const hint = document.getElementById('call-cal-hint');
+    const monthActions = document.getElementById('call-cal-monthactions');
     btn.textContent = callCal.editing ? 'Terminer' : 'Modifier';
     btn.classList.toggle('adm-cal-toggle--on', callCal.editing);
     if (hint) {
-      hint.textContent = 'Cliquez sur un jour pour ajouter ou retirer des créneaux horaires.';
+      hint.textContent = 'Cliquez sur un jour pour l\'ouvrir ou le fermer à la réservation (appel le matin).';
       hint.classList.toggle('is-hidden', !callCal.editing);
     }
-    if (!callCal.editing) { callCal.selectedDay = null; }
+    monthActions?.classList.toggle('is-hidden', !callCal.editing);
     renderCallCal();
-    renderDayEditor();
   });
 
   // ---- Liste des appels réservés ----
@@ -1561,7 +1558,6 @@ import '../../../styles/global.css';
   function renderHome() {
     renderStats();
     renderCallCal();
-    renderDayEditor();
     renderCallBookings();
   }
 
@@ -2855,6 +2851,21 @@ import '../../../styles/global.css';
   .adm-cal-toggle--ghost:hover { border-color: #14513A; color: #14513A; background: #FFFFFF; }
   .adm-cal-toggle--ghost.adm-cal-toggle--on { background: #14513A; color: #FAF8F4; border-color: #14513A; }
 
+  .adm-callcal__monthactions { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .adm-monthbtn {
+    border: 1px solid #14513A; background: #14513A; color: #FAF8F4;
+    font-family: 'Jost', sans-serif; font-size: 0.76rem; font-weight: 500;
+    padding: 8px 14px; border-radius: 9px; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .adm-monthbtn:hover { background: #0C3A28; }
+  .adm-monthbtn--ghost { background: #FFFFFF; color: #6B6B63; border-color: #D8D5CC; }
+  .adm-monthbtn--ghost:hover { background: #F5F4F0; color: #C6413B; border-color: #C6413B; }
+  .adm-callcal__legend {
+    font-family: 'Jost', sans-serif; font-size: 0.76rem; font-weight: 300;
+    color: #6B6B63; margin: 12px 0 0;
+  }
+  .adm-callcal__legend strong { color: #14513A; font-weight: 600; }
   .adm-callcal { max-width: 420px; }
   .adm-callcal__head {
     display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
