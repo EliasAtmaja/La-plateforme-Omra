@@ -54,7 +54,10 @@ import '../../../styles/global.css';
         <span class="adm-side__badge" id="pending-count" hidden>0</span>
       </a>
     </nav>
-    <button class="adm-side__logout" id="logout-btn">D&eacute;connexion</button>
+    <button class="adm-side__logout" id="logout-btn">
+      <svg class="adm-side__logout-icon" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 2.5H4a1.5 1.5 0 0 0-1.5 1.5v10A1.5 1.5 0 0 0 4 15.5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M11 12l3-3-3-3M14 9H6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>D&eacute;connexion</span>
+    </button>
   </aside>
 
   <!-- Main -->
@@ -105,10 +108,13 @@ import '../../../styles/global.css';
       <section class="adm-card">
         <div class="adm-card__head">
           <h2 class="adm-card__title">Mes cr&eacute;neaux d'appel</h2>
-          <button class="adm-cal-toggle" id="call-cal-toggle" data-editing="false">Ouvrir le calendrier</button>
+          <div class="adm-card__actions">
+            <button class="adm-cal-toggle adm-cal-toggle--ghost is-hidden" id="call-cal-edit">Modifier</button>
+            <button class="adm-cal-toggle" id="call-cal-show">Voir le calendrier</button>
+          </div>
         </div>
-        <p class="adm-card__hint" id="call-cal-hint">Cliquez sur &laquo;&nbsp;Ouvrir le calendrier&nbsp;&raquo; pour ajouter ou retirer vos cr&eacute;neaux disponibles.</p>
-        <div class="adm-callcal">
+        <p class="adm-card__hint is-hidden" id="call-cal-hint"></p>
+        <div class="adm-callcal is-hidden" id="call-cal-container">
           <div class="adm-callcal__head">
             <button type="button" class="adm-callcal__nav" id="call-cal-prev" aria-label="Mois pr&eacute;c&eacute;dent">
               <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M13 4l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1467,15 +1473,42 @@ import '../../../styles/global.css';
   document.getElementById('call-cal-next')?.addEventListener('click', () => {
     callCal.month++; if (callCal.month > 11) { callCal.month = 0; callCal.year++; } renderCallCal();
   });
-  document.getElementById('call-cal-toggle')?.addEventListener('click', () => {
-    callCal.editing = !callCal.editing;
-    const btn = document.getElementById('call-cal-toggle')!;
+  let callCalVisible = false;
+  document.getElementById('call-cal-show')?.addEventListener('click', () => {
+    callCalVisible = !callCalVisible;
+    const showBtn = document.getElementById('call-cal-show')!;
+    const editBtn = document.getElementById('call-cal-edit')!;
+    const container = document.getElementById('call-cal-container')!;
     const hint = document.getElementById('call-cal-hint');
-    btn.textContent = callCal.editing ? 'Fermer le calendrier' : 'Ouvrir le calendrier';
+    if (callCalVisible) {
+      container.classList.remove('is-hidden');
+      editBtn.classList.remove('is-hidden');
+      showBtn.textContent = 'Masquer';
+      renderCallCal();
+    } else {
+      // On masque tout et on quitte l'édition
+      callCal.editing = false;
+      callCal.selectedDay = null;
+      container.classList.add('is-hidden');
+      editBtn.classList.add('is-hidden');
+      editBtn.textContent = 'Modifier';
+      editBtn.classList.remove('adm-cal-toggle--on');
+      hint?.classList.add('is-hidden');
+      showBtn.textContent = 'Voir le calendrier';
+      renderDayEditor();
+    }
+  });
+
+  document.getElementById('call-cal-edit')?.addEventListener('click', () => {
+    callCal.editing = !callCal.editing;
+    const btn = document.getElementById('call-cal-edit')!;
+    const hint = document.getElementById('call-cal-hint');
+    btn.textContent = callCal.editing ? 'Terminer' : 'Modifier';
     btn.classList.toggle('adm-cal-toggle--on', callCal.editing);
-    if (hint) hint.textContent = callCal.editing
-      ? 'Cliquez sur un jour pour ajouter ou retirer des créneaux horaires.'
-      : 'Cliquez sur « Ouvrir le calendrier » pour ajouter ou retirer vos créneaux disponibles.';
+    if (hint) {
+      hint.textContent = 'Cliquez sur un jour pour ajouter ou retirer des créneaux horaires.';
+      hint.classList.toggle('is-hidden', !callCal.editing);
+    }
     if (!callCal.editing) { callCal.selectedDay = null; }
     renderCallCal();
     renderDayEditor();
@@ -1818,6 +1851,7 @@ import '../../../styles/global.css';
     border-radius: 0 3px 3px 0;
   }
   .adm-side__logout {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
     padding: 10px 14px;
     background: none;
     border: 1px solid rgba(250,248,244,0.14);
@@ -1828,6 +1862,7 @@ import '../../../styles/global.css';
     cursor: pointer; font-family: inherit;
     transition: border-color 0.2s, color 0.2s, background 0.2s;
   }
+  .adm-side__logout-icon { display: none; }
   .adm-side__logout:hover {
     border-color: rgba(250,248,244,0.4);
     color: #FAF8F4;
@@ -2618,36 +2653,53 @@ import '../../../styles/global.css';
     .adm-side {
       top: auto; bottom: 0; left: 0; right: 0;
       width: auto; height: auto;
-      flex-direction: row; align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-      border-radius: 20px 20px 0 0;
+      flex-direction: row; align-items: stretch;
+      gap: 0;
+      padding: 8px 8px;
+      padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+      border-radius: 22px 22px 0 0;
       box-shadow: 0 -10px 40px rgba(8,40,24,0.35);
     }
     .adm-side__brand { display: none; }
     .adm-side__nav {
       flex-direction: row; flex-grow: 1;
-      justify-content: center; gap: 8px;
+      justify-content: space-around; gap: 2px;
     }
+    /* Chaque item : icône au-dessus, mini-label en dessous (style app mobile) */
     .adm-side__link {
-      padding: 10px 18px;
-      border-radius: 999px;
-      font-size: 0.8rem;
+      flex: 1 1 0; min-width: 0;
+      flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      padding: 8px 2px;
+      border-radius: 14px;
+      font-size: 0.6rem; font-weight: 500; letter-spacing: 0.01em;
+      text-align: center; line-height: 1.1;
+      color: rgba(250,248,244,0.6);
     }
+    .adm-side__link svg { width: 21px; height: 21px; }
     .adm-side__link--active {
-      background: #FAF8F4;
-      color: #14513A;
+      background: rgba(250,248,244,0.12);
+      color: #E8C987;
       font-weight: 600;
     }
     .adm-side__link--active::before { display: none; }
-    .adm-side__badge { margin-left: 6px; }
-    .adm-side__logout {
-      flex-shrink: 0;
-      font-size: 0.68rem;
-      padding: 9px 14px;
-      border-radius: 999px;
+    /* Badge en pastille flottante sur l'icône */
+    .adm-side__badge {
+      position: absolute; top: 4px; left: 50%; transform: translateX(4px);
+      margin-left: 0; min-width: 15px; height: 15px; font-size: 0.56rem;
+      border: 2px solid #0A2E1E;
     }
+    .adm-side__logout {
+      flex: 0 0 auto;
+      flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      border: none;
+      padding: 8px 10px;
+      font-size: 0.6rem; font-weight: 500;
+      color: rgba(250,248,244,0.55);
+      border-radius: 14px;
+    }
+    .adm-side__logout:hover { background: rgba(250,248,244,0.06); border: none; }
+    .adm-side__logout-icon { display: block; }
+    .adm-side__logout span { display: block; }
 
     .adm-main {
       margin-left: 0;
@@ -2707,8 +2759,9 @@ import '../../../styles/global.css';
   }
 
   @media (max-width: 400px) {
-    .adm-side__link { padding: 10px 13px; font-size: 0.74rem; }
-    .adm-side__logout { font-size: 0.62rem; padding: 8px 10px; }
+    .adm-side__link { padding: 7px 1px; font-size: 0.55rem; }
+    .adm-side__link svg { width: 19px; height: 19px; }
+    .adm-side__logout { font-size: 0.55rem; padding: 7px 6px; }
   }
 
   /* ============ MON ESPACE (accueil admin) ============ */
@@ -2789,6 +2842,7 @@ import '../../../styles/global.css';
     color: #9C9C93; text-align: center; padding: 20px 0;
   }
 
+  .adm-card__actions { display: flex; gap: 8px; align-items: center; }
   .adm-cal-toggle {
     border: 1px solid #14513A; background: #FFFFFF; color: #14513A;
     font-family: 'Jost', sans-serif; font-size: 0.78rem; font-weight: 500;
@@ -2797,6 +2851,9 @@ import '../../../styles/global.css';
   }
   .adm-cal-toggle:hover { background: #EDF5F0; }
   .adm-cal-toggle--on { background: #14513A; color: #FAF8F4; }
+  .adm-cal-toggle--ghost { border-color: #D8D5CC; color: #6B6B63; }
+  .adm-cal-toggle--ghost:hover { border-color: #14513A; color: #14513A; background: #FFFFFF; }
+  .adm-cal-toggle--ghost.adm-cal-toggle--on { background: #14513A; color: #FAF8F4; border-color: #14513A; }
 
   .adm-callcal { max-width: 420px; }
   .adm-callcal__head {

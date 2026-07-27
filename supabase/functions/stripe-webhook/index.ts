@@ -37,7 +37,9 @@ async function verifyStripeSignature(body: string, signature: string, secret: st
   return expected === sig;
 }
 
-const LOGO_URL = 'https://www.laplateformeomra.com/Sans%20titre%20logo%20adapt..png';
+const LOGO_URL = 'https://www.laplateformeomra.com/assets/images/logo-v2.png';
+const GREETING = "As-salamu 'aleykom wa rahmatoulLahi wa barakaatouh,";
+const LOGO_BADGE = `<div style="display:inline-block;background:#FFFFFF;border-radius:12px;padding:9px 16px;margin:0 auto 12px;"><img src="${LOGO_URL}" alt="La plateforme Omra" width="150" style="display:block;max-width:150px;height:auto;" /></div>`;
 
 function buildEmail(opts: {
   clientName: string;
@@ -68,12 +70,12 @@ function buildEmail(opts: {
     <tr><td align="center">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border-radius:16px;overflow:hidden;border:1px solid #EFEDE6;">
         <tr><td style="background:#14513A;padding:28px 32px;text-align:center;">
-          <img src="${LOGO_URL}" alt="La plateforme Omra" width="180" style="display:block;margin:0 auto 12px;max-width:180px;height:auto;" />
+          ${LOGO_BADGE}
           <div style="font-family:Georgia,serif;font-size:20px;font-weight:bold;color:#E9D9AE;">Confirmation de réservation</div>
         </td></tr>
         <tr><td style="padding:32px;">
           <p style="margin:0 0 24px;font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#4A4A42;">
-            ${clientName ? `As-salamu alaykum ${esc(clientName)},<br>` : 'As-salamu alaykum,<br>'}
+            ${GREETING}<br>
             Nous vous confirmons la bonne réception de votre paiement. Voici le récapitulatif de votre réservation.
           </p>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #EFEDE6;border-radius:12px;overflow:hidden;">
@@ -135,12 +137,12 @@ function buildCallEmail(opts: {
     <tr><td align="center">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border-radius:16px;overflow:hidden;border:1px solid #EFEDE6;">
         <tr><td style="background:#14513A;padding:28px 32px;text-align:center;">
-          <img src="${LOGO_URL}" alt="La plateforme Omra" width="180" style="display:block;margin:0 auto 12px;max-width:180px;height:auto;" />
+          ${LOGO_BADGE}
           <div style="font-family:Georgia,serif;font-size:20px;font-weight:bold;color:#E9D9AE;">Appel de planification confirmé</div>
         </td></tr>
         <tr><td style="padding:32px;">
           <p style="margin:0 0 24px;font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#4A4A42;">
-            ${clientName ? `As-salamu alaykum ${esc(clientName)},<br>` : 'As-salamu alaykum,<br>'}
+            ${GREETING}<br>
             Nous vous confirmons la bonne réception de votre paiement. Votre appel de planification est réservé.
             Voici le récapitulatif de votre demande.
           </p>
