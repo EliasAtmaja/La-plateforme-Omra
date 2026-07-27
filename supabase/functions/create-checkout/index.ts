@@ -35,15 +35,27 @@ serve(async (req) => {
     let line_items: any[];
     let ids: string[] = bookingIds || [];
 
+    let itemDetails: any[] = [];
+
     if (items && items.length > 0) {
       ids = items.map((i: any) => i.bookingId);
+      itemDetails = items.map((item: any) => ({
+        guideName: item.guideName || 'Guide',
+        activityName: item.activityName || '',
+        groupLabel: item.groupLabel || '',
+        date: item.date || '',
+        slot: item.slot || '',
+        servicePrice: item.servicePrice || 0,
+        guidePrice: item.guidePrice || 0,
+        price: item.price || 0,
+      }));
       line_items = items.map((item: any) => ({
         price_data: {
           currency: 'eur',
-          unit_amount: Math.round((item.price || 0) * 100),
+          unit_amount: Math.round((item.servicePrice || item.price || 0) * 100),
           product_data: {
             name: item.guideName || 'Guide',
-            description: [item.date, item.slot].filter(Boolean).join(' — '),
+            description: [item.activityName, item.date, item.slot, item.groupLabel].filter(Boolean).join(' — '),
           },
         },
         quantity: 1,
@@ -106,6 +118,7 @@ serve(async (req) => {
       cancel_url: cancelUrl || 'https://www.laplateformeomra.com/guides/',
       metadata: {
         booking_ids: JSON.stringify(ids),
+        item_details: JSON.stringify(itemDetails),
       },
       payment_intent_data: {
         metadata: {
