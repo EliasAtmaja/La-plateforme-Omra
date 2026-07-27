@@ -655,7 +655,7 @@ const service = services.find(s => s.slug === 'planification')!;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
   }
-  .pl-form__radio:hover { border-color: #14513A; }
+  @media (hover: hover) { .pl-form__radio:hover { border-color: #14513A; } }
   .pl-form__radio:has(input:checked) {
     border-color: #14513A;
     background: #EDF5F0;
@@ -743,7 +743,7 @@ const service = services.find(s => s.slug === 'planification')!;
     font-family: 'Jost', sans-serif; font-size: 0.9rem; font-weight: 400; color: #6B6B63;
     cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .pl-cal-open:hover { border-color: #14513A; }
+  @media (hover: hover) { .pl-cal-open:hover { border-color: #14513A; } }
   .pl-cal-open > svg:first-child { color: #14513A; flex-shrink: 0; }
   .pl-cal-open span { flex: 1; text-align: left; }
   .pl-cal-open__chev { color: #9C9C93; transition: transform 0.25s; flex-shrink: 0; }
@@ -771,7 +771,7 @@ const service = services.find(s => s.slug === 'planification')!;
     background: #FAF8F4; border: 1px solid #E3E0D6; color: #14513A;
     cursor: pointer; transition: background 0.2s, border-color 0.2s;
   }
-  .pl-cal__nav:hover { background: #EDF5F0; border-color: #14513A; }
+  @media (hover: hover) { .pl-cal__nav:hover { background: #EDF5F0; border-color: #14513A; } }
   .pl-cal__weekdays {
     display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
     margin-bottom: 6px;
@@ -797,7 +797,9 @@ const service = services.find(s => s.slug === 'planification')!;
     background: #EDF5F0; border-color: #D3E7DD;
     cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s;
   }
-  .pl-cal__cell--avail:hover { background: #DCEDE4; border-color: #14513A; transform: translateY(-1px); }
+  @media (hover: hover) {
+    .pl-cal__cell--avail:hover { background: #DCEDE4; border-color: #14513A; transform: translateY(-1px); }
+  }
   .pl-cal__cell--selected {
     background: #14513A !important; color: #FAF8F4 !important;
     border-color: #14513A !important;
@@ -825,9 +827,11 @@ const service = services.find(s => s.slug === 'planification')!;
     color: #14513A; cursor: pointer;
     transition: background 0.15s, border-color 0.15s, transform 0.15s;
   }
-  .pl-slot:hover { background: #EDF5F0; border-color: #14513A; transform: translateY(-1px); }
+  @media (hover: hover) {
+    .pl-slot:hover { background: #EDF5F0; border-color: #14513A; transform: translateY(-1px); }
+  }
   .pl-slot--active {
-    background: #14513A; color: #FAF8F4; border-color: #14513A;
+    background: #14513A !important; color: #FAF8F4 !important; border-color: #14513A !important;
   }
   .pl-slots__note {
     font-family: 'Jost', sans-serif; font-size: 0.8rem; font-weight: 300;

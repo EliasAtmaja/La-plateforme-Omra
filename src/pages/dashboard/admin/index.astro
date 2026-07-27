@@ -138,6 +138,10 @@ import '../../../styles/global.css';
       <section class="adm-card">
         <div class="adm-card__head">
           <h2 class="adm-card__title">Appels r&eacute;serv&eacute;s <span class="adm-card__count" id="call-bookings-count"></span></h2>
+          <button class="adm-cal-toggle adm-cal-toggle--ghost" id="home-refresh">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:5px;"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Actualiser
+          </button>
         </div>
         <div class="adm-callbookings" id="call-bookings-list"></div>
       </section>
@@ -1239,6 +1243,7 @@ import '../../../styles/global.css';
       if (target === 'home') {
         homePanel.classList.remove('is-hidden');
         renderHome();
+        refreshHome();
       } else if (target === 'reviews') {
         reviewsPanel.classList.remove('is-hidden');
         renderAdminReviews();
@@ -1560,6 +1565,29 @@ import '../../../styles/global.css';
     renderCallCal();
     renderCallBookings();
   }
+
+  // Recharge les données « argent » et « appels » depuis la base (paiements récents)
+  async function refreshHome() {
+    const [cs, cb, b] = await Promise.all([
+      supabase.from('call_slots').select('*').order('date'),
+      supabase.from('call_bookings').select('*').order('slot_date'),
+      supabase.from('bookings').select('*').order('date'),
+    ]);
+    if (cs.data) DB_CALL_SLOTS = cs.data;
+    if (cb.data) DB_CALL_BOOKINGS = cb.data;
+    if (b.data) { RAW_BOOKINGS = b.data; DB_BOOKINGS = b.data.map(mapBooking); }
+    renderHome();
+  }
+
+  document.getElementById('home-refresh')?.addEventListener('click', async () => {
+    const btn = document.getElementById('home-refresh') as HTMLButtonElement;
+    btn.disabled = true;
+    const original = btn.innerHTML;
+    btn.textContent = 'Actualisation…';
+    await refreshHome();
+    btn.disabled = false;
+    btn.innerHTML = original;
+  });
 
   // ===== REVIEWS ADMIN =====
   let activeRTab = 'pending';
@@ -2897,7 +2925,7 @@ import '../../../styles/global.css';
   .adm-callcal__cell--past { color: #D2D0C8; }
   .adm-callcal__cell--has { color: #14513A; font-weight: 600; background: #EDF5F0; border-color: #D3E7DD; }
   .adm-callcal__cell--edit { cursor: pointer; color: #4A4A42; }
-  .adm-callcal__cell--edit:hover { border-color: #14513A; background: #F3F8F5; }
+  @media (hover: hover) { .adm-callcal__cell--edit:hover { border-color: #14513A; background: #F3F8F5; } }
   .adm-callcal__cell--sel { background: #14513A !important; color: #FAF8F4 !important; border-color: #14513A !important; }
   .adm-callcal__count {
     position: absolute; top: 3px; right: 4px;
