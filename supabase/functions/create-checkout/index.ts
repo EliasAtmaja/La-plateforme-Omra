@@ -21,7 +21,61 @@ serve(async (req) => {
   }
 
   try {
-    const { bookingIds, items, successUrl, cancelUrl } = await req.json();
+    const { bookingIds, items, callBooking, successUrl, cancelUrl } = await req.json();
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // ---- Cas particulier : réservation d'un appel de planification ----
+    if (callBooking && callBooking.id) {
+      const cb = callBooking;
+      const priceCents = Math.round((cb.price || 39) * 100);
+      const callDetails = {
+        type: 'call',
+        id: cb.id,
+        date: cb.date || '',
+        time: cb.time || '',
+        name: cb.name || '',
+        groupSize: cb.groupSize || null,
+        arrival: cb.arrival || '',
+        departure: cb.departure || '',
+        phone: cb.phone || '',
+        email: cb.email || '',
+        hasTickets: !!cb.hasTickets,
+      };
+
+      const callSession = await stripe.checkout.sessions.create({
+        payment_method_types: ['card', 'paypal'],
+        mode: 'payment',
+        customer_email: cb.email || undefined,
+        line_items: [{
+          price_data: {
+            currency: 'eur',
+            unit_amount: priceCents,
+            product_data: {
+              name: 'Appel de planification (30 min)',
+              description: [cb.date, cb.time].filter(Boolean).join(' — '),
+            },
+          },
+          quantity: 1,
+        }],
+        success_url: successUrl || 'https://www.laplateformeomra.com/paiement/confirmation/?session_id={CHECKOUT_SESSION_ID}',
+        cancel_url: cancelUrl || 'https://www.laplateformeomra.com/services/planification/',
+        metadata: {
+          call_booking_id: cb.id,
+          call_details: JSON.stringify(callDetails),
+        },
+      });
+
+      await supabase
+        .from('call_bookings')
+        .update({ stripe_session_id: callSession.id })
+        .eq('id', cb.id);
+
+      return new Response(
+        JSON.stringify({ url: callSession.url }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
 
     if ((!bookingIds || bookingIds.length === 0) && (!items || items.length === 0)) {
       return new Response(
@@ -29,8 +83,6 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     let line_items: any[];
     let ids: string[] = bookingIds || [];

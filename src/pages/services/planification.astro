@@ -123,10 +123,37 @@ const service = services.find(s => s.slug === 'planification')!;
         </div>
       </fieldset>
 
+      <div class="pl-form__field pl-cal-field">
+        <label>Je souhaite un appel le :</label>
+        <div class="pl-cal" id="pl-cal">
+          <div class="pl-cal__head">
+            <button type="button" class="pl-cal__nav" id="pl-cal-prev" aria-label="Mois pr&eacute;c&eacute;dent">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M13 4l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <span class="pl-cal__month" id="pl-cal-month">&mdash;</span>
+            <button type="button" class="pl-cal__nav" id="pl-cal-next" aria-label="Mois suivant">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="pl-cal__weekdays">
+            <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+          </div>
+          <div class="pl-cal__grid" id="pl-cal-grid"></div>
+          <p class="pl-cal__loading" id="pl-cal-loading">Chargement des disponibilit&eacute;s&hellip;</p>
+          <p class="pl-cal__empty is-hidden" id="pl-cal-empty">Aucune disponibilit&eacute; pour le moment. Revenez bient&ocirc;t.</p>
+        </div>
+        <div class="pl-slots is-hidden" id="pl-slots">
+          <p class="pl-slots__label">Cr&eacute;neaux disponibles le <strong id="pl-slots-date"></strong></p>
+          <div class="pl-slots__list" id="pl-slots-list"></div>
+        </div>
+        <input type="hidden" name="callDate" id="pl-call-date" />
+        <input type="hidden" name="callTime" id="pl-call-time" />
+      </div>
+
       <p class="pl-form__error is-hidden" id="planif-error">Merci de remplir tous les champs correctement.</p>
 
       <button type="submit" class="pl-form__submit">
-        R&eacute;server mon appel
+        R&eacute;server mon appel et proc&eacute;der au paiement
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </form>
@@ -151,46 +178,230 @@ const service = services.find(s => s.slug === 'planification')!;
 </BaseLayout>
 
 <script>
+  import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '../../lib/supabase';
+
   const form = document.getElementById('planif-form') as HTMLFormElement | null;
-  const success = document.getElementById('planif-success');
   const errorMsg = document.getElementById('planif-error');
 
-  if (form && success) {
+  // ---- Calendrier des créneaux d'appel ----
+  const monthEl = document.getElementById('pl-cal-month');
+  const gridEl = document.getElementById('pl-cal-grid');
+  const loadingEl = document.getElementById('pl-cal-loading');
+  const emptyEl = document.getElementById('pl-cal-empty');
+  const prevBtn = document.getElementById('pl-cal-prev') as HTMLButtonElement | null;
+  const nextBtn = document.getElementById('pl-cal-next') as HTMLButtonElement | null;
+  const slotsWrap = document.getElementById('pl-slots');
+  const slotsDateEl = document.getElementById('pl-slots-date');
+  const slotsListEl = document.getElementById('pl-slots-list');
+  const callDateInput = document.getElementById('pl-call-date') as HTMLInputElement | null;
+  const callTimeInput = document.getElementById('pl-call-time') as HTMLInputElement | null;
+
+  const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  let freeSlots: Record<string, string[]> = {};
+  let viewYear = 0;
+  let viewMonth = 0;
+  let selectedDate: string | null = null;
+
+  function formatDateFr(dateStr: string): string {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return `${d} ${MONTHS_FR[m - 1].toLowerCase()} ${y}`;
+  }
+
+  async function loadSlots() {
+    const { data, error } = await supabase
+      .from('call_free_slots')
+      .select('date, time')
+      .order('date', { ascending: true })
+      .order('time', { ascending: true });
+
+    loadingEl?.classList.add('is-hidden');
+    if (error || !data || data.length === 0) {
+      emptyEl?.classList.remove('is-hidden');
+      return;
+    }
+    freeSlots = {};
+    data.forEach((r: any) => {
+      (freeSlots[r.date] = freeSlots[r.date] || []).push(r.time);
+    });
+    const [y, m] = data[0].date.split('-').map(Number);
+    viewYear = y;
+    viewMonth = m - 1;
+    renderCalendar();
+  }
+
+  function renderCalendar() {
+    if (!gridEl || !monthEl) return;
+    monthEl.textContent = `${MONTHS_FR[viewMonth]} ${viewYear}`;
+    gridEl.innerHTML = '';
+    const firstDow = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7;
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    for (let i = 0; i < firstDow; i++) {
+      const s = document.createElement('span');
+      s.className = 'pl-cal__cell pl-cal__cell--empty';
+      gridEl.appendChild(s);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pl-cal__cell';
+      btn.textContent = String(d);
+      const has = freeSlots[dateStr] && freeSlots[dateStr].length;
+      if (has) {
+        btn.classList.add('pl-cal__cell--avail');
+        btn.addEventListener('click', () => selectDate(dateStr, btn));
+      } else {
+        btn.disabled = true;
+        btn.classList.add('pl-cal__cell--off');
+      }
+      if (dateStr === selectedDate) btn.classList.add('pl-cal__cell--selected');
+      gridEl.appendChild(btn);
+    }
+  }
+
+  function selectDate(dateStr: string, btn: HTMLButtonElement) {
+    selectedDate = dateStr;
+    gridEl?.querySelectorAll('.pl-cal__cell--selected').forEach((c) => c.classList.remove('pl-cal__cell--selected'));
+    btn.classList.add('pl-cal__cell--selected');
+    if (callDateInput) callDateInput.value = dateStr;
+    if (callTimeInput) callTimeInput.value = '';
+    if (slotsDateEl) slotsDateEl.textContent = formatDateFr(dateStr);
+    if (slotsListEl) {
+      slotsListEl.innerHTML = '';
+      (freeSlots[dateStr] || []).forEach((t) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'pl-slot';
+        b.textContent = t;
+        b.addEventListener('click', () => {
+          slotsListEl.querySelectorAll('.pl-slot--active').forEach((x) => x.classList.remove('pl-slot--active'));
+          b.classList.add('pl-slot--active');
+          if (callTimeInput) callTimeInput.value = t;
+        });
+        slotsListEl.appendChild(b);
+      });
+    }
+    slotsWrap?.classList.remove('is-hidden');
+  }
+
+  prevBtn?.addEventListener('click', () => {
+    viewMonth--;
+    if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+    renderCalendar();
+  });
+  nextBtn?.addEventListener('click', () => {
+    viewMonth++;
+    if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+    renderCalendar();
+  });
+
+  loadSlots();
+
+  // ---- Soumission : réservation + paiement Stripe ----
+  if (form) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const date = callDateInput?.value || '';
+      const time = callTimeInput?.value || '';
+
       if (!form.checkValidity()) {
-        errorMsg?.classList.remove('is-hidden');
+        if (errorMsg) {
+          errorMsg.textContent = 'Merci de remplir tous les champs correctement.';
+          errorMsg.classList.remove('is-hidden');
+        }
+        return;
+      }
+      if (!date || !time) {
+        if (errorMsg) {
+          errorMsg.textContent = 'Merci de choisir une date et un créneau pour votre appel.';
+          errorMsg.classList.remove('is-hidden');
+        }
+        document.getElementById('pl-cal')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
       errorMsg?.classList.add('is-hidden');
 
       const submitBtn = form.querySelector('.pl-form__submit') as HTMLButtonElement;
+      const originalHtml = submitBtn.innerHTML;
       submitBtn.disabled = true;
+      submitBtn.classList.add('is-loading');
+      submitBtn.innerHTML = 'Traitement<span class="pl-dots"><span>.</span><span>.</span><span>.</span></span>';
 
       const data = new FormData(form);
-      const { supabase } = await import('../../lib/supabase');
-      const { error } = await supabase.from('planif_requests').insert({
-        name: data.get('name'),
-        group_size: parseInt(String(data.get('groupSize'))) || null,
-        arrival: data.get('arrival') || null,
-        departure: data.get('departure') || null,
-        phone: data.get('phone'),
-        email: data.get('email'),
-        has_tickets: data.get('hasTickets') === 'oui',
-      });
-      submitBtn.disabled = false;
+      const name = String(data.get('name') || '');
+      const groupSize = parseInt(String(data.get('groupSize'))) || null;
+      const arrival = String(data.get('arrival') || '') || null;
+      const departure = String(data.get('departure') || '') || null;
+      const phone = String(data.get('phone') || '');
+      const email = String(data.get('email') || '');
+      const hasTickets = data.get('hasTickets') === 'oui';
 
-      if (error) {
-        if (errorMsg) {
-          errorMsg.textContent = "Une erreur est survenue lors de l'envoi. Veuillez réessayer.";
-          errorMsg.classList.remove('is-hidden');
+      function fail(msg: string) {
+        if (errorMsg) { errorMsg.textContent = msg; errorMsg.classList.remove('is-hidden'); }
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('is-loading');
+        submitBtn.innerHTML = originalHtml;
+      }
+
+      // 1) Créer la réservation d'appel (statut pending)
+      const { data: rpc, error: rpcErr } = await supabase.rpc('create_call_booking', {
+        p_date: date,
+        p_time: time,
+        p_name: name,
+        p_group_size: groupSize,
+        p_arrival: arrival,
+        p_departure: departure,
+        p_phone: phone,
+        p_email: email,
+        p_has_tickets: hasTickets,
+      });
+
+      if (rpcErr) {
+        const m = rpcErr.message || '';
+        if (m.includes('SLOT_ALREADY_BOOKED') || m.includes('SLOT_UNAVAILABLE')) {
+          selectedDate = null;
+          if (callDateInput) callDateInput.value = '';
+          if (callTimeInput) callTimeInput.value = '';
+          slotsWrap?.classList.add('is-hidden');
+          emptyEl?.classList.add('is-hidden');
+          await loadSlots();
+          fail('Ce créneau vient d\'être réservé. Merci d\'en choisir un autre.');
+        } else {
+          fail("Une erreur est survenue. Veuillez réessayer.");
         }
         return;
       }
 
-      form.classList.add('is-hidden');
-      success.classList.remove('is-hidden');
-      success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const bookingId = (rpc as any)?.id;
+
+      // 2) Créer la session de paiement Stripe et rediriger
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'apikey': SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            callBooking: {
+              id: bookingId,
+              date, time, name, groupSize, arrival, departure, phone, email, hasTickets,
+              price: 39,
+            },
+            successUrl: `${window.location.origin}/paiement/confirmation/?session_id={CHECKOUT_SESSION_ID}`,
+            cancelUrl: `${window.location.origin}/services/planification/`,
+          }),
+        });
+        const cdata = await res.json();
+        if (cdata.url) {
+          window.location.href = cdata.url;
+        } else {
+          fail(cdata.error || "Impossible de démarrer le paiement. Veuillez réessayer.");
+        }
+      } catch {
+        fail("Impossible de démarrer le paiement. Veuillez réessayer.");
+      }
     });
   }
 </script>
@@ -475,6 +686,99 @@ const service = services.find(s => s.slug === 'planification')!;
     background: #0C3A28; color: #FAF8F4;
     transform: translateY(-2px);
     box-shadow: 0 12px 28px rgba(20,81,58,0.25);
+  }
+
+  /* ---- CALENDRIER APPEL ---- */
+  .pl-cal-field label { margin-bottom: 10px; }
+  .pl-cal {
+    background: #FFFFFF;
+    border: 1px solid #E3E0D6;
+    border-radius: 14px;
+    padding: 16px;
+  }
+  .pl-cal__head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .pl-cal__month {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.15rem; font-weight: 700; color: #14513A;
+  }
+  .pl-cal__nav {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: 9px;
+    background: #FAF8F4; border: 1px solid #E3E0D6; color: #14513A;
+    cursor: pointer; transition: background 0.2s, border-color 0.2s;
+  }
+  .pl-cal__nav:hover { background: #EDF5F0; border-color: #14513A; }
+  .pl-cal__weekdays {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+    margin-bottom: 6px;
+  }
+  .pl-cal__weekdays span {
+    text-align: center;
+    font-family: 'Jost', sans-serif; font-size: 0.68rem; font-weight: 600;
+    color: #9C9C93; text-transform: uppercase;
+  }
+  .pl-cal__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .pl-cal__cell {
+    aspect-ratio: 1 / 1;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid transparent; border-radius: 9px;
+    background: transparent;
+    font-family: 'Jost', sans-serif; font-size: 0.85rem; font-weight: 400;
+    color: #C4C2BA;
+  }
+  .pl-cal__cell--empty { border: none; }
+  .pl-cal__cell--off { color: #C4C2BA; cursor: not-allowed; }
+  .pl-cal__cell--avail {
+    color: #14513A; font-weight: 500;
+    background: #EDF5F0; border-color: #D3E7DD;
+    cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  }
+  .pl-cal__cell--avail:hover { background: #DCEDE4; border-color: #14513A; transform: translateY(-1px); }
+  .pl-cal__cell--selected {
+    background: #14513A !important; color: #FAF8F4 !important;
+    border-color: #14513A !important;
+  }
+  .pl-cal__loading, .pl-cal__empty {
+    font-family: 'Jost', sans-serif; font-size: 0.85rem; font-weight: 300;
+    color: #6B6B63; text-align: center; margin: 14px 0 4px;
+  }
+
+  .pl-slots {
+    margin-top: 14px;
+    background: #FAF8F4; border: 1px solid #EFEDE6; border-radius: 12px;
+    padding: 16px;
+  }
+  .pl-slots__label {
+    font-family: 'Jost', sans-serif; font-size: 0.85rem; font-weight: 400;
+    color: #4A4A42; margin: 0 0 12px;
+  }
+  .pl-slots__label strong { color: #14513A; font-weight: 600; }
+  .pl-slots__list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pl-slot {
+    padding: 9px 16px;
+    background: #FFFFFF; border: 1px solid #E3E0D6; border-radius: 9px;
+    font-family: 'Jost', sans-serif; font-size: 0.85rem; font-weight: 500;
+    color: #14513A; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  }
+  .pl-slot:hover { background: #EDF5F0; border-color: #14513A; transform: translateY(-1px); }
+  .pl-slot--active {
+    background: #14513A; color: #FAF8F4; border-color: #14513A;
+  }
+
+  /* Points animés du bouton pendant le traitement */
+  .pl-form__submit.is-loading { opacity: 0.85; cursor: wait; }
+  .pl-dots span {
+    display: inline-block; animation: plDot 1.2s infinite ease-in-out;
+  }
+  .pl-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .pl-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes plDot {
+    0%, 60%, 100% { opacity: 0.2; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-3px); }
   }
 
   /* ---- RESPONSIVE ---- */

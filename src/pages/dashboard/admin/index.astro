@@ -39,7 +39,11 @@ import '../../../styles/global.css';
       <span>Admin</span>
     </div>
     <nav class="adm-side__nav">
-      <a href="#" class="adm-side__link adm-side__link--active" data-nav-tab="guides">
+      <a href="#" class="adm-side__link adm-side__link--active" data-nav-tab="home">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 7l6-5 6 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 6.5V14h9V6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Mon espace
+      </a>
+      <a href="#" class="adm-side__link" data-nav-tab="guides">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M2.5 14c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.4"/></svg>
         Guides
         <span class="adm-side__badge adm-side__badge--red" id="refusal-count" hidden>0</span>
@@ -55,7 +59,88 @@ import '../../../styles/global.css';
 
   <!-- Main -->
   <main class="adm-main">
-    <div id="panel-guides-header">
+
+    <!-- ====== MON ESPACE (accueil admin) ====== -->
+    <div id="panel-home">
+      <header class="adm-top">
+        <div>
+          <h1 class="adm-top__title">Mon espace</h1>
+          <p class="adm-top__sub">Vos revenus, vos disponibilit&eacute;s et vos appels</p>
+        </div>
+      </header>
+
+      <!-- Statistiques argent -->
+      <section class="adm-stats">
+        <div class="adm-stat">
+          <span class="adm-stat__label">Aujourd'hui</span>
+          <span class="adm-stat__value" id="stat-today">0&nbsp;&euro;</span>
+        </div>
+        <div class="adm-stat">
+          <span class="adm-stat__label">Cette semaine</span>
+          <span class="adm-stat__value" id="stat-week">0&nbsp;&euro;</span>
+        </div>
+        <div class="adm-stat">
+          <span class="adm-stat__label">Ce mois-ci</span>
+          <span class="adm-stat__value" id="stat-month">0&nbsp;&euro;</span>
+        </div>
+        <div class="adm-stat adm-stat--total">
+          <span class="adm-stat__label">Total encaiss&eacute;</span>
+          <span class="adm-stat__value" id="stat-total">0&nbsp;&euro;</span>
+        </div>
+      </section>
+
+      <section class="adm-card">
+        <div class="adm-card__head">
+          <h2 class="adm-card__title">D&eacute;tail des encaissements</h2>
+          <div class="adm-seg" role="tablist">
+            <button class="adm-seg__btn adm-seg__btn--active" data-stat-period="day">Par jour</button>
+            <button class="adm-seg__btn" data-stat-period="week">Par semaine</button>
+            <button class="adm-seg__btn" data-stat-period="month">Par mois</button>
+          </div>
+        </div>
+        <div class="adm-breakdown" id="stat-breakdown"></div>
+      </section>
+
+      <!-- Calendrier des créneaux d'appel -->
+      <section class="adm-card">
+        <div class="adm-card__head">
+          <h2 class="adm-card__title">Mes cr&eacute;neaux d'appel</h2>
+          <button class="adm-cal-toggle" id="call-cal-toggle" data-editing="false">Ouvrir le calendrier</button>
+        </div>
+        <p class="adm-card__hint" id="call-cal-hint">Cliquez sur &laquo;&nbsp;Ouvrir le calendrier&nbsp;&raquo; pour ajouter ou retirer vos cr&eacute;neaux disponibles.</p>
+        <div class="adm-callcal">
+          <div class="adm-callcal__head">
+            <button type="button" class="adm-callcal__nav" id="call-cal-prev" aria-label="Mois pr&eacute;c&eacute;dent">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M13 4l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <span class="adm-callcal__month" id="call-cal-month">&mdash;</span>
+            <button type="button" class="adm-callcal__nav" id="call-cal-next" aria-label="Mois suivant">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="adm-callcal__weekdays"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+          <div class="adm-callcal__grid" id="call-cal-grid"></div>
+        </div>
+        <div class="adm-dayeditor is-hidden" id="call-day-editor">
+          <p class="adm-dayeditor__title">Cr&eacute;neaux du <strong id="call-day-label"></strong></p>
+          <div class="adm-dayeditor__slots" id="call-day-slots"></div>
+          <div class="adm-dayeditor__add">
+            <input type="time" id="call-day-time" class="adm-dayeditor__time" />
+            <button type="button" class="adm-dayeditor__addbtn" id="call-day-add">Ajouter le cr&eacute;neau</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Appels réservés -->
+      <section class="adm-card">
+        <div class="adm-card__head">
+          <h2 class="adm-card__title">Appels r&eacute;serv&eacute;s <span class="adm-card__count" id="call-bookings-count"></span></h2>
+        </div>
+        <div class="adm-callbookings" id="call-bookings-list"></div>
+      </section>
+    </div>
+
+    <div id="panel-guides-header" class="is-hidden">
       <header class="adm-top">
         <div>
           <h1 class="adm-top__title">Gestion des guides</h1>
@@ -87,7 +172,7 @@ import '../../../styles/global.css';
     </div>
 
     <!-- Guides list (rendered client-side from localStorage) -->
-    <div class="adm-guides" id="panel-guides"></div>
+    <div class="adm-guides is-hidden" id="panel-guides"></div>
   </main>
 </div>
 
@@ -248,21 +333,29 @@ import '../../../styles/global.css';
   let DB_BOOKINGS: any[] = [];
   let DB_REVIEWS: any[] = [];
   let DB_AVAIL: Record<string, string[]> = {};
+  let DB_CALL_SLOTS: any[] = [];
+  let DB_CALL_BOOKINGS: any[] = [];
+  let RAW_BOOKINGS: any[] = [];
 
   async function loadAll() {
-    const [g, b, r, a] = await Promise.all([
+    const [g, b, r, a, cs, cb] = await Promise.all([
       supabase.from('guides').select('*').order('created_at'),
       supabase.from('bookings').select('*').order('date'),
       supabase.from('reviews').select('*').order('created_at', { ascending: false }),
       supabase.from('availability').select('guide_id, date'),
+      supabase.from('call_slots').select('*').order('date'),
+      supabase.from('call_bookings').select('*').order('slot_date'),
     ]);
     DB_GUIDES = (g.data || []).map(mapGuide);
     DB_BOOKINGS = (b.data || []).map(mapBooking);
+    RAW_BOOKINGS = b.data || [];
     DB_REVIEWS = (r.data || []).map(mapReview);
     DB_AVAIL = {};
     (a.data || []).forEach((row: any) => {
       (DB_AVAIL[row.guide_id] = DB_AVAIL[row.guide_id] || []).push(row.date);
     });
+    DB_CALL_SLOTS = cs.data || [];
+    DB_CALL_BOOKINGS = cb.data || [];
   }
 
   async function enterDashboard() {
@@ -272,6 +365,7 @@ import '../../../styles/global.css';
     reloadAllCards();
     updatePendingBadge();
     updateRefusalBadge();
+    renderHome();
   }
 
   // Session admin déjà active ?
@@ -1120,8 +1214,9 @@ import '../../../styles/global.css';
     resetModal();
   });
 
-  // ===== TAB NAVIGATION (Guides / Avis) =====
+  // ===== TAB NAVIGATION (Mon espace / Guides / Avis) =====
   const navTabs = document.querySelectorAll('[data-nav-tab]');
+  const homePanel = document.getElementById('panel-home')!;
   const guidesHeader = document.getElementById('panel-guides-header')!;
   const guidesPanel = document.getElementById('panel-guides')!;
   const reviewsPanel = document.getElementById('panel-reviews')!;
@@ -1132,18 +1227,310 @@ import '../../../styles/global.css';
       const target = (tab as HTMLElement).dataset.navTab;
       navTabs.forEach(t => t.classList.remove('adm-side__link--active'));
       tab.classList.add('adm-side__link--active');
-      if (target === 'reviews') {
-        guidesHeader.classList.add('is-hidden');
-        guidesPanel.classList.add('is-hidden');
+
+      homePanel.classList.add('is-hidden');
+      guidesHeader.classList.add('is-hidden');
+      guidesPanel.classList.add('is-hidden');
+      reviewsPanel.classList.add('is-hidden');
+
+      if (target === 'home') {
+        homePanel.classList.remove('is-hidden');
+        renderHome();
+      } else if (target === 'reviews') {
         reviewsPanel.classList.remove('is-hidden');
         renderAdminReviews();
       } else {
         guidesHeader.classList.remove('is-hidden');
         guidesPanel.classList.remove('is-hidden');
-        reviewsPanel.classList.add('is-hidden');
       }
     });
   });
+
+  // ===== MON ESPACE (accueil admin) =====
+  const MONTHS_HOME = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+  function fmtEuro(cents: number): string {
+    return (Math.round(cents) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' €';
+  }
+  function toYMD(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function formatDayFr(dateStr: string): string {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return `${d} ${MONTHS_HOME[m - 1].toLowerCase()} ${y}`;
+  }
+
+  // ---- Transactions payées (guides + appels), amount_paid en centimes ----
+  function collectTransactions(): { date: string; amount: number }[] {
+    const txns: { date: string; amount: number }[] = [];
+    RAW_BOOKINGS.forEach((b: any) => {
+      if (b.status === 'paid' && b.amount_paid) {
+        txns.push({ date: (b.created_at || '').slice(0, 10), amount: b.amount_paid });
+      }
+    });
+    DB_CALL_BOOKINGS.forEach((b: any) => {
+      if (b.status === 'paid' && b.amount_paid) {
+        txns.push({ date: (b.created_at || '').slice(0, 10), amount: b.amount_paid });
+      }
+    });
+    return txns;
+  }
+
+  function renderStats() {
+    const txns = collectTransactions();
+    const now = new Date();
+    const todayStr = toYMD(now);
+    const startWeek = new Date(now);
+    const dow = (now.getDay() + 6) % 7; // Lundi = 0
+    startWeek.setDate(now.getDate() - dow);
+    const startWeekStr = toYMD(startWeek);
+    const startMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+
+    let today = 0, week = 0, month = 0, total = 0;
+    txns.forEach((t) => {
+      total += t.amount;
+      if (t.date === todayStr) today += t.amount;
+      if (t.date >= startWeekStr) week += t.amount;
+      if (t.date >= startMonthStr) month += t.amount;
+    });
+    const set = (id: string, v: number) => { const el = document.getElementById(id); if (el) el.textContent = fmtEuro(v); };
+    set('stat-today', today);
+    set('stat-week', week);
+    set('stat-month', month);
+    set('stat-total', total);
+    renderBreakdown();
+  }
+
+  let statPeriod: 'day' | 'week' | 'month' = 'day';
+  function renderBreakdown() {
+    const wrap = document.getElementById('stat-breakdown');
+    if (!wrap) return;
+    const txns = collectTransactions();
+    const groups: Record<string, { label: string; sort: string; amount: number }> = {};
+
+    txns.forEach((t) => {
+      if (!t.date) return;
+      const [y, m, d] = t.date.split('-').map(Number);
+      let key = '', label = '', sort = '';
+      if (statPeriod === 'day') {
+        key = t.date; label = formatDayFr(t.date); sort = t.date;
+      } else if (statPeriod === 'month') {
+        key = `${y}-${String(m).padStart(2, '0')}`;
+        label = `${MONTHS_HOME[m - 1]} ${y}`; sort = key;
+      } else {
+        const dt = new Date(y, m - 1, d);
+        const dow = (dt.getDay() + 6) % 7;
+        dt.setDate(dt.getDate() - dow);
+        const wk = toYMD(dt);
+        key = wk; label = `Semaine du ${formatDayFr(wk)}`; sort = wk;
+      }
+      if (!groups[key]) groups[key] = { label, sort, amount: 0 };
+      groups[key].amount += t.amount;
+    });
+
+    const rows = Object.values(groups).sort((a, b) => b.sort.localeCompare(a.sort));
+    if (rows.length === 0) {
+      wrap.innerHTML = '<p class="adm-breakdown__empty">Aucun encaissement pour le moment.</p>';
+      return;
+    }
+    wrap.innerHTML = rows.map((r) => `
+      <div class="adm-breakdown__row">
+        <span class="adm-breakdown__label">${escHtml(r.label)}</span>
+        <span class="adm-breakdown__amount">${fmtEuro(r.amount)}</span>
+      </div>`).join('');
+  }
+
+  document.querySelectorAll('[data-stat-period]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      statPeriod = (btn as HTMLElement).dataset.statPeriod as any;
+      document.querySelectorAll('[data-stat-period]').forEach((b) => b.classList.remove('adm-seg__btn--active'));
+      btn.classList.add('adm-seg__btn--active');
+      renderBreakdown();
+    });
+  });
+
+  // ---- Calendrier des créneaux d'appel ----
+  const callCal = { year: 0, month: 0, editing: false, selectedDay: null as string | null };
+
+  function slotsByDate(): Record<string, { id: string; time: string }[]> {
+    const map: Record<string, { id: string; time: string }[]> = {};
+    DB_CALL_SLOTS.forEach((s: any) => {
+      (map[s.date] = map[s.date] || []).push({ id: s.id, time: s.time });
+    });
+    Object.values(map).forEach((arr) => arr.sort((a, b) => a.time.localeCompare(b.time)));
+    return map;
+  }
+
+  function renderCallCal() {
+    const monthEl = document.getElementById('call-cal-month');
+    const gridEl = document.getElementById('call-cal-grid');
+    if (!monthEl || !gridEl) return;
+    if (!callCal.year) {
+      const now = new Date();
+      callCal.year = now.getFullYear();
+      callCal.month = now.getMonth();
+    }
+    monthEl.textContent = `${MONTHS_HOME[callCal.month]} ${callCal.year}`;
+    const byDate = slotsByDate();
+    const todayStr = toYMD(new Date());
+    gridEl.innerHTML = '';
+    const firstDow = (new Date(callCal.year, callCal.month, 1).getDay() + 6) % 7;
+    const daysInMonth = new Date(callCal.year, callCal.month + 1, 0).getDate();
+    for (let i = 0; i < firstDow; i++) {
+      const s = document.createElement('span');
+      s.className = 'adm-callcal__cell adm-callcal__cell--empty';
+      gridEl.appendChild(s);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${callCal.year}-${String(callCal.month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const count = (byDate[dateStr] || []).length;
+      const isPast = dateStr < todayStr;
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'adm-callcal__cell';
+      cell.innerHTML = `<span>${d}</span>${count ? `<span class="adm-callcal__count">${count}</span>` : ''}`;
+      if (count) cell.classList.add('adm-callcal__cell--has');
+      if (isPast) cell.classList.add('adm-callcal__cell--past');
+      if (dateStr === callCal.selectedDay) cell.classList.add('adm-callcal__cell--sel');
+      if (callCal.editing && !isPast) {
+        cell.classList.add('adm-callcal__cell--edit');
+        cell.addEventListener('click', () => { callCal.selectedDay = dateStr; renderCallCal(); renderDayEditor(); });
+      } else {
+        cell.disabled = true;
+      }
+      gridEl.appendChild(cell);
+    }
+  }
+
+  function renderDayEditor() {
+    const editor = document.getElementById('call-day-editor');
+    const label = document.getElementById('call-day-label');
+    const slotsEl = document.getElementById('call-day-slots');
+    if (!editor || !label || !slotsEl) return;
+    if (!callCal.editing || !callCal.selectedDay) { editor.classList.add('is-hidden'); return; }
+    editor.classList.remove('is-hidden');
+    label.textContent = formatDayFr(callCal.selectedDay);
+    const byDate = slotsByDate();
+    const slots = byDate[callCal.selectedDay] || [];
+    if (slots.length === 0) {
+      slotsEl.innerHTML = '<span class="adm-dayeditor__empty">Aucun créneau. Ajoutez-en un ci-dessous.</span>';
+    } else {
+      slotsEl.innerHTML = slots.map((s) => `
+        <span class="adm-slotchip" data-slot-id="${s.id}">
+          ${escHtml(s.time)}
+          <button type="button" class="adm-slotchip__x" data-remove-slot="${s.id}" aria-label="Retirer">&times;</button>
+        </span>`).join('');
+    }
+  }
+
+  async function addCallSlot() {
+    if (!callCal.selectedDay) return;
+    const input = document.getElementById('call-day-time') as HTMLInputElement | null;
+    const time = input?.value;
+    if (!time) { alert('Choisissez une heure.'); return; }
+    const byDate = slotsByDate();
+    if ((byDate[callCal.selectedDay] || []).some((s) => s.time === time)) {
+      alert('Ce créneau existe déjà.');
+      return;
+    }
+    const { data, error } = await supabase
+      .from('call_slots')
+      .insert({ date: callCal.selectedDay, time })
+      .select()
+      .single();
+    if (error || !data) { alert('Erreur lors de l\'ajout. Réessayez.'); return; }
+    DB_CALL_SLOTS.push(data);
+    if (input) input.value = '';
+    renderCallCal();
+    renderDayEditor();
+  }
+
+  async function removeCallSlot(id: string) {
+    const slot = DB_CALL_SLOTS.find((s: any) => s.id === id);
+    const booked = DB_CALL_BOOKINGS.some((b: any) => b.status === 'paid' && slot && b.slot_date === slot.date && b.slot_time === slot.time);
+    if (booked && !confirm('Ce créneau a une réservation payée. Le retirer ne supprime pas la réservation. Continuer ?')) return;
+    const { error } = await supabase.from('call_slots').delete().eq('id', id);
+    if (error) { alert('Erreur lors de la suppression. Réessayez.'); return; }
+    DB_CALL_SLOTS = DB_CALL_SLOTS.filter((s: any) => s.id !== id);
+    renderCallCal();
+    renderDayEditor();
+  }
+
+  document.getElementById('call-day-add')?.addEventListener('click', addCallSlot);
+  document.getElementById('call-day-slots')?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('[data-remove-slot]');
+    if (btn) removeCallSlot((btn as HTMLElement).dataset.removeSlot!);
+  });
+  document.getElementById('call-cal-prev')?.addEventListener('click', () => {
+    callCal.month--; if (callCal.month < 0) { callCal.month = 11; callCal.year--; } renderCallCal();
+  });
+  document.getElementById('call-cal-next')?.addEventListener('click', () => {
+    callCal.month++; if (callCal.month > 11) { callCal.month = 0; callCal.year++; } renderCallCal();
+  });
+  document.getElementById('call-cal-toggle')?.addEventListener('click', () => {
+    callCal.editing = !callCal.editing;
+    const btn = document.getElementById('call-cal-toggle')!;
+    const hint = document.getElementById('call-cal-hint');
+    btn.textContent = callCal.editing ? 'Fermer le calendrier' : 'Ouvrir le calendrier';
+    btn.classList.toggle('adm-cal-toggle--on', callCal.editing);
+    if (hint) hint.textContent = callCal.editing
+      ? 'Cliquez sur un jour pour ajouter ou retirer des créneaux horaires.'
+      : 'Cliquez sur « Ouvrir le calendrier » pour ajouter ou retirer vos créneaux disponibles.';
+    if (!callCal.editing) { callCal.selectedDay = null; }
+    renderCallCal();
+    renderDayEditor();
+  });
+
+  // ---- Liste des appels réservés ----
+  function renderCallBookings() {
+    const list = document.getElementById('call-bookings-list');
+    const count = document.getElementById('call-bookings-count');
+    if (!list) return;
+    const paid = DB_CALL_BOOKINGS
+      .filter((b: any) => b.status === 'paid')
+      .sort((a: any, b: any) => (b.slot_date + b.slot_time).localeCompare(a.slot_date + a.slot_time));
+    if (count) count.textContent = paid.length ? String(paid.length) : '';
+    if (paid.length === 0) {
+      list.innerHTML = '<p class="adm-callbookings__empty">Aucun appel réservé pour le moment.</p>';
+      return;
+    }
+    list.innerHTML = paid.map((b: any) => {
+      const rows = [
+        ['Date de l\'appel', formatDayFr(b.slot_date)],
+        ['Heure', b.slot_time || '—'],
+        ['Nom & prénom', b.name || '—'],
+        ['Nombre de personnes', b.group_size ? String(b.group_size) : '—'],
+        ['Date d\'arrivée', b.arrival ? formatDayFr(b.arrival) : '—'],
+        ['Date de départ', b.departure ? formatDayFr(b.departure) : '—'],
+        ['Téléphone', b.phone || '—'],
+        ['Email', b.email || '—'],
+        ['Billets d\'avion', b.has_tickets ? 'Oui, déjà réservés' : 'Non, pas encore'],
+        ['Montant payé', b.amount_paid ? fmtEuro(b.amount_paid) : '—'],
+      ].map(([k, v]) => `
+        <div class="adm-cb__row"><span class="adm-cb__k">${escHtml(k)}</span><span class="adm-cb__v">${escHtml(v)}</span></div>`).join('');
+      return `
+        <div class="adm-cb" data-cb>
+          <button type="button" class="adm-cb__head" data-cb-toggle>
+            <span class="adm-cb__title">${escHtml(b.name || 'Client')}</span>
+            <span class="adm-cb__meta">${escHtml(formatDayFr(b.slot_date))} · ${escHtml(b.slot_time || '')}</span>
+            <svg class="adm-cb__chevron" width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="adm-cb__body">${rows}</div>
+        </div>`;
+    }).join('');
+  }
+
+  document.getElementById('call-bookings-list')?.addEventListener('click', (e) => {
+    const head = (e.target as HTMLElement).closest('[data-cb-toggle]');
+    if (head) head.parentElement?.classList.toggle('adm-cb--open');
+  });
+
+  function renderHome() {
+    renderStats();
+    renderCallCal();
+    renderDayEditor();
+    renderCallBookings();
+  }
 
   // ===== REVIEWS ADMIN =====
   let activeRTab = 'pending';
@@ -2322,6 +2709,211 @@ import '../../../styles/global.css';
   @media (max-width: 400px) {
     .adm-side__link { padding: 10px 13px; font-size: 0.74rem; }
     .adm-side__logout { font-size: 0.62rem; padding: 8px 10px; }
+  }
+
+  /* ============ MON ESPACE (accueil admin) ============ */
+  .adm-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .adm-stat {
+    background: #FFFFFF;
+    border: 1px solid #ECEAE3;
+    border-radius: 14px;
+    padding: 18px 18px 16px;
+  }
+  .adm-stat--total { background: #14513A; border-color: #14513A; }
+  .adm-stat__label {
+    display: block;
+    font-family: 'Jost', sans-serif; font-size: 0.72rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: #9C9C93; margin-bottom: 8px;
+  }
+  .adm-stat--total .adm-stat__label { color: rgba(233,217,174,0.85); }
+  .adm-stat__value {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.7rem; font-weight: 700; color: #14513A; line-height: 1;
+  }
+  .adm-stat--total .adm-stat__value { color: #FAF8F4; }
+
+  .adm-card {
+    background: #FFFFFF;
+    border: 1px solid #ECEAE3;
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 22px;
+  }
+  .adm-card__head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
+  }
+  .adm-card__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.35rem; font-weight: 700; color: #1C1C1A; margin: 0;
+  }
+  .adm-card__count {
+    font-family: 'Jost', sans-serif; font-size: 0.8rem; font-weight: 500;
+    color: #FFFFFF; background: #14513A; border-radius: 999px;
+    padding: 1px 9px; margin-left: 4px;
+  }
+  .adm-card__hint {
+    font-family: 'Jost', sans-serif; font-size: 0.82rem; font-weight: 300;
+    color: #6B6B63; margin: -6px 0 16px;
+  }
+
+  .adm-seg { display: inline-flex; background: #F3F1EA; border-radius: 10px; padding: 3px; }
+  .adm-seg__btn {
+    border: none; background: transparent; cursor: pointer;
+    font-family: 'Jost', sans-serif; font-size: 0.78rem; font-weight: 500;
+    color: #6B6B63; padding: 7px 14px; border-radius: 8px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .adm-seg__btn--active { background: #FFFFFF; color: #14513A; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+  .adm-breakdown { display: flex; flex-direction: column; }
+  .adm-breakdown__row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 4px; border-bottom: 1px solid #F1EFE8;
+  }
+  .adm-breakdown__row:last-child { border-bottom: none; }
+  .adm-breakdown__label {
+    font-family: 'Jost', sans-serif; font-size: 0.88rem; font-weight: 400; color: #4A4A42;
+  }
+  .adm-breakdown__amount {
+    font-family: 'Jost', sans-serif; font-size: 0.95rem; font-weight: 600; color: #14513A;
+  }
+  .adm-breakdown__empty {
+    font-family: 'Jost', sans-serif; font-size: 0.85rem; font-weight: 300;
+    color: #9C9C93; text-align: center; padding: 20px 0;
+  }
+
+  .adm-cal-toggle {
+    border: 1px solid #14513A; background: #FFFFFF; color: #14513A;
+    font-family: 'Jost', sans-serif; font-size: 0.78rem; font-weight: 500;
+    padding: 9px 16px; border-radius: 9px; cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .adm-cal-toggle:hover { background: #EDF5F0; }
+  .adm-cal-toggle--on { background: #14513A; color: #FAF8F4; }
+
+  .adm-callcal { max-width: 420px; }
+  .adm-callcal__head {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+  }
+  .adm-callcal__month {
+    font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.1rem; font-weight: 700; color: #14513A;
+  }
+  .adm-callcal__nav {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #FAF8F4; border: 1px solid #E3E0D6; color: #14513A; cursor: pointer;
+  }
+  .adm-callcal__nav:hover { background: #EDF5F0; border-color: #14513A; }
+  .adm-callcal__weekdays {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px;
+  }
+  .adm-callcal__weekdays span {
+    text-align: center; font-family: 'Jost', sans-serif; font-size: 0.66rem; font-weight: 600;
+    color: #9C9C93; text-transform: uppercase;
+  }
+  .adm-callcal__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .adm-callcal__cell {
+    position: relative; aspect-ratio: 1 / 1;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid transparent; border-radius: 8px; background: transparent;
+    font-family: 'Jost', sans-serif; font-size: 0.82rem; color: #B4B2AA;
+  }
+  .adm-callcal__cell--empty { border: none; }
+  .adm-callcal__cell--past { color: #D2D0C8; }
+  .adm-callcal__cell--has { color: #14513A; font-weight: 600; background: #EDF5F0; border-color: #D3E7DD; }
+  .adm-callcal__cell--edit { cursor: pointer; color: #4A4A42; }
+  .adm-callcal__cell--edit:hover { border-color: #14513A; background: #F3F8F5; }
+  .adm-callcal__cell--sel { background: #14513A !important; color: #FAF8F4 !important; border-color: #14513A !important; }
+  .adm-callcal__count {
+    position: absolute; top: 3px; right: 4px;
+    font-size: 0.58rem; font-weight: 700; color: #FFFFFF;
+    background: #B99752; border-radius: 999px; min-width: 13px; height: 13px;
+    display: inline-flex; align-items: center; justify-content: center; padding: 0 3px;
+  }
+  .adm-callcal__cell--sel .adm-callcal__count { background: #E9D9AE; color: #14513A; }
+
+  .adm-dayeditor {
+    margin-top: 18px; padding-top: 18px; border-top: 1px solid #F1EFE8;
+    max-width: 460px;
+  }
+  .adm-dayeditor__title {
+    font-family: 'Jost', sans-serif; font-size: 0.85rem; font-weight: 400; color: #4A4A42; margin: 0 0 12px;
+  }
+  .adm-dayeditor__title strong { color: #14513A; font-weight: 600; }
+  .adm-dayeditor__slots { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .adm-dayeditor__empty {
+    font-family: 'Jost', sans-serif; font-size: 0.8rem; font-weight: 300; color: #9C9C93;
+  }
+  .adm-slotchip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #EDF5F0; border: 1px solid #D3E7DD; border-radius: 999px;
+    padding: 5px 8px 5px 12px;
+    font-family: 'Jost', sans-serif; font-size: 0.82rem; font-weight: 500; color: #14513A;
+  }
+  .adm-slotchip__x {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 999px; border: none;
+    background: rgba(20,81,58,0.12); color: #14513A; cursor: pointer;
+    font-size: 1rem; line-height: 1;
+  }
+  .adm-slotchip__x:hover { background: #C6413B; color: #FFFFFF; }
+  .adm-dayeditor__add { display: flex; gap: 8px; align-items: center; }
+  .adm-dayeditor__time {
+    padding: 9px 12px; border: 1px solid #E3E0D6; border-radius: 9px;
+    font-family: 'Jost', sans-serif; font-size: 0.85rem; color: #1C1C1A;
+  }
+  .adm-dayeditor__addbtn {
+    padding: 9px 16px; background: #14513A; color: #FAF8F4; border: none; border-radius: 9px;
+    font-family: 'Jost', sans-serif; font-size: 0.78rem; font-weight: 500; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .adm-dayeditor__addbtn:hover { background: #0C3A28; }
+
+  .adm-callbookings { display: flex; flex-direction: column; gap: 10px; }
+  .adm-callbookings__empty {
+    font-family: 'Jost', sans-serif; font-size: 0.85rem; font-weight: 300; color: #9C9C93;
+    text-align: center; padding: 20px 0;
+  }
+  .adm-cb { border: 1px solid #ECEAE3; border-radius: 12px; overflow: hidden; }
+  .adm-cb__head {
+    width: 100%; display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; background: #FFFFFF; border: none; cursor: pointer; text-align: left;
+  }
+  .adm-cb__head:hover { background: #FAF8F4; }
+  .adm-cb__title {
+    font-family: 'Jost', sans-serif; font-size: 0.92rem; font-weight: 600; color: #1C1C1A;
+  }
+  .adm-cb__meta {
+    font-family: 'Jost', sans-serif; font-size: 0.8rem; font-weight: 400; color: #6B6B63;
+    margin-left: auto;
+  }
+  .adm-cb__chevron { color: #9C9C93; transition: transform 0.2s; flex-shrink: 0; }
+  .adm-cb--open .adm-cb__chevron { transform: rotate(180deg); }
+  .adm-cb__body { display: none; padding: 4px 16px 14px; background: #FCFBF8; }
+  .adm-cb--open .adm-cb__body { display: block; }
+  .adm-cb__row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 9px 0; border-bottom: 1px solid #F1EFE8;
+  }
+  .adm-cb__row:last-child { border-bottom: none; }
+  .adm-cb__k { font-family: 'Jost', sans-serif; font-size: 0.8rem; color: #6B6B63; }
+  .adm-cb__v { font-family: 'Jost', sans-serif; font-size: 0.85rem; font-weight: 500; color: #1C1C1A; text-align: right; }
+
+  @media (max-width: 900px) {
+    .adm-stats { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 520px) {
+    .adm-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .adm-stat__value { font-size: 1.4rem; }
+    .adm-cb__meta { margin-left: 0; width: 100%; }
+    .adm-cb__head { flex-wrap: wrap; }
   }
 </style>
 

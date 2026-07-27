@@ -103,6 +103,70 @@ function buildEmail(opts: {
 </body></html>`;
 }
 
+function buildCallEmail(opts: {
+  clientName: string;
+  details: any;
+  paidCents: number;
+}): string {
+  const { clientName, details, paidCents } = opts;
+  const d = details || {};
+  const row = (label: string, value: string) => value ? `
+    <tr>
+      <td style="padding:10px 16px;border-bottom:1px solid #EFEDE6;font-family:Arial,sans-serif;font-size:13px;color:#6B6B63;width:45%;">${esc(label)}</td>
+      <td style="padding:10px 16px;border-bottom:1px solid #EFEDE6;font-family:Arial,sans-serif;font-size:14px;color:#1C1C1A;font-weight:500;">${esc(value)}</td>
+    </tr>` : '';
+
+  const infoRows = [
+    row('Date de l\'appel', formatDate(d.date)),
+    row('Heure', d.time || ''),
+    row('Nom & prénom', d.name || ''),
+    row('Nombre de personnes', d.groupSize ? String(d.groupSize) : ''),
+    row('Date d\'arrivée', formatDate(d.arrival)),
+    row('Date de départ', formatDate(d.departure)),
+    row('Téléphone', d.phone || ''),
+    row('Email', d.email || ''),
+    row('Billets d\'avion', d.hasTickets ? 'Oui, déjà réservés' : 'Non, pas encore'),
+  ].join('');
+
+  return `<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#FAF8F4;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FAF8F4;padding:32px 0;">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border-radius:16px;overflow:hidden;border:1px solid #EFEDE6;">
+        <tr><td style="background:#14513A;padding:28px 32px;text-align:center;">
+          <img src="${LOGO_URL}" alt="La plateforme Omra" width="180" style="display:block;margin:0 auto 12px;max-width:180px;height:auto;" />
+          <div style="font-family:Georgia,serif;font-size:20px;font-weight:bold;color:#E9D9AE;">Appel de planification confirmé</div>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          <p style="margin:0 0 24px;font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#4A4A42;">
+            ${clientName ? `As-salamu alaykum ${esc(clientName)},<br>` : 'As-salamu alaykum,<br>'}
+            Nous vous confirmons la bonne réception de votre paiement. Votre appel de planification est réservé.
+            Voici le récapitulatif de votre demande.
+          </p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #EFEDE6;border-radius:12px;overflow:hidden;">
+            ${infoRows}
+          </table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;border:1px solid #EFEDE6;border-radius:12px;overflow:hidden;">
+            <tr>
+              <td style="padding:14px 16px;font-family:Arial,sans-serif;font-size:14px;color:#4A4A42;">Montant payé</td>
+              <td style="padding:14px 16px;font-family:Arial,sans-serif;font-size:16px;color:#14513A;font-weight:bold;text-align:right;">${euros(paidCents)} &euro;</td>
+            </tr>
+          </table>
+          <p style="margin:24px 0 0;font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#4A4A42;">
+            Notre expert vous appellera au créneau choisi. Assurez-vous d'être joignable au numéro indiqué.
+            Pour toute question, notre équipe reste disponible sur WhatsApp.
+          </p>
+          <p style="margin:16px 0 0;font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#4A4A42;">
+            Qu'Allah facilite votre voyage.<br>— L'équipe de La plateforme Omra
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
 async function sendConfirmationEmail(to: string, subject: string, html: string) {
   if (!RESEND_API_KEY) {
     console.log('RESEND_API_KEY manquant : email non envoyé.');
@@ -149,6 +213,40 @@ serve(async (req) => {
     const session = event.data?.object;
     const bookingIdsRaw = session?.metadata?.booking_ids;
     const itemDetailsRaw = session?.metadata?.item_details;
+    const callBookingId = session?.metadata?.call_booking_id;
+    const callDetailsRaw = session?.metadata?.call_details;
+
+    // ---- Réservation d'un appel de planification ----
+    if (callBookingId) {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      await supabase
+        .from('call_bookings')
+        .update({ status: 'paid', amount_paid: session.amount_total || 0 })
+        .eq('id', callBookingId);
+
+      const cd = callDetailsRaw ? JSON.parse(callDetailsRaw) : {};
+      const clientEmail = session.customer_details?.email || session.customer_email || cd.email || '';
+      const clientName = session.customer_details?.name || cd.name || '';
+
+      if (clientEmail) {
+        try {
+          const html = buildCallEmail({
+            clientName,
+            details: cd,
+            paidCents: session.amount_total || 0,
+          });
+          await sendConfirmationEmail(clientEmail, 'Votre appel de planification — La plateforme Omra', html);
+        } catch (err) {
+          console.error('Erreur email appel :', err);
+        }
+      }
+
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
     if (bookingIdsRaw) {
       const bookingIds: string[] = JSON.parse(bookingIdsRaw);
