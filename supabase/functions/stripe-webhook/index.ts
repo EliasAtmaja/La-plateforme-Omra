@@ -222,10 +222,12 @@ serve(async (req) => {
     if (callBookingId) {
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-      await supabase
+      const { data: updated, error: updErr } = await supabase
         .from('call_bookings')
         .update({ status: 'paid', amount_paid: session.amount_total || 0 })
-        .eq('id', callBookingId);
+        .eq('id', callBookingId)
+        .select();
+      console.log('CALL update — id:', callBookingId, 'rows:', updated?.length ?? 0, 'error:', updErr?.message || 'none');
 
       const cd = callDetailsRaw ? JSON.parse(callDetailsRaw) : {};
       const clientEmail = session.customer_details?.email || session.customer_email || cd.email || '';
