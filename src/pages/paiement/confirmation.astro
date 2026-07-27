@@ -17,11 +17,11 @@ const lang = getLangFromUrl(Astro.url);
         </svg>
       </div>
       <h1 class="pc-title">Paiement confirm&eacute; !</h1>
-      <p class="pc-text">
+      <p class="pc-text" id="pc-text-main">
         Merci pour votre confiance. Votre r&eacute;servation est confirm&eacute;e et votre guide a &eacute;t&eacute; notifi&eacute;.
         Vous recevrez un r&eacute;capitulatif par email.
       </p>
-      <p class="pc-text pc-text--small">
+      <p class="pc-text pc-text--small" id="pc-text-sub">
         Notre &eacute;quipe vous contactera via WhatsApp pour coordonner les d&eacute;tails de votre accompagnement.
       </p>
       <a href={getLocalePath(lang, '/')} class="pc-home">
@@ -35,8 +35,16 @@ const lang = getLangFromUrl(Astro.url);
 </BaseLayout>
 
 <script>
-  localStorage.removeItem('omra-cart');
-  window.dispatchEvent(new Event('cart-updated'));
+  const isCall = new URLSearchParams(window.location.search).get('type') === 'call';
+  if (isCall) {
+    const main = document.getElementById('pc-text-main');
+    const sub = document.getElementById('pc-text-sub');
+    if (main) main.innerHTML = "Merci pour votre confiance. Votre appel de planification est réservé. Vous recevrez un récapitulatif par email avec tous les détails.";
+    if (sub) sub.innerHTML = "Notre expert vous appellera au créneau que vous avez choisi. Assurez-vous d'être joignable au numéro indiqué.";
+  } else {
+    localStorage.removeItem('omra-cart');
+    window.dispatchEvent(new Event('cart-updated'));
+  }
 </script>
 
 <style is:global>

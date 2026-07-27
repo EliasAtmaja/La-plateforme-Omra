@@ -389,7 +389,7 @@ const service = services.find(s => s.slug === 'planification')!;
               date, time, name, groupSize, arrival, departure, phone, email, hasTickets,
               price: 39,
             },
-            successUrl: `${window.location.origin}/paiement/confirmation/?session_id={CHECKOUT_SESSION_ID}`,
+            successUrl: `${window.location.origin}/paiement/confirmation/?type=call&session_id={CHECKOUT_SESSION_ID}`,
             cancelUrl: `${window.location.origin}/services/planification/`,
           }),
         });
