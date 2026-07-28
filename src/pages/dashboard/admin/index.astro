@@ -263,23 +263,6 @@ import '../../../styles/global.css';
               <option value="femme">Femme</option>
             </select>
           </div>
-          <div class="adm-form-field">
-            <label>Prix du service (€)</label>
-            <input type="number" name="service_prix" min="0" required placeholder="30" />
-          </div>
-        </div>
-        <div class="adm-form-field">
-          <label>Suppl&eacute;ment si 7 &agrave; 10 personnes (€)</label>
-          <input type="number" name="supplement_prix" min="0" placeholder="0" />
-          <span class="adm-form-hint">Ajout&eacute; au (prix du guide + prix du service) quand le client choisit un groupe de 7 &agrave; 10 personnes. Laisser &agrave; 0 si non applicable.</span>
-        </div>
-        <div class="adm-form-field">
-          <label>Expertise</label>
-          <input type="text" name="diplome" placeholder="Licence en Histoire islamique" />
-        </div>
-        <div class="adm-form-field">
-          <label>Langues (separees par des virgules)</label>
-          <input type="text" name="langues" placeholder="Arabe, Francais, Anglais" />
         </div>
         <div class="adm-form-field">
           <label>Prix du guide par activit&eacute;</label>
@@ -289,6 +272,25 @@ import '../../../styles/global.css';
             Ajouter une activit&eacute;
           </button>
           <span class="adm-form-hint">Ajoutez chaque activit&eacute; propos&eacute;e par ce guide et son prix. Le guide n'appara&icirc;tra que pour les activit&eacute;s ajout&eacute;es ici.</span>
+        </div>
+        <div class="adm-form-row">
+          <div class="adm-form-field">
+            <label>Prix du service (€)</label>
+            <input type="number" name="service_prix" min="0" required placeholder="30" />
+          </div>
+          <div class="adm-form-field">
+            <label>Suppl&eacute;ment si 7 &agrave; 10 personnes (€)</label>
+            <input type="number" name="supplement_prix" min="0" placeholder="0" />
+          </div>
+        </div>
+        <span class="adm-form-hint" style="margin-top:-8px;">Le suppl&eacute;ment est ajout&eacute; au (prix du guide + prix du service) quand le client choisit un groupe de 7 &agrave; 10 personnes. Laisser &agrave; 0 si non applicable.</span>
+        <div class="adm-form-field">
+          <label>Expertise</label>
+          <input type="text" name="diplome" placeholder="Licence en Histoire islamique" />
+        </div>
+        <div class="adm-form-field">
+          <label>Langues (separees par des virgules)</label>
+          <input type="text" name="langues" placeholder="Arabe, Francais, Anglais" />
         </div>
         <div class="adm-form-field">
           <label>Description</label>
