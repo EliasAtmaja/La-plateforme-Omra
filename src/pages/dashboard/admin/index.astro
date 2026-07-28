@@ -130,7 +130,7 @@ import '../../../styles/global.css';
           </div>
           <div class="adm-callcal__weekdays"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
           <div class="adm-callcal__grid" id="call-cal-grid"></div>
-          <p class="adm-callcal__legend">Les jours en vert sont ouverts &agrave; la r&eacute;servation (appel <strong>le matin</strong>).</p>
+          <p class="adm-callcal__legend">Les jours en <strong>vert</strong> sont ouverts &agrave; la r&eacute;servation.</p>
         </div>
       </section>
 
@@ -1509,7 +1509,7 @@ import '../../../styles/global.css';
     btn.textContent = callCal.editing ? 'Terminer' : 'Modifier';
     btn.classList.toggle('adm-cal-toggle--on', callCal.editing);
     if (hint) {
-      hint.textContent = 'Cliquez sur un jour pour l\'ouvrir ou le fermer à la réservation (appel le matin).';
+      hint.textContent = 'Cliquez sur un jour pour l\'ouvrir ou le fermer à la réservation.';
       hint.classList.toggle('is-hidden', !callCal.editing);
     }
     monthActions?.classList.toggle('is-hidden', !callCal.editing);

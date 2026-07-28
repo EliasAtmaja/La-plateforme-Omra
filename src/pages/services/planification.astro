@@ -148,11 +148,7 @@ const service = services.find(s => s.slug === 'planification')!;
           <p class="pl-cal__loading" id="pl-cal-loading">Chargement des disponibilit&eacute;s&hellip;</p>
           <p class="pl-cal__empty is-hidden" id="pl-cal-empty">Aucune disponibilit&eacute; pour le moment. Revenez bient&ocirc;t.</p>
         </div>
-        <div class="pl-slots is-hidden" id="pl-slots">
-          <p class="pl-slots__label">Cr&eacute;neau disponible le <strong id="pl-slots-date"></strong></p>
-          <div class="pl-slots__list" id="pl-slots-list"></div>
-          <p class="pl-slots__note">L'&eacute;quipe vous contactera par WhatsApp afin de convenir de l'heure que vous pr&eacute;f&eacute;rez ce jour-l&agrave;.</p>
-        </div>
+        <p class="pl-slots__note">L'&eacute;quipe vous contactera par WhatsApp afin de convenir de l'heure que vous pr&eacute;f&eacute;rez ce jour-l&agrave;.</p>
         </div>
         <input type="hidden" name="callDate" id="pl-call-date" />
         <input type="hidden" name="callTime" id="pl-call-time" />
@@ -225,9 +221,8 @@ const service = services.find(s => s.slug === 'planification')!;
   function updateCalLabel() {
     if (!calOpenLabel) return;
     const dv = callDateInput?.value;
-    const tv = callTimeInput?.value;
-    if (dv && tv) {
-      calOpenLabel.textContent = `${formatDateFr(dv)} · ${tv}`;
+    if (dv) {
+      calOpenLabel.textContent = formatDateFr(dv);
       calOpenBtn?.classList.add('pl-cal-open--filled');
     } else {
       calOpenLabel.textContent = 'Choisir une date';
@@ -301,32 +296,9 @@ const service = services.find(s => s.slug === 'planification')!;
     gridEl?.querySelectorAll('.pl-cal__cell--selected').forEach((c) => c.classList.remove('pl-cal__cell--selected'));
     btn.classList.add('pl-cal__cell--selected');
     if (callDateInput) callDateInput.value = dateStr;
-    if (callTimeInput) callTimeInput.value = '';
-    if (slotsDateEl) slotsDateEl.textContent = formatDateFr(dateStr);
-    if (slotsListEl) {
-      slotsListEl.innerHTML = '';
-      (freeSlots[dateStr] || []).forEach((t) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'pl-slot';
-        b.textContent = t;
-        b.addEventListener('click', () => {
-          slotsListEl.querySelectorAll('.pl-slot--active').forEach((x) => x.classList.remove('pl-slot--active'));
-          b.classList.add('pl-slot--active');
-          if (callTimeInput) callTimeInput.value = t;
-          updateCalLabel();
-        });
-        slotsListEl.appendChild(b);
-      });
-      // Un seul créneau possible ("Le matin") → on le pré-sélectionne
-      const only = (freeSlots[dateStr] || []);
-      if (only.length === 1) {
-        const firstBtn = slotsListEl.querySelector('.pl-slot') as HTMLButtonElement | null;
-        firstBtn?.classList.add('pl-slot--active');
-        if (callTimeInput) callTimeInput.value = only[0];
-      }
-    }
-    slotsWrap?.classList.remove('is-hidden');
+    // Plus de créneau horaire : on enregistre la dispo interne du jour (ex. "Le matin")
+    const times = freeSlots[dateStr] || [];
+    if (callTimeInput) callTimeInput.value = times[0] || 'Journée';
     updateCalLabel();
   }
 
