@@ -1041,21 +1041,58 @@ import '../../../styles/global.css';
   const addGuideForm = document.getElementById('add-guide-form') as HTMLFormElement;
 
   // ===== Prix du guide par activité (liste répétable) =====
+  // city: ville de l'activité ; gender: 'all' | 'homme' | 'femme' (qui peut la faire)
   const GUIDE_ACTIVITIES = [
-    { slug: 'omra-classique', label: 'Omra Privé Premium' },
-    { slug: 'guide-pmr-omra', label: 'Omra Privé Premium PMR' },
-    { slug: 'omra-masjid-aicha', label: 'Seconde Omra vers Masjid Aïcha' },
-    { slug: 'visite-historique-makkah', label: 'Visite historique de Makkah' },
-    { slug: 'visite-historique-medine', label: 'Visite historique de Médine' },
-    { slug: 'visite-masjid-nabawi', label: 'Visite du Masjid An-Nabawi' },
-    { slug: 'shopping-guide-medine', label: 'Orientation & Shopping Privilège (Femmes)' },
+    { slug: 'omra-classique', label: 'Omra Privé Premium', city: 'mecca', gender: 'all' },
+    { slug: 'guide-pmr-omra', label: 'Omra Privé Premium PMR', city: 'mecca', gender: 'homme' },
+    { slug: 'omra-masjid-aicha', label: 'Seconde Omra vers Masjid Aïcha', city: 'mecca', gender: 'all' },
+    { slug: 'visite-historique-makkah', label: 'Visite historique de Makkah', city: 'mecca', gender: 'all' },
+    { slug: 'visite-historique-medine', label: 'Visite historique de Médine', city: 'medina', gender: 'all' },
+    { slug: 'visite-masjid-nabawi', label: 'Visite du Masjid An-Nabawi', city: 'medina', gender: 'all' },
+    { slug: 'shopping-guide-medine', label: 'Orientation & Shopping Privilège (Femmes)', city: 'medina', gender: 'femme' },
   ];
   const actPricesList = document.getElementById('act-prices-list')!;
 
+  function currentVille(): string {
+    return (addGuideForm.querySelector('[name="ville"]') as HTMLSelectElement)?.value || '';
+  }
+  function currentGuideGender(): string {
+    return (addGuideForm.querySelector('[name="gender"]') as HTMLSelectElement)?.value || '';
+  }
+  // Activités autorisées selon la ville et le genre du guide en cours de saisie
+  function allowedActivities() {
+    const city = currentVille();
+    const gender = currentGuideGender();
+    return GUIDE_ACTIVITIES.filter((a) =>
+      (!city || a.city === city) &&
+      (a.gender === 'all' || !gender || a.gender === gender));
+  }
+
   function actOptionsHtml(selected: string): string {
-    return '<option value="">— Choisir une activité —</option>' + GUIDE_ACTIVITIES.map((a) =>
+    const allowed = allowedActivities();
+    const slugs = new Set(allowed.map((a) => a.slug));
+    let list = allowed;
+    // On garde l'activité déjà choisie même si elle sort du filtre (édition)
+    if (selected && !slugs.has(selected)) {
+      const found = GUIDE_ACTIVITIES.find((a) => a.slug === selected);
+      if (found) list = [found, ...allowed];
+    }
+    return '<option value="">— Choisir une activité —</option>' + list.map((a) =>
       `<option value="${a.slug}"${a.slug === selected ? ' selected' : ''}>${escHtml(a.label)}</option>`).join('');
   }
+
+  // Recharge les options de toutes les lignes (après changement de ville / genre)
+  function refreshActPriceOptions() {
+    const allowedSlugs = new Set(allowedActivities().map((a) => a.slug));
+    actPricesList.querySelectorAll('.adm-actprice').forEach((row) => {
+      const sel = row.querySelector('.adm-actprice__act') as HTMLSelectElement;
+      const keep = allowedSlugs.has(sel.value) ? sel.value : '';
+      sel.innerHTML = actOptionsHtml(keep);
+      sel.value = keep;
+    });
+  }
+  addGuideForm.querySelector('[name="ville"]')?.addEventListener('change', refreshActPriceOptions);
+  addGuideForm.querySelector('[name="gender"]')?.addEventListener('change', refreshActPriceOptions);
   function addActPriceRow(slug = '', price = '') {
     const row = document.createElement('div');
     row.className = 'adm-actprice';
