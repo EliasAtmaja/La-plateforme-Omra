@@ -264,10 +264,6 @@ import '../../../styles/global.css';
             </select>
           </div>
           <div class="adm-form-field">
-            <label>Prix du guide (€)</label>
-            <input type="number" name="prix" min="0" required placeholder="120" />
-          </div>
-          <div class="adm-form-field">
             <label>Prix du service (€)</label>
             <input type="number" name="service_prix" min="0" required placeholder="30" />
           </div>
@@ -286,16 +282,13 @@ import '../../../styles/global.css';
           <input type="text" name="langues" placeholder="Arabe, Francais, Anglais" />
         </div>
         <div class="adm-form-field">
-          <label>Services propos&eacute;s par ce guide</label>
-          <div class="adm-form-services">
-            <label class="adm-form-service"><input type="checkbox" name="services" value="omra-classique" /><span>Omra Priv&eacute; Premium</span></label>
-            <label class="adm-form-service"><input type="checkbox" name="services" value="guide-pmr-omra" /><span>Omra Priv&eacute; Premium PMR</span></label>
-            <label class="adm-form-service"><input type="checkbox" name="services" value="omra-masjid-aicha" /><span>Omra au d&eacute;part du Masjid A&iuml;cha</span></label>
-            <label class="adm-form-service"><input type="checkbox" name="services" value="visite-historique-makkah" /><span>Visite historique de Makkah</span></label>
-            <label class="adm-form-service"><input type="checkbox" name="services" value="visite-historique-medine" /><span>Visite historique de M&eacute;dine</span></label>
-            <label class="adm-form-service"><input type="checkbox" name="services" value="visite-masjid-nabawi" /><span>Visite du Masjid An-Nabawi</span></label>
-            <label class="adm-form-service"><input type="checkbox" name="services" value="shopping-guide-medine" /><span>Orientation &amp; Shopping Privil&egrave;ge (Femmes)</span></label>
-          </div>
+          <label>Prix du guide par activit&eacute;</label>
+          <div class="adm-actprices" id="act-prices-list"></div>
+          <button type="button" class="adm-actprices__add" id="act-prices-add">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Ajouter une activit&eacute;
+          </button>
+          <span class="adm-form-hint">Ajoutez chaque activit&eacute; propos&eacute;e par ce guide et son prix. Le guide n'appara&icirc;tra que pour les activit&eacute;s ajout&eacute;es ici.</span>
         </div>
         <div class="adm-form-field">
           <label>Description</label>
@@ -1045,6 +1038,52 @@ import '../../../styles/global.css';
   const modalTitle = document.getElementById('modal-title')!;
   const addGuideForm = document.getElementById('add-guide-form') as HTMLFormElement;
 
+  // ===== Prix du guide par activité (liste répétable) =====
+  const GUIDE_ACTIVITIES = [
+    { slug: 'omra-classique', label: 'Omra Privé Premium' },
+    { slug: 'guide-pmr-omra', label: 'Omra Privé Premium PMR' },
+    { slug: 'omra-masjid-aicha', label: 'Seconde Omra vers Masjid Aïcha' },
+    { slug: 'visite-historique-makkah', label: 'Visite historique de Makkah' },
+    { slug: 'visite-historique-medine', label: 'Visite historique de Médine' },
+    { slug: 'visite-masjid-nabawi', label: 'Visite du Masjid An-Nabawi' },
+    { slug: 'shopping-guide-medine', label: 'Orientation & Shopping Privilège (Femmes)' },
+  ];
+  const actPricesList = document.getElementById('act-prices-list')!;
+
+  function actOptionsHtml(selected: string): string {
+    return '<option value="">— Choisir une activité —</option>' + GUIDE_ACTIVITIES.map((a) =>
+      `<option value="${a.slug}"${a.slug === selected ? ' selected' : ''}>${escHtml(a.label)}</option>`).join('');
+  }
+  function addActPriceRow(slug = '', price = '') {
+    const row = document.createElement('div');
+    row.className = 'adm-actprice';
+    row.innerHTML = `
+      <div class="adm-actprice__select-wrap">
+        <select class="adm-actprice__act">${actOptionsHtml(slug)}</select>
+        <svg class="adm-actprice__chev" width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M4 7l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <input type="number" class="adm-actprice__price" min="0" placeholder="Prix €" value="${price}" />
+      <button type="button" class="adm-actprice__remove" aria-label="Retirer">&times;</button>`;
+    row.querySelector('.adm-actprice__remove')!.addEventListener('click', () => row.remove());
+    actPricesList.appendChild(row);
+  }
+  function readActPrices(): Record<string, number> {
+    const map: Record<string, number> = {};
+    actPricesList.querySelectorAll('.adm-actprice').forEach((row) => {
+      const slug = (row.querySelector('.adm-actprice__act') as HTMLSelectElement).value;
+      const price = parseInt((row.querySelector('.adm-actprice__price') as HTMLInputElement).value);
+      if (slug && price > 0) map[slug] = price;
+    });
+    return map;
+  }
+  function setActPrices(prices: Record<string, number>) {
+    actPricesList.innerHTML = '';
+    const entries = Object.entries(prices || {});
+    if (entries.length === 0) { addActPriceRow(); return; }
+    entries.forEach(([slug, price]) => addActPriceRow(slug, String(price)));
+  }
+  document.getElementById('act-prices-add')?.addEventListener('click', () => addActPriceRow());
+
   function openEditModal(guideId: string) {
     const guide = getStoredGuides().find((g: any) => g.id === guideId);
     if (!guide) return;
@@ -1055,15 +1094,17 @@ import '../../../styles/global.css';
     (addGuideForm.querySelector('[name="nom"]') as HTMLInputElement).value = guide.lastName || '';
     (addGuideForm.querySelector('[name="ville"]') as HTMLSelectElement).value = guide.city || '';
     (addGuideForm.querySelector('[name="gender"]') as HTMLSelectElement).value = guide.gender || 'homme';
-    (addGuideForm.querySelector('[name="prix"]') as HTMLInputElement).value = guide.pricePerDay ? String(guide.pricePerDay) : '';
     (addGuideForm.querySelector('[name="service_prix"]') as HTMLInputElement).value = guide.servicePrice ? String(guide.servicePrice) : '';
     (addGuideForm.querySelector('[name="supplement_prix"]') as HTMLInputElement).value = guide.supplement710 ? String(guide.supplement710) : '';
     (addGuideForm.querySelector('[name="diplome"]') as HTMLInputElement).value = guide.diploma || '';
     (addGuideForm.querySelector('[name="langues"]') as HTMLInputElement).value = (guide.languages || []).join(', ');
     (addGuideForm.querySelector('[name="description"]') as HTMLTextAreaElement).value = guide.description || '';
-    addGuideForm.querySelectorAll('[name="services"]').forEach((c: any) => {
-      c.checked = (guide.services || []).includes(c.value);
-    });
+    // Prix par activité : depuis activityPrices, ou (guides anciens) reconstruit depuis services + pricePerDay
+    let ap = guide.activityPrices && Object.keys(guide.activityPrices).length ? { ...guide.activityPrices } : {};
+    if (Object.keys(ap).length === 0 && (guide.services || []).length) {
+      (guide.services || []).forEach((s: string) => { ap[s] = guide.pricePerDay || 0; });
+    }
+    setActPrices(ap);
     // Identifiants gérés par Supabase Auth : non modifiables après création
     const loginInput = addGuideForm.querySelector('[name="identifiant"]') as HTMLInputElement;
     const mdpInput = addGuideForm.querySelector('[name="mdp"]') as HTMLInputElement;
@@ -1087,6 +1128,7 @@ import '../../../styles/global.css';
     editingGuideId = null;
     modalTitle.textContent = 'Ajouter un guide';
     addGuideForm.reset();
+    setActPrices({});
     const loginInput = addGuideForm.querySelector('[name="identifiant"]') as HTMLInputElement;
     const mdpInput = addGuideForm.querySelector('[name="mdp"]') as HTMLInputElement;
     loginInput.disabled = false;
@@ -1111,7 +1153,6 @@ import '../../../styles/global.css';
     const nom = (form.querySelector('[name="nom"]') as HTMLInputElement).value.trim();
     const ville = (form.querySelector('[name="ville"]') as HTMLSelectElement).value;
     const gender = (form.querySelector('[name="gender"]') as HTMLSelectElement).value;
-    const prix = (form.querySelector('[name="prix"]') as HTMLInputElement).value;
     const servicePrix = (form.querySelector('[name="service_prix"]') as HTMLInputElement).value;
     const supplementPrix = (form.querySelector('[name="supplement_prix"]') as HTMLInputElement).value;
     const diplome = (form.querySelector('[name="diplome"]') as HTMLInputElement).value.trim();
@@ -1131,8 +1172,10 @@ import '../../../styles/global.css';
     const photoMatch = photoUrl.match(/url\("?([^"]*)"?\)/);
     let photoDataUrl = photoMatch ? photoMatch[1] : '';
 
-    const servicesChecked = Array.from(form.querySelectorAll('[name="services"]:checked'))
-      .map((c: any) => c.value);
+    const activityPrices = readActPrices();
+    const activitySlugs = Object.keys(activityPrices);
+    const priceValues = Object.values(activityPrices);
+    const minPrice = priceValues.length ? Math.min(...priceValues) : 0;
 
     const fields = {
       first_name: prenom,
@@ -1142,10 +1185,11 @@ import '../../../styles/global.css';
       diploma: diplome || null,
       description: description || null,
       languages: langues ? langues.split(',').map((l: string) => l.trim()).filter(Boolean) : [],
-      price_per_day: prix ? parseInt(prix) : 0,
+      price_per_day: minPrice, // prix « à partir de » (repli quand pas d'activité précise)
       service_price: servicePrix ? parseInt(servicePrix) : 0,
       supplement_7_10: supplementPrix ? parseInt(supplementPrix) : 0,
-      services: servicesChecked,
+      services: activitySlugs,
+      activity_prices: activityPrices,
     };
 
     if (editingGuideId) {
@@ -2545,6 +2589,41 @@ import '../../../styles/global.css';
     outline: none; border-color: #14513A;
     box-shadow: 0 0 0 3px rgba(20,81,58,0.08);
   }
+
+  /* Prix du guide par activité */
+  .adm-actprices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+  .adm-actprice { display: flex; gap: 8px; align-items: center; }
+  .adm-actprice__select-wrap { position: relative; flex: 1 1 auto; min-width: 0; }
+  .adm-actprice__act {
+    width: 100%; padding: 10px 30px 10px 12px;
+    border: 1.5px solid #E7E4DB; border-radius: 10px;
+    font-size: 0.82rem; font-family: inherit; background: #FAF9F5;
+    appearance: none; -webkit-appearance: none;
+    text-overflow: ellipsis;
+  }
+  .adm-actprice__act:focus { outline: none; border-color: #14513A; box-shadow: 0 0 0 3px rgba(20,81,58,0.08); }
+  .adm-actprice__chev { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); color: #9C9C93; pointer-events: none; }
+  .adm-actprice__price {
+    width: 92px; flex: 0 0 92px; padding: 10px 12px;
+    border: 1.5px solid #E7E4DB; border-radius: 10px;
+    font-size: 0.82rem; font-family: inherit; background: #FAF9F5;
+  }
+  .adm-actprice__price:focus { outline: none; border-color: #14513A; box-shadow: 0 0 0 3px rgba(20,81,58,0.08); }
+  .adm-actprice__remove {
+    flex: 0 0 auto; width: 34px; height: 34px; border-radius: 9px;
+    border: 1.5px solid #E7E4DB; background: #FAF9F5; color: #9C9C93;
+    font-size: 1.15rem; line-height: 1; cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .adm-actprice__remove:hover { background: #FBEAE9; color: #C6413B; border-color: #E7B6B2; }
+  .adm-actprices__add {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border: 1.5px dashed #C9C6BC; border-radius: 10px;
+    background: transparent; color: #14513A;
+    font-size: 0.78rem; font-weight: 600; font-family: inherit; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .adm-actprices__add:hover { border-color: #14513A; background: #F3F8F5; }
 
   .adm-form-services {
     display: flex; flex-wrap: wrap; gap: 8px;

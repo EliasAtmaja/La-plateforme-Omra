@@ -84,9 +84,25 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
   function groupLabel(): string {
     return groupTier === '7-10' ? '7 à 10 personnes' : '1 à 7 personnes';
   }
+
+  // Certaines activités imposent le genre du guide (bouton unique, non modifiable).
+  const ACTIVITY_GENDER: Record<string, 'homme' | 'femme'> = {
+    'guide-pmr-omra': 'homme',
+    'shopping-guide-medine': 'femme',
+  };
+  const forcedGender = ACTIVITY_GENDER[currentActivity] || '';
+
+  // Prix de base du guide pour l'activité choisie (ou « à partir de » si aucune activité).
+  function guideBasePrice(g: any): number {
+    const ap = g?.activityPrices || {};
+    if (currentActivity && ap[currentActivity] != null) return ap[currentActivity];
+    const vals = Object.values(ap) as number[];
+    if (vals.length) return Math.min(...vals);
+    return g?.pricePerDay || 0;
+  }
   // Prix total affiché / facturé pour un guide selon la taille de groupe choisie.
   function guideGuidePrice(g: any): number {
-    return (g?.pricePerDay || 0) + (groupApplies && groupTier === '7-10' ? (g?.supplement710 || 0) : 0);
+    return guideBasePrice(g) + (groupApplies && groupTier === '7-10' ? (g?.supplement710 || 0) : 0);
   }
   function guideTotal(g: any): number {
     return guideGuidePrice(g) + (g?.servicePrice || 0);
@@ -134,15 +150,31 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
 
   function initFilters() {
     const btns = Array.from(document.querySelectorAll('.gp-gender-btn')) as HTMLButtonElement[];
-    btns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const val = btn.dataset.gender || '';
-        // Sélection unique + re-clic sur le bouton actif = tout afficher
-        filterGender = (filterGender === val) ? '' : val;
-        btns.forEach(b => b.classList.toggle('is-active', (b.dataset.gender || '') === filterGender && filterGender !== ''));
-        renderGuidesList();
+
+    // Genre imposé par l'activité : un seul bouton visible, verrouillé.
+    if (forcedGender) {
+      filterGender = forcedGender;
+      btns.forEach(b => {
+        const g = b.dataset.gender || '';
+        if (g === forcedGender) {
+          b.classList.add('is-active');
+          b.setAttribute('aria-pressed', 'true');
+          b.style.cursor = 'default';
+        } else {
+          b.style.display = 'none';
+        }
       });
-    });
+    } else {
+      btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const val = btn.dataset.gender || '';
+          // Sélection unique + re-clic sur le bouton actif = tout afficher
+          filterGender = (filterGender === val) ? '' : val;
+          btns.forEach(b => b.classList.toggle('is-active', (b.dataset.gender || '') === filterGender && filterGender !== ''));
+          renderGuidesList();
+        });
+      });
+    }
 
     // ---- Taille du groupe (uniquement pour les activités concernées) ----
     const groupRow = document.getElementById('gp-group-row');
@@ -256,6 +288,11 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
 
     let guides = getGuides();
     if (filterGender) guides = guides.filter((g: any) => g.gender === filterGender);
+    // Si on réserve pour une activité précise, on ne montre que les guides qui la proposent.
+    if (currentActivity) {
+      guides = guides.filter((g: any) =>
+        (g.activityPrices && g.activityPrices[currentActivity] != null) || (g.services || []).includes(currentActivity));
+    }
     const existing = list.querySelectorAll('.gp-card');
     existing.forEach(el => el.remove());
     document.querySelectorAll('body > .gp-cal').forEach(el => el.remove());
@@ -341,7 +378,7 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
               ${ratingHtml}
             </div>
             <div class="gp-card__right">
-              ${(g.pricePerDay || g.servicePrice) ? `<div class="gp-card__price"><span class="gp-card__amount">${esc(String(guideTotal(g)))}&euro;</span><span class="gp-card__unit">Frais inclus</span></div>` : ''}
+              ${guideTotal(g) > 0 ? `<div class="gp-card__price"><span class="gp-card__amount">${esc(String(guideTotal(g)))}&euro;</span><span class="gp-card__unit">Frais inclus</span></div>` : ''}
               <button class="gp-card__avail-btn" type="button" data-open-cal="${g.id}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="4" y="5.5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 10h16M8.5 3.5v3.5M15.5 3.5v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 Les disponibilit&eacute;s
