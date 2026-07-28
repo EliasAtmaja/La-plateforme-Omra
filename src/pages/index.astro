@@ -216,6 +216,22 @@ const lang = getLangFromUrl(Astro.url);
   </div>
 </section>
 
+<!-- ========== TRANSPORT VIP ========== -->
+<section class="hm-transport">
+  <div class="hm-container">
+    <div class="hm-transport__card reveal">
+      <span class="hm-transport__eyebrow">Service exclusif</span>
+      <h2 class="hm-transport__title">Transport VIP &amp; Mobilit&eacute; Sur Mesure en Arabie Saoudite</h2>
+      <p class="hm-transport__text">
+        Pour l'ensemble de vos d&eacute;placements au sein du Royaume, b&eacute;n&eacute;ficiez d'un accompagnement
+        d'exception. Notre &eacute;quipe se tient &agrave; votre enti&egrave;re disposition par WhatsApp ou par email
+        pour vous conseiller et vous orienter vers les services de transport les plus prestigieux et exclusifs.
+        Confort, confidentialit&eacute; et r&eacute;activit&eacute; garantis.
+      </p>
+    </div>
+  </div>
+</section>
+
 <!-- ========== REJOIGNEZ-NOUS ========== -->
 <section class="hm-join">
   <div class="hm-join__wrap">
@@ -1230,6 +1246,42 @@ const lang = getLangFromUrl(Astro.url);
   }
 
   /* ---- REJOIGNEZ-NOUS ---- */
+  /* ===== TRANSPORT VIP ===== */
+  .hm-transport {
+    background: #FFFFFF;
+    padding: 56px 0 8px;
+  }
+  .hm-transport__card {
+    max-width: 860px; margin: 0 auto;
+    background: linear-gradient(135deg, #0D3B2A 0%, #14513A 100%);
+    border-radius: 22px;
+    padding: 40px 40px 36px;
+    box-shadow: 0 18px 50px rgba(13,59,42,0.18);
+  }
+  .hm-transport__eyebrow {
+    display: inline-block;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.68rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.22em;
+    color: #E8C987; margin-bottom: 12px;
+  }
+  .hm-transport__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.9rem; font-weight: 700;
+    color: #FAF8F4; line-height: 1.15; margin: 0 0 16px;
+  }
+  .hm-transport__text {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem; font-weight: 300;
+    color: rgba(250,248,244,0.85); line-height: 1.8; margin: 0;
+  }
+  @media (max-width: 639px) {
+    .hm-transport { padding: 40px 0 4px; }
+    .hm-transport__card { padding: 28px 22px 24px; border-radius: 18px; }
+    .hm-transport__title { font-size: 1.45rem; }
+    .hm-transport__text { font-size: 0.88rem; }
+  }
+
   .hm-join {
     padding: 0;
     background: #FFFFFF;

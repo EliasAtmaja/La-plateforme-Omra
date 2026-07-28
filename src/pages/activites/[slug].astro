@@ -12,8 +12,6 @@ const { slug } = Astro.params;
 const activity = activities.find(a => a.slug === slug)!;
 const totalSteps = activity.timeline.length;
 
-// Activités concernées par l'encart « Transport VIP »
-const showTransportVip = ['visite-historique-medine', 'visite-historique-makkah', 'omra-masjid-aicha'].includes(activity.slug);
 // Activités avec guide femme (accord au féminin sur le bouton de réservation)
 const isFemaleGuide = ['shopping-guide-medine'].includes(activity.slug);
 const guideCtaLabel = isFemaleGuide ? 'Je réserve ma guide' : 'Je réserve mon guide';
@@ -95,21 +93,6 @@ const guideCtaLabel = isFemaleGuide ? 'Je réserve ma guide' : 'Je réserve mon 
   </section>
   )}
 
-  {showTransportVip && (
-    <section class="act-transport">
-      <div class="act-container">
-        <div class="act-transport__card reveal">
-          <h2 class="act-transport__title">Transport VIP &amp; Mobilit&eacute; Sur Mesure en Arabie Saoudite</h2>
-          <p class="act-transport__text">
-            Pour l'ensemble de vos d&eacute;placements au sein du Royaume, b&eacute;n&eacute;ficiez d'un accompagnement
-            d'exception. Notre &eacute;quipe se tient &agrave; votre enti&egrave;re disposition par WhatsApp ou par email
-            pour vous conseiller et vous orienter vers les services de transport les plus prestigieux et exclusifs.
-            Confort, confidentialit&eacute; et r&eacute;activit&eacute; garantis.
-          </p>
-        </div>
-      </div>
-    </section>
-  )}
 
   <!-- CTA -->
   <section class="act-cta">

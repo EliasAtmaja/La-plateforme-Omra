@@ -191,6 +191,25 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
 
   function esc(s: string) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+  // Petit aller-retour de défilement pour signaler qu'un texte déborde (titre long).
+  function hintScroll(el: HTMLElement) {
+    setTimeout(() => {
+      if (el.scrollHeight <= el.clientHeight + 2) return;
+      const max = el.scrollHeight - el.clientHeight;
+      const ease = (t: number) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      const animTo = (from: number, to: number, dur: number, then?: () => void) => {
+        const t0 = performance.now();
+        const step = (now: number) => {
+          const p = Math.min(1, (now - t0) / dur);
+          el.scrollTop = from + (to - from) * ease(p);
+          if (p < 1) requestAnimationFrame(step); else if (then) setTimeout(then, 0);
+        };
+        requestAnimationFrame(step);
+      };
+      animTo(0, max, 900, () => setTimeout(() => animTo(max, 0, 700), 600));
+    }, 750);
+  }
+
   // ---- Données Supabase (chargées une fois, servies depuis un cache mémoire) ----
   let GUIDES: any[] = [];
   let REVIEWS: any[] = []; // avis approuvés uniquement (filtrés par RLS)
@@ -360,7 +379,7 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
         : `
           <div class="gp-profile__reviews gp-profile__reviews--empty">
             <span class="gp-profile__rv-label">Avis</span>
-            <p class="gp-profile__rv-text gp-profile__rv-text--empty">Aucun avis pour le moment. Soyez le premier &agrave; voyager avec ${esc(g.firstName)} !</p>
+            <p class="gp-profile__rv-text gp-profile__rv-text--empty">Aucun avis pour le moment. Soyez le premier &agrave; partager votre ressenti sur ${esc(g.firstName)}&nbsp;!</p>
           </div>`;
 
       const card = document.createElement('article');
@@ -605,6 +624,11 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
         if (!isOpen) {
           const cal = document.getElementById(`cal-${id}`);
           if (cal) cal.classList.add('is-hidden');
+        } else {
+          // Si le titre déborde (plus de 2 lignes), on fait un léger aller-retour
+          // de défilement pour montrer qu'il y a plus de texte.
+          const dip = profile.querySelector('.gp-profile__diploma') as HTMLElement | null;
+          if (dip) hintScroll(dip);
         }
       });
     });
@@ -1183,8 +1207,16 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
     font-family: 'Jost', sans-serif;
     font-size: 0.85rem; font-weight: 400; color: #B99752;
     margin: 0 0 14px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 1.5;
+    max-height: 3em; /* ~2 lignes puis défilement */
+    overflow-y: auto;
+    padding-right: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(185,151,82,0.45) transparent;
   }
+  .gp-profile__diploma::-webkit-scrollbar { width: 4px; }
+  .gp-profile__diploma::-webkit-scrollbar-track { background: transparent; }
+  .gp-profile__diploma::-webkit-scrollbar-thumb { background: rgba(185,151,82,0.45); border-radius: 4px; }
   .gp-profile__langs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
   .gp-profile__lang {
     display: inline-block; padding: 6px 16px;
