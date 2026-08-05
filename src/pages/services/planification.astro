@@ -183,6 +183,9 @@ const service = services.find(s => s.slug === 'planification')!;
 
 <script>
   import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '../../lib/supabase';
+  import { linkDateRange, checkDateRange } from '../../lib/date-range';
+
+  linkDateRange('pl-arrival', 'pl-departure');
 
   const form = document.getElementById('planif-form') as HTMLFormElement | null;
   const errorMsg = document.getElementById('planif-error');
@@ -335,6 +338,17 @@ const service = services.find(s => s.slug === 'planification')!;
           errorMsg.classList.remove('is-hidden');
         }
         document.getElementById('pl-cal')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      const dateErr = checkDateRange(
+        (document.getElementById('pl-arrival') as HTMLInputElement | null)?.value || '',
+        (document.getElementById('pl-departure') as HTMLInputElement | null)?.value || '',
+      );
+      if (dateErr) {
+        if (errorMsg) {
+          errorMsg.textContent = dateErr;
+          errorMsg.classList.remove('is-hidden');
+        }
         return;
       }
       errorMsg?.classList.add('is-hidden');

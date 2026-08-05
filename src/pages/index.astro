@@ -4,12 +4,16 @@ import { getLangFromUrl, t, getLocalePath } from '../i18n/ui';
 const lang = getLangFromUrl(Astro.url);
 ---
 
-<BaseLayout title={t(lang, 'nav.home')} description={t(lang, 'hero.subtitle')} hasHero={true} preloadImage="/assets/images/hero-mecca.webp">
+<BaseLayout title={t(lang, 'nav.home')} description={t(lang, 'hero.subtitle')} hasHero={true} preloadImage="/assets/images/hero-mecca.webp" preloadImageDesktop="/assets/images/hero-mecca-desktop.webp">
 
 <!-- ========== HERO ========== -->
 <section class="hm-hero">
   <div class="hm-hero__bg" aria-hidden="true">
-    <img src="/assets/images/hero-mecca.webp" alt="" loading="eager" fetchpriority="high" decoding="async" />
+    <!-- Visuel dédié au bureau ; le mobile garde le cadrage vertical d'origine -->
+    <picture>
+      <source media="(min-width: 1024px)" srcset="/assets/images/hero-mecca-desktop.webp" />
+      <img src="/assets/images/hero-mecca.webp" alt="" loading="eager" fetchpriority="high" decoding="async" />
+    </picture>
   </div>
   <div class="hm-hero__content">
     <p class="hm-hero__pre load-rise" style="--load-delay: 150ms">La plateforme</p>
@@ -96,8 +100,8 @@ const lang = getLangFromUrl(Astro.url);
           <span class="xp__frame" aria-hidden="true"></span>
         </div>
         <div class="xp__panel">
-          <span class="xp__sub">Organisation</span>
-          <span class="xp__title xp__title--icon"><span class="xp__title-icon" aria-hidden="true">📞</span><span class="xp__title-text">Conseils &amp; Optimisation : Votre appel priv&eacute;</span></span>
+          <span class="xp__sub xp__sub--icon"><span class="xp__title-icon" aria-hidden="true">📞</span>Organisation</span>
+          <span class="xp__title">Conseils &amp; Optimisation : Votre appel priv&eacute;</span>
           <span class="xp__reveal">
             <span class="xp__desc">Un entretien privé de 30 minutes avec votre spécialiste Omra/Hajj : il structurera votre séjour, vous évitera les pièges logistiques et vous permettra de maîtriser votre budget.</span>
             <a href={getLocalePath(lang, '/services/planification/')} class="xp__cta">
@@ -107,8 +111,8 @@ const lang = getLangFromUrl(Astro.url);
           </span>
         </div>
         <div class="xp__open" aria-hidden="true">
-          <span class="xp__open-sub">Organisation</span>
-          <span class="xp__open-title xp__title--icon"><span class="xp__title-icon" aria-hidden="true">📞</span><span class="xp__title-text">Conseils &amp; Optimisation : Votre appel priv&eacute;</span></span>
+          <span class="xp__open-sub xp__sub--icon"><span class="xp__title-icon" aria-hidden="true">📞</span>Organisation</span>
+          <span class="xp__open-title">Conseils &amp; Optimisation : Votre appel priv&eacute;</span>
           <span class="xp__open-line"></span>
           <p class="xp__open-desc">Un entretien privé de 30 minutes avec votre spécialiste Omra/Hajj : il structurera votre séjour, vous évitera les pièges logistiques et vous permettra de maîtriser votre budget.</p>
           <a href={getLocalePath(lang, '/services/planification/')} class="xp__open-cta" aria-label="Découvrir : Planification">
@@ -162,7 +166,7 @@ const lang = getLangFromUrl(Astro.url);
         <div class="xp__panel">
           <span class="xp__title">Vos accompagnements à Makkah Al Mukaramah</span>
           <span class="xp__reveal">
-            <span class="xp__desc"><strong>Un accompagnement 100 % privé.</strong> Rites de la Omra et visites des sites sacrés : profitez d'une expérience totalement privatisée, réalisée à votre rythme et guidée pas à pas par l'accompagnant(e) local(e) de votre choix.</span>
+            <span class="xp__desc">Un accompagnement 100 % privé. Rites de la Omra et visites des sites sacrés : profitez d'une expérience totalement privatisée, réalisée à votre rythme et guidée pas à pas par l'accompagnant(e) local(e) de votre choix.</span>
             <a href={getLocalePath(lang, '/services/makkah/')} class="xp__cta">
               <span>Découvrir</span>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
@@ -172,7 +176,7 @@ const lang = getLangFromUrl(Astro.url);
         <div class="xp__open" aria-hidden="true">
           <span class="xp__open-title">Vos accompagnements à Makkah Al Mukaramah</span>
           <span class="xp__open-line"></span>
-          <p class="xp__open-desc"><strong>Un accompagnement 100 % privé.</strong> Rites de la Omra et visites des sites sacrés : profitez d'une expérience totalement privatisée, réalisée à votre rythme et guidée pas à pas par l'accompagnant(e) local(e) de votre choix.</p>
+          <p class="xp__open-desc">Un accompagnement 100 % privé. Rites de la Omra et visites des sites sacrés : profitez d'une expérience totalement privatisée, réalisée à votre rythme et guidée pas à pas par l'accompagnant(e) local(e) de votre choix.</p>
           <a href={getLocalePath(lang, '/services/makkah/')} class="xp__open-cta" aria-label="Découvrir : Makkah">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
           </a>
@@ -221,7 +225,7 @@ const lang = getLangFromUrl(Astro.url);
   <span class="hm-transport__glow" aria-hidden="true"></span>
   <div class="hm-container hm-transport__inner reveal">
     <div class="hm-transport__head">
-      <span class="hm-transport__eyebrow"><span class="hm-transport__eyebrow-line"></span>Service exclusif</span>
+      <span class="hm-transport__eyebrow">Service exclusif</span>
       <h2 class="hm-transport__title">Transport VIP &amp; Mobilit&eacute;<br><em>sur mesure</em> en Arabie Saoudite</h2>
     </div>
     <div class="hm-transport__body">
@@ -255,12 +259,7 @@ const lang = getLangFromUrl(Astro.url);
         </a>
       </div>
       <div class="hm-join__badge" aria-hidden="true">
-        <svg viewBox="0 0 96 96" fill="none" width="96" height="96">
-          <circle cx="48" cy="48" r="46" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 5" opacity="0.5"/>
-          <circle cx="48" cy="40" r="13" stroke="currentColor" stroke-width="2"/>
-          <path d="M25 74c0-12.7 10.3-23 23-23s23 10.3 23 23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <path d="M62 34l7 7M69 34l-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+        <img src="/assets/images/join-badge.png" alt="" width="96" height="96" />
       </div>
     </div>
   </div>
@@ -298,6 +297,9 @@ const lang = getLangFromUrl(Astro.url);
             En savoir plus
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
+        </div>
+        <div class="hm-about__mark" aria-hidden="true">
+          <img src="/assets/images/logo-mark-light.png" alt="" width="560" height="709" loading="lazy" decoding="async" />
         </div>
       </div>
     </div>
@@ -373,64 +375,6 @@ const lang = getLangFromUrl(Astro.url);
     <!-- Mobile pagination dots -->
     <div class="hm-testi__dots" id="testi-dots"></div>
 
-    <!-- Formulaire "Laisser un avis" -->
-    <div class="hm-testi__form-wrap" id="review-form-wrap">
-      <button class="hm-testi__toggle-form" id="toggle-review-form">
-        <span>Laisser un avis</span>
-        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
-      <form class="hm-testi__form" id="review-form" hidden>
-        <label class="hm-testi__guide-check">
-          <input type="checkbox" id="review-is-site" checked />
-          <span>Cet avis concerne le site</span>
-        </label>
-        <label class="hm-testi__guide-check">
-          <input type="checkbox" id="review-is-guide" />
-          <span>Cet avis concerne un guide</span>
-        </label>
-        <div class="hm-testi__form-row">
-          <label class="hm-testi__label">
-            Votre prénom
-            <input type="text" class="hm-testi__input" id="review-name" required />
-          </label>
-          <label class="hm-testi__label" id="review-service-label">
-            Service utilisé
-            <input type="text" class="hm-testi__input" id="review-service" required />
-          </label>
-        </div>
-        <label class="hm-testi__label" id="review-guide-label" style="display:none">
-          Choisissez le guide
-          <select class="hm-testi__input" id="review-guide">
-            <option value="">— Choisir un guide —</option>
-          </select>
-        </label>
-        <label class="hm-testi__label">
-          Note
-          <div class="hm-testi__star-input" id="star-input">
-            <button type="button" data-star="1" aria-label="1 étoile">★</button>
-            <button type="button" data-star="2" aria-label="2 étoiles">★</button>
-            <button type="button" data-star="3" aria-label="3 étoiles">★</button>
-            <button type="button" data-star="4" aria-label="4 étoiles">★</button>
-            <button type="button" data-star="5" aria-label="5 étoiles">★</button>
-          </div>
-        </label>
-        <label class="hm-testi__label">
-          Votre avis
-          <textarea class="hm-testi__textarea" id="review-text" required rows="4"></textarea>
-        </label>
-        <button type="submit" class="hm-testi__submit">Envoyer mon avis</button>
-        <p class="hm-testi__form-note">Votre avis sera visible après validation par notre équipe.</p>
-      </form>
-    </div>
-  </div>
-</section>
-
-<!-- ========== CTA ========== -->
-<section class="hm-cta">
-  <div class="hm-container hm-cta__inner reveal">
-    <p class="hm-cta__eyebrow">Pr&ecirc;t &agrave; partir&nbsp;?</p>
-    <h2 class="hm-cta__title">Votre guide vous attend</h2>
-    <a href={getLocalePath(lang, '/guides/')} class="hm-btn hm-btn--gold">Trouver mon guide</a>
   </div>
 </section>
 
@@ -446,7 +390,10 @@ const lang = getLangFromUrl(Astro.url);
   .hm-eyebrow {
     font-family: 'Jost', sans-serif;
     font-size: 0.7rem; font-weight: 500; text-transform: uppercase;
-    letter-spacing: 0.26em; color: #9A7C3F; margin-bottom: 14px;
+    letter-spacing: 0.26em; color: #9A7C3F;
+    /* margin auto : la règle globale `p { max-width: 70ch }` bride la boîte,
+       qui resterait sinon collée à gauche dans un en-tête centré. */
+    margin: 0 auto 14px;
   }
   .hm-section-head { text-align: center; margin-bottom: 64px; }
   .hm-title {
@@ -558,6 +505,7 @@ const lang = getLangFromUrl(Astro.url);
   .hm-hero__bg {
     position: absolute; inset: 0; z-index: 0;
   }
+  .hm-hero__bg picture { display: block; width: 100%; height: 100%; }
   .hm-hero__bg img {
     width: 100%; height: 100%; object-fit: cover;
     object-position: center 90%;
@@ -565,6 +513,19 @@ const lang = getLangFromUrl(Astro.url);
   }
   @media (prefers-reduced-motion: reduce) {
     .hm-hero__bg img { animation: none; }
+  }
+  /* Bureau : réglage vertical du visuel.
+     La boîte déborde de 80px (40 en haut, 40 en bas), masqués par le hero.
+     --hero-shift : positif = descend l'image, négatif = la remonte.
+     Plage utile : -40px à +40px. */
+  @media (min-width: 1024px) {
+    .hm-hero__bg img {
+      --hero-shift: 28px;
+      position: relative;
+      height: calc(100% + 80px);
+      top: calc(-40px + var(--hero-shift));
+      object-position: center center;
+    }
   }
   .hm-hero__bg::after {
     content: '';
@@ -666,6 +627,18 @@ const lang = getLangFromUrl(Astro.url);
     transform: translateX(5px);
   }
 
+
+  /* Bureau : bloc d'accroche allégé pour laisser respirer le visuel */
+  @media (min-width: 1024px) {
+    .hm-hero__pre {
+      font-size: 0.68rem; letter-spacing: 0.3em; margin-top: 28px;
+    }
+    .hm-hero__title { font-size: 4.1rem; }
+    .hm-hero__title-wrap { gap: 12px; margin-bottom: 8px; }
+    .hm-hero__line-bar { width: 30px; }
+    .hm-hero__sub { font-size: 0.74rem; letter-spacing: 0.05em; line-height: 1.6; }
+    .hm-hero__badge { max-width: 150px; margin-bottom: 12px; }
+  }
 
   @media (max-width: 960px) {
     .hm-hero { min-height: 92vh; }
@@ -1032,13 +1005,18 @@ const lang = getLangFromUrl(Astro.url);
     letter-spacing: 0.02em;
   }
 
-  /* Titre avec icône : les lignes suivantes s'alignent sous le texte, pas sous l'icône */
-  .xp__title--icon {
+  /* Icône portée par le sur-titre : le titre reste un bloc aligné à gauche */
+  .xp__sub--icon {
     display: flex;
-    align-items: baseline;
-    gap: 6px;
+    align-items: center;
+    gap: 7px;
   }
-  .xp__title--icon .xp__title-icon { flex-shrink: 0; }
+  .xp__sub--icon .xp__title-icon {
+    flex-shrink: 0;
+    letter-spacing: normal;
+    font-size: 1.05em;
+    line-height: 1;
+  }
 
   .xp__reveal {
     display: grid;
@@ -1181,6 +1159,13 @@ const lang = getLangFromUrl(Astro.url);
       letter-spacing: 0.04em;
       line-height: 1.18;
     }
+    /* L'icône est portée par le sur-titre : elle ne doit pas casser
+       l'alignement du titre ni de la description. */
+    .xp__open-sub.xp__sub--icon {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
 
     .xp__open-line {
       display: block;
@@ -1261,32 +1246,28 @@ const lang = getLangFromUrl(Astro.url);
   .hm-transport {
     position: relative;
     overflow: hidden;
-    background:
-      radial-gradient(120% 90% at 100% 0%, #FBF7EE 0%, transparent 55%),
-      linear-gradient(180deg, #FFFFFF 0%, #F7F3EA 100%);
-    padding: 84px 0 92px;
-    border-top: 1px solid #F0EBDF;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 35%, #F7F3EA 100%);
+    padding: 120px 0 92px;
   }
   .hm-transport__glow {
-    position: absolute; top: -120px; right: -80px;
+    position: absolute; top: 40%; right: -80px;
     width: 420px; height: 420px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(185,151,82,0.18) 0%, transparent 65%);
+    background: radial-gradient(circle, rgba(185,151,82,0.12) 0%, transparent 65%);
     pointer-events: none;
   }
   .hm-transport__inner {
     position: relative; z-index: 1;
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 56px; align-items: center;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 40px;
+    text-align: center;
   }
+  .hm-transport__head { text-align: center; }
   .hm-transport__eyebrow {
-    display: inline-flex; align-items: center; gap: 12px;
+    display: inline-block;
     font-family: 'Jost', sans-serif;
     font-size: 0.7rem; font-weight: 600;
     text-transform: uppercase; letter-spacing: 0.24em;
     color: #B99752; margin-bottom: 18px;
-  }
-  .hm-transport__eyebrow-line {
-    width: 34px; height: 1px; background: #C9AE78; display: inline-block;
   }
   .hm-transport__title {
     font-family: 'Cormorant Garamond', Georgia, serif;
@@ -1298,12 +1279,7 @@ const lang = getLangFromUrl(Astro.url);
   }
   .hm-transport__body {
     position: relative;
-    padding-left: 40px;
-  }
-  .hm-transport__body::before {
-    content: ''; position: absolute; left: 0; top: 4px; bottom: 4px;
-    width: 2px; border-radius: 2px;
-    background: linear-gradient(180deg, #C9AE78 0%, rgba(201,174,120,0.15) 100%);
+    max-width: 620px;
   }
   .hm-transport__text {
     font-family: 'Jost', sans-serif;
@@ -1312,6 +1288,7 @@ const lang = getLangFromUrl(Astro.url);
   }
   .hm-transport__points {
     display: flex; flex-wrap: wrap; gap: 10px 26px; list-style: none; padding: 0; margin: 0;
+    justify-content: center;
   }
   .hm-transport__points li {
     display: inline-flex; align-items: center; gap: 10px;
@@ -1324,9 +1301,8 @@ const lang = getLangFromUrl(Astro.url);
   }
   @media (max-width: 767px) {
     .hm-transport { padding: 56px 0 60px; }
-    .hm-transport__inner { grid-template-columns: 1fr; gap: 26px; }
+    .hm-transport__inner { gap: 26px; }
     .hm-transport__title { font-size: 1.95rem; }
-    .hm-transport__body { padding-left: 20px; }
     .hm-transport__text { font-size: 0.92rem; }
     .hm-transport__glow { width: 300px; height: 300px; top: -90px; right: -100px; }
   }
@@ -1390,7 +1366,15 @@ const lang = getLangFromUrl(Astro.url);
   .hm-join__btn:hover svg { transform: translateX(4px); }
   .hm-join__badge {
     position: relative; z-index: 1; flex-shrink: 0;
-    color: rgba(232,201,135,0.55);
+  }
+  .hm-join__badge img {
+    width: 96px; height: 96px;
+    object-fit: contain;
+    border-radius: 50%;
+  }
+  /* Bureau : le visuel occupe vraiment l'espace libre à droite de la carte */
+  @media (min-width: 1024px) {
+    .hm-join__badge img { width: 240px; height: 240px; }
   }
   @media (max-width: 767px) {
     .hm-join { padding: 8px 0 52px; }
@@ -1399,7 +1383,7 @@ const lang = getLangFromUrl(Astro.url);
       padding: 38px 26px 40px; border-radius: 22px;
     }
     .hm-join__content { max-width: none; }
-    .hm-join__badge svg { width: 68px; height: 68px; }
+    .hm-join__badge img { width: 68px; height: 68px; }
     .hm-join__btn { width: 100%; justify-content: center; }
   }
 
@@ -1411,6 +1395,28 @@ const lang = getLangFromUrl(Astro.url);
     box-shadow: inset 0 18px 28px -12px rgba(0,0,0,0.35);
   }
   .hm-about__grid { max-width: 640px; }
+  /* Le logo n'apparaît qu'au bureau : sur mobile la colonne n'existe pas. */
+  .hm-about__mark { display: none; }
+  @media (min-width: 1024px) {
+    .hm-about__grid {
+      max-width: none;
+      display: grid;
+      grid-template-columns: minmax(0, 640px) 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+    .hm-about__mark {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hm-about__mark img {
+      width: 100%;
+      max-width: 340px;
+      height: auto;
+      opacity: 0.9;
+    }
+  }
   .hm-about__eyebrow {
     font-family: 'Jost', sans-serif;
     font-size: 0.68rem; font-weight: 600;
@@ -1888,24 +1894,6 @@ const lang = getLangFromUrl(Astro.url);
     .hm-testi__form-row { grid-template-columns: 1fr; }
   }
 
-  /* ---- CTA ---- */
-  .hm-cta {
-    background: #FFFFFF; padding: 110px 0;
-    border-top: 1px solid #EEEBE3;
-  }
-  .hm-cta__inner { text-align: center; }
-  .hm-cta__eyebrow {
-    font-family: 'Jost', sans-serif; font-size: 0.7rem; font-weight: 500;
-    text-transform: uppercase; letter-spacing: 0.26em; color: #9A7C3F; margin-bottom: 16px;
-  }
-  .hm-cta__title {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 2.8rem; font-weight: 600; color: #1C1C1A; margin-bottom: 36px;
-  }
-
-  @media (max-width: 639px) {
-    .hm-cta__title { font-size: 2rem; }
-  }
 </style>
 
 <script>

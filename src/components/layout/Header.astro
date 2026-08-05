@@ -17,8 +17,8 @@ const navLinks = [
 
 const mobileLinks = [
   { label: 'Accueil', href: getLocalePath(lang, '/') },
-  { label: 'Vos Accompagnements à Médine', href: getLocalePath(lang, '/guides/') + '?ville=medine' },
-  { label: 'Vos Accompagnements à Makkah', href: getLocalePath(lang, '/guides/') + '?ville=makkah' },
+  { label: 'Vos Accompagnements à Médine', href: getLocalePath(lang, '/services/madinah/') },
+  { label: 'Vos Accompagnements à Makkah', href: getLocalePath(lang, '/services/makkah/') },
   { label: 'Visas & Formalités', href: getLocalePath(lang, '/services/visa/') },
   { label: 'Conseils & Optimisation', href: getLocalePath(lang, '/services/planification/') },
   { label: 'Aide / Support', href: 'https://wa.me/33671796772?text=As-salamu%20alaykum%2C%20j%27ai%20besoin%20d%27aide.' },
@@ -66,19 +66,19 @@ const mobileLinks = [
           <p class="header__cart-empty" id="cart-empty">Votre panier est vide.</p>
           <div class="header__cart-footer" id="cart-footer" hidden>
             <div class="header__cart-total">
-              <span>Total</span>
+              <span>Total du s&eacute;jour</span>
               <strong id="cart-total"></strong>
             </div>
             <div class="hc-breakdown" id="hc-breakdown">
-              <div class="hc-breakdown__row">
+              <div class="hc-breakdown__row hc-breakdown__row--due">
                 <span class="hc-breakdown__dot hc-breakdown__dot--green"></span>
                 <span class="hc-breakdown__label">&Agrave; payer aujourd'hui</span>
                 <span class="hc-breakdown__line"></span>
-                <strong class="hc-breakdown__value" id="hc-pay-today"></strong>
+                <strong class="hc-breakdown__value hc-breakdown__value--due" id="hc-pay-today"></strong>
               </div>
               <div class="hc-breakdown__row">
                 <span class="hc-breakdown__dot hc-breakdown__dot--gold"></span>
-                <span class="hc-breakdown__label">&Agrave; payer sur place</span>
+                <span class="hc-breakdown__label">&Agrave; payer sur place, au guide</span>
                 <span class="hc-breakdown__line"></span>
                 <strong class="hc-breakdown__value hc-breakdown__value--muted" id="hc-pay-onsite"></strong>
               </div>
@@ -894,6 +894,22 @@ const mobileLinks = [
   .hc-breakdown__value--muted {
     color: #999;
     font-weight: 500;
+  }
+  /* Ligne « à payer aujourd'hui » : discrètement mise en avant */
+  .hc-breakdown__row--due {
+    margin: -2px -6px 4px;
+    padding: 6px;
+    background: #EDF5F0;
+    border-radius: 7px;
+  }
+  .hc-breakdown__row--due .hc-breakdown__label {
+    color: #14513A;
+    font-weight: 600;
+  }
+  .hc-breakdown__value--due {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #14513A;
   }
   .hc-breakdown__info {
     display: inline-flex;

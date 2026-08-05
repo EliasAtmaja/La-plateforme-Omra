@@ -37,16 +37,61 @@ async function verifyStripeSignature(body: string, signature: string, secret: st
   return expected === sig;
 }
 
-const LOGO_URL = 'https://raw.githubusercontent.com/EliasAtmaja/La-plateforme-Omra/master/public/assets/images/logo-v2.png';
+const LOGO_URL = 'https://www.laplateformeomra.com/assets/images/logo-email.png';
+const SITE_URL = 'https://www.laplateformeomra.com';
 const GREETING = "As-salamu 'aleykom wa rahmatoulLahi wa barakaatouh,";
 const LOGO_BADGE = `<div style="display:inline-block;background:#FFFFFF;border-radius:12px;padding:10px 18px;margin:0 auto 12px;"><img src="${LOGO_URL}" alt="La plateforme Omra" width="58" height="73" style="display:block;width:58px;height:73px;" /></div>`;
 
+/**
+ * Bloc « préparez votre séjour » : une phrase d'attente, puis un lien vers la
+ * page dédiée de CHAQUE activité réservée (programme détaillé étape par étape).
+ */
+function buildPrepareBlock(
+  items: { label: string; url: string }[],
+  intro = "En attendant votre s&eacute;jour, prenez le temps de parcourir &mdash; ou de reparcourir &mdash; le d&eacute;roul&eacute; de votre accompagnement. Chaque &eacute;tape y est d&eacute;taill&eacute;e, pour que vous arriviez serein(e)s et pleinement pr&eacute;par&eacute;s.",
+): string {
+  if (items.length === 0) return '';
+  const links = items.map((it) => `
+    <tr><td style="padding:0 0 10px;">
+      <a href="${it.url}" style="display:block;padding:13px 20px;background:#FFFFFF;border:1px solid #E2DCCB;border-radius:10px;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;color:#14513A;">
+        ${it.label} <span style="color:#B99752;font-weight:normal;">&rarr;</span>
+      </a>
+    </td></tr>`).join('');
+
+  return `
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#FAF8F4;border:1px solid #EFEDE6;border-radius:12px;">
+            <tr><td style="padding:22px 20px;">
+              <div style="font-family:Georgia,serif;font-size:17px;font-weight:bold;color:#14513A;margin-bottom:10px;">Pr&eacute;parez votre s&eacute;jour</div>
+              <p style="margin:0 0 18px;font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#4A4A42;">
+                ${intro}
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                ${links}
+              </table>
+            </td></tr>
+          </table>`;
+}
+
 function buildEmail(opts: {
   clientName: string;
-  lines: { guideName: string; activity: string; date: string; slot: string; guidePrice: number; servicePrice: number; groupLabel: string }[];
+  lines: { guideName: string; activity: string; activitySlug?: string; date: string; slot: string; guidePrice: number; servicePrice: number; groupLabel: string }[];
   paidOnlineCents: number;
 }): string {
   const { clientName, lines, paidOnlineCents } = opts;
+
+  // Une entrée par activité distincte (pas de doublon si plusieurs guides
+  // ont été réservés pour la même activité).
+  const seen = new Set<string>();
+  const prepareItems: { label: string; url: string }[] = [];
+  for (const l of lines) {
+    if (!l.activitySlug || seen.has(l.activitySlug)) continue;
+    seen.add(l.activitySlug);
+    prepareItems.push({
+      label: esc(l.activity || 'Voir le programme'),
+      url: `${SITE_URL}/activites/${encodeURIComponent(l.activitySlug)}/`,
+    });
+  }
+  const prepareBlock = buildPrepareBlock(prepareItems);
   const onsiteTotal = lines.reduce((s, l) => s + l.guidePrice, 0);
   const rows = lines.map((l) => `
     <tr>
@@ -74,8 +119,10 @@ function buildEmail(opts: {
           <div style="font-family:Georgia,serif;font-size:20px;font-weight:bold;color:#E9D9AE;">Confirmation de réservation</div>
         </td></tr>
         <tr><td style="padding:32px;">
+          <p style="margin:0 0 16px;font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#4A4A42;">
+            ${GREETING}
+          </p>
           <p style="margin:0 0 24px;font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#4A4A42;">
-            ${GREETING}<br>
             Nous vous confirmons la bonne réception de votre paiement. Voici le récapitulatif de votre réservation.
           </p>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #EFEDE6;border-radius:12px;overflow:hidden;">
@@ -91,6 +138,7 @@ function buildEmail(opts: {
               <td style="padding:14px 16px;font-family:Arial,sans-serif;font-size:16px;color:#14513A;font-weight:bold;text-align:right;">${onsiteTotal} &euro;</td>
             </tr>
           </table>
+${prepareBlock}
           <p style="margin:24px 0 0;font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#4A4A42;">
             Le reste à payer sera à régler directement à votre guide sur place. Notre équipe reste à votre entière
             disposition sur WhatsApp pour toute question durant votre séjour.
@@ -141,8 +189,10 @@ function buildCallEmail(opts: {
           <div style="font-family:Georgia,serif;font-size:20px;font-weight:bold;color:#E9D9AE;">Appel de planification confirmé</div>
         </td></tr>
         <tr><td style="padding:32px;">
+          <p style="margin:0 0 16px;font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#4A4A42;">
+            ${GREETING}
+          </p>
           <p style="margin:0 0 24px;font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#4A4A42;">
-            ${GREETING}<br>
             Nous vous confirmons la bonne réception de votre paiement. Votre appel de planification est réservé.
             Voici le récapitulatif de votre demande.
           </p>
@@ -155,6 +205,10 @@ function buildCallEmail(opts: {
               <td style="padding:14px 16px;font-family:Arial,sans-serif;font-size:16px;color:#14513A;font-weight:bold;text-align:right;">${euros(paidCents)} &euro;</td>
             </tr>
           </table>
+${buildPrepareBlock(
+    [{ label: 'Conseil &amp; Optimisation : votre appel priv&eacute;', url: `${SITE_URL}/services/planification/` }],
+    "En attendant votre appel, prenez le temps de parcourir le d&eacute;roul&eacute; de cet accompagnement. Vous y verrez tout ce que nous couvrirons ensemble &mdash; de quoi pr&eacute;parer vos questions et tirer le meilleur de ces 30 minutes.",
+  )}
           <p style="margin:24px 0 0;font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#4A4A42;">
             Notre expert vous appellera au créneau choisi. Assurez-vous d'être joignable au numéro indiqué.
             Pour toute question, notre équipe reste disponible sur WhatsApp.
@@ -222,16 +276,23 @@ serve(async (req) => {
     if (callBookingId) {
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-      const { data: updated, error: updErr } = await supabase
-        .from('call_bookings')
-        .update({ status: 'paid', amount_paid: session.amount_total || 0 })
-        .eq('id', callBookingId)
-        .select();
-      console.log('CALL update — id:', callBookingId, 'rows:', updated?.length ?? 0, 'error:', updErr?.message || 'none');
-
       const cd = callDetailsRaw ? JSON.parse(callDetailsRaw) : {};
       const clientEmail = session.customer_details?.email || session.customer_email || cd.email || '';
       const clientName = session.customer_details?.name || cd.name || '';
+      const clientPhone = session.customer_details?.phone || cd.phone || '';
+
+      const { data: updated, error: updErr } = await supabase
+        .from('call_bookings')
+        .update({
+          status: 'paid',
+          amount_paid: session.amount_total || 0,
+          name: clientName || undefined,
+          email: clientEmail || undefined,
+          phone: clientPhone || undefined,
+        })
+        .eq('id', callBookingId)
+        .select();
+      console.log('CALL update — id:', callBookingId, 'rows:', updated?.length ?? 0, 'error:', updErr?.message || 'none');
 
       if (clientEmail) {
         try {
@@ -256,26 +317,49 @@ serve(async (req) => {
       const bookingIds: string[] = JSON.parse(bookingIdsRaw);
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-      await supabase
+      // Priorité aux coordonnées saisies sur notre page panier (metadata) :
+      // ce sont celles que le client a explicitement renseignées. Stripe ne
+      // sert que de repli.
+      const clientEmail = session.customer_details?.email || session.customer_email || '';
+      const clientName = session.metadata?.buyer_name || session.customer_details?.name || '';
+      const clientPhone = session.metadata?.buyer_phone || session.customer_details?.phone || '';
+      console.log('Client:', clientEmail, clientName, clientPhone);
+
+      // Les coordonnées saisies dans Stripe sont recopiées sur la réservation :
+      // l'admin et le guide concerné doivent savoir QUI vient.
+      const { error: updErr } = await supabase
         .from('bookings')
         .update({
           status: 'paid',
           amount_paid: session.amount_total || 0,
+          client_name: clientName || null,
+          client_email: clientEmail || null,
+          client_phone: clientPhone || null,
         })
         .in('id', bookingIds);
-
-      const clientEmail = session.customer_details?.email || session.customer_email || '';
-      const clientName = session.customer_details?.name || '';
-      console.log('Client:', clientEmail, clientName);
+      if (updErr) console.error('Maj bookings échouée :', updErr.message);
 
       if (clientEmail) {
         let lines: any[] = [];
+
+        // Le slug d'activité n'est pas transporté dans les metadata Stripe
+        // (limite de taille) : on le relit en base pour construire les liens
+        // vers les pages dédiées.
+        const { data: bookedRows } = await supabase
+          .from('bookings')
+          .select('activity_slug, activity_name')
+          .in('id', bookingIds);
+        const slugByActivityName: Record<string, string> = {};
+        (bookedRows || []).forEach((b: any) => {
+          if (b.activity_name && b.activity_slug) slugByActivityName[b.activity_name] = b.activity_slug;
+        });
 
         if (itemDetailsRaw) {
           const details = JSON.parse(itemDetailsRaw);
           lines = details.map((d: any) => ({
             guideName: d.guideName || 'Guide',
             activity: d.activityName || '',
+            activitySlug: slugByActivityName[d.activityName] || '',
             date: d.date || '',
             slot: d.slot || '',
             guidePrice: d.guidePrice || 0,
@@ -285,13 +369,13 @@ serve(async (req) => {
         } else {
           const { data: bookings } = await supabase
             .from('bookings')
-            .select('id, guide_id, date, slot, activity_name')
+            .select('id, guide_id, date, slot, activity_name, activity_slug')
             .in('id', bookingIds);
 
           const guideIds = [...new Set((bookings || []).map((b: any) => b.guide_id))];
           const { data: guides } = await supabase
             .from('guides')
-            .select('id, first_name, last_name, price_per_day, service_price')
+            .select('id, first_name, last_name, price_per_day, service_percent, activity_prices')
             .in('id', guideIds);
 
           const guideMap: Record<string, any> = {};
@@ -299,13 +383,19 @@ serve(async (req) => {
 
           lines = (bookings || []).map((b: any) => {
             const g = guideMap[b.guide_id];
+            // Prix du guide pour CETTE activité, puis frais de service en %
+            const prices = g?.activity_prices || {};
+            const guidePrice = (b.activity_slug && prices[b.activity_slug] != null)
+              ? prices[b.activity_slug]
+              : (g?.price_per_day || 0);
             return {
               guideName: g ? `${g.first_name} ${g.last_name}` : 'Guide',
               activity: b.activity_name || '',
+              activitySlug: b.activity_slug || '',
               date: b.date,
               slot: b.slot || '',
-              guidePrice: g?.price_per_day || 0,
-              servicePrice: g?.service_price || 0,
+              guidePrice,
+              servicePrice: Math.round(guidePrice * (g?.service_percent || 0) / 100),
               groupLabel: '',
             };
           });

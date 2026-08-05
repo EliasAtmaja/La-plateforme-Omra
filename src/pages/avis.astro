@@ -1,0 +1,323 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Partagez votre expérience" description="Laissez un avis sur votre expérience avec La plateforme Omra." noindex>
+
+  <section class="avis-hero">
+    <div class="avis-container">
+      <div class="avis-hero__icon">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 2l3.6 7.3 8 1.2-5.8 5.6 1.4 8L16 20.4 8.8 24.1l1.4-8-5.8-5.6 8-1.2L16 2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </div>
+      <h1 class="avis-hero__title load-rise" style="--load-delay: 100ms">Merci de nous avoir fait confiance</h1>
+      <p class="avis-hero__sub load-rise" style="--load-delay: 250ms">Votre exp&eacute;rience compte &eacute;norm&eacute;ment pour nous. Prenez un instant pour la partager &mdash; chaque t&eacute;moignage nous aide &agrave; grandir et permet aux futurs voyageurs de faire le bon choix.</p>
+    </div>
+  </section>
+
+  <section class="avis-section">
+    <div class="avis-container">
+
+      <!-- AVIS SITE -->
+      <div class="avis-block">
+        <div class="avis-block__header">
+          <div class="avis-block__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 9v12"/></svg>
+          </div>
+          <div>
+            <h2 class="avis-block__title">Votre avis sur La plateforme Omra</h2>
+            <p class="avis-block__sub">Qualit&eacute; du service, r&eacute;activit&eacute;, accompagnement&hellip;</p>
+          </div>
+        </div>
+        <form class="avis-form" id="form-site">
+          <label class="avis-label">
+            Votre pr&eacute;nom
+            <input type="text" class="avis-input" name="name" required />
+          </label>
+          <label class="avis-label">
+            Note
+            <div class="avis-stars" data-form="site">
+              <button type="button" data-star="1" aria-label="1 &eacute;toile">&#9733;</button>
+              <button type="button" data-star="2" aria-label="2 &eacute;toiles">&#9733;</button>
+              <button type="button" data-star="3" aria-label="3 &eacute;toiles">&#9733;</button>
+              <button type="button" data-star="4" aria-label="4 &eacute;toiles">&#9733;</button>
+              <button type="button" data-star="5" aria-label="5 &eacute;toiles">&#9733;</button>
+            </div>
+          </label>
+          <label class="avis-label">
+            Votre avis
+            <textarea class="avis-textarea" name="text" rows="4" required></textarea>
+          </label>
+          <button type="submit" class="avis-submit" disabled>Envoyer mon avis</button>
+        </form>
+        <div class="avis-success is-hidden" id="success-site">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.4"/><path d="M6 10l3 3 5-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <p>Merci pour votre avis. Il sera visible tr&egrave;s prochainement apr&egrave;s validation.</p>
+        </div>
+      </div>
+
+      <!-- AVIS GUIDE -->
+      <div class="avis-block">
+        <div class="avis-block__header">
+          <div class="avis-block__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+          </div>
+          <div>
+            <h2 class="avis-block__title">Votre avis sur un guide</h2>
+            <p class="avis-block__sub">Partagez votre exp&eacute;rience avec votre accompagnant(e).</p>
+          </div>
+        </div>
+        <form class="avis-form" id="form-guide">
+          <label class="avis-label">
+            Votre pr&eacute;nom
+            <input type="text" class="avis-input" name="name" required />
+          </label>
+          <label class="avis-label">
+            Choisissez le guide
+            <select class="avis-input" name="guide" id="guide-select" required>
+              <option value="">Chargement&hellip;</option>
+            </select>
+          </label>
+          <label class="avis-label">
+            Note
+            <div class="avis-stars" data-form="guide">
+              <button type="button" data-star="1" aria-label="1 &eacute;toile">&#9733;</button>
+              <button type="button" data-star="2" aria-label="2 &eacute;toiles">&#9733;</button>
+              <button type="button" data-star="3" aria-label="3 &eacute;toiles">&#9733;</button>
+              <button type="button" data-star="4" aria-label="4 &eacute;toiles">&#9733;</button>
+              <button type="button" data-star="5" aria-label="5 &eacute;toiles">&#9733;</button>
+            </div>
+          </label>
+          <label class="avis-label">
+            Votre avis
+            <textarea class="avis-textarea" name="text" rows="4" required></textarea>
+          </label>
+          <button type="submit" class="avis-submit" disabled>Envoyer mon avis</button>
+        </form>
+        <div class="avis-success is-hidden" id="success-guide">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.4"/><path d="M6 10l3 3 5-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <p>Merci pour votre avis. Il sera visible tr&egrave;s prochainement apr&egrave;s validation.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</BaseLayout>
+
+<script>
+  import { supabase } from '../lib/supabase';
+
+  // Load guides into select
+  (async () => {
+    const { data } = await supabase.from('guides').select('id, first_name, last_name').order('first_name');
+    const select = document.getElementById('guide-select') as HTMLSelectElement;
+    if (!select || !data) return;
+    select.innerHTML = '<option value="">— Choisir un guide —</option>' +
+      data.map((g: any) => `<option value="${g.id}">${g.first_name} ${g.last_name}</option>`).join('');
+  })();
+
+  // Star rating logic
+  document.querySelectorAll('.avis-stars').forEach(container => {
+    const formType = (container as HTMLElement).dataset.form!;
+    const form = document.getElementById(`form-${formType}`) as HTMLFormElement;
+    const submitBtn = form?.querySelector('.avis-submit') as HTMLButtonElement;
+    let selected = 0;
+
+    container.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selected = parseInt(btn.dataset.star!);
+        container.querySelectorAll('button').forEach((b, i) => {
+          b.classList.toggle('is-active', i < selected);
+        });
+        if (submitBtn) submitBtn.disabled = false;
+      });
+      btn.addEventListener('mouseenter', () => {
+        const v = parseInt(btn.dataset.star!);
+        container.querySelectorAll('button').forEach((b, i) => {
+          b.classList.toggle('is-hover', i < v);
+        });
+      });
+      btn.addEventListener('mouseleave', () => {
+        container.querySelectorAll('button').forEach(b => b.classList.remove('is-hover'));
+      });
+    });
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (selected === 0) return;
+      const name = (form.querySelector('[name="name"]') as HTMLInputElement).value.trim();
+      const text = (form.querySelector('[name="text"]') as HTMLTextAreaElement).value.trim();
+      if (!name || !text) return;
+
+      const submitBtn = form.querySelector('.avis-submit') as HTMLButtonElement;
+      submitBtn.disabled = true;
+
+      if (formType === 'site') {
+        const { error } = await supabase.from('reviews').insert({
+          name, text, stars: selected,
+          service: 'La plateforme Omra',
+          status: 'pending',
+          guide_id: null,
+        });
+        if (error) { alert("Erreur lors de l'envoi. Réessayez."); submitBtn.disabled = false; return; }
+      } else {
+        const guideSelect = form.querySelector('[name="guide"]') as HTMLSelectElement;
+        const guideId = guideSelect.value;
+        const guideName = guideSelect.options[guideSelect.selectedIndex].textContent || '';
+        if (!guideId) { alert('Veuillez choisir un guide.'); submitBtn.disabled = false; return; }
+        const { error } = await supabase.from('reviews').insert({
+          name, text, stars: selected,
+          service: `Guide - ${guideName}`,
+          status: 'pending',
+          guide_id: guideId,
+        });
+        if (error) { alert("Erreur lors de l'envoi. Réessayez."); submitBtn.disabled = false; return; }
+      }
+
+      form.classList.add('is-hidden');
+      document.getElementById(`success-${formType}`)?.classList.remove('is-hidden');
+    });
+  });
+</script>
+
+<style is:global>
+  .is-hidden { display: none !important; }
+
+  .avis-container { max-width: 680px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---- HERO ---- */
+  .avis-hero {
+    background: radial-gradient(ellipse 120% 100% at 50% -20%, #14513A 0%, #0C3A28 60%, #082818 100%);
+    padding: 84px 0 56px;
+    text-align: center;
+  }
+  .avis-hero__icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 60px; height: 60px; border-radius: 18px;
+    background: rgba(232,201,135,0.15);
+    color: #E8C987; margin-bottom: 24px;
+  }
+  .avis-hero__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.4rem; font-weight: 600; color: #FAF8F4;
+    margin: 0 0 14px; letter-spacing: -0.01em;
+  }
+  .avis-hero__sub {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.92rem; font-weight: 300;
+    color: rgba(250,248,244,0.65); margin: 0;
+    line-height: 1.7; max-width: 520px; margin-inline: auto;
+  }
+
+  /* ---- SECTION ---- */
+  .avis-section {
+    background: #FFFFFF;
+    padding: 48px 0 88px;
+  }
+
+  /* ---- BLOCK ---- */
+  .avis-block {
+    background: #FAF9F5;
+    border: 1px solid #ECE9E1;
+    border-radius: 20px;
+    padding: 32px 28px;
+    margin-bottom: 24px;
+  }
+  .avis-block__header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 24px;
+  }
+  .avis-block__icon {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+    color: #E8C987;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .avis-block__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.3rem; font-weight: 700; color: #14513A;
+    margin: 0 0 2px;
+  }
+  .avis-block__sub {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem; font-weight: 300; color: #9C9C93;
+    margin: 0;
+  }
+
+  /* ---- FORM ---- */
+  .avis-form { display: flex; flex-direction: column; gap: 16px; }
+  .avis-label {
+    display: flex; flex-direction: column; gap: 6px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.75rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: #9C9C93;
+  }
+  .avis-input, .avis-textarea {
+    width: 100%; padding: 12px 16px;
+    border: 1.5px solid #E7E4DB; border-radius: 12px;
+    font-size: 0.88rem; font-family: 'Jost', sans-serif;
+    background: #FFFFFF; box-sizing: border-box;
+    transition: border-color 0.2s;
+  }
+  .avis-input:focus, .avis-textarea:focus {
+    outline: none; border-color: #14513A;
+    box-shadow: 0 0 0 4px rgba(20,81,58,0.08);
+  }
+  .avis-textarea { resize: vertical; min-height: 80px; }
+
+  /* Stars */
+  .avis-stars {
+    display: flex; gap: 6px;
+  }
+  .avis-stars button {
+    background: none; border: none; padding: 0;
+    font-size: 2rem; color: #D5D1C8;
+    cursor: pointer; transition: transform 0.15s, color 0.15s;
+    line-height: 1;
+  }
+  .avis-stars button.is-active, .avis-stars button.is-hover { color: #D4A843; }
+  .avis-stars button:hover { transform: scale(1.15); }
+
+  /* Submit */
+  .avis-submit {
+    padding: 14px;
+    background: linear-gradient(135deg, #14513A, #0C3A28);
+    color: #FAF8F4; border: none; border-radius: 12px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.82rem; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    cursor: pointer; transition: transform 0.25s, box-shadow 0.25s, opacity 0.25s;
+  }
+  .avis-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(20,81,58,0.25);
+  }
+  .avis-submit:disabled {
+    opacity: 0.4; cursor: not-allowed;
+  }
+
+  /* Success */
+  .avis-success {
+    display: flex; align-items: center; gap: 12px;
+    padding: 20px;
+    background: #EDF5F0;
+    border: 1px solid #C8DFD1;
+    border-radius: 12px;
+  }
+  .avis-success svg { color: #14513A; flex-shrink: 0; }
+  .avis-success p {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.88rem; font-weight: 500;
+    color: #14513A; margin: 0;
+  }
+
+  @media (max-width: 639px) {
+    .avis-hero { padding: 60px 0 40px; }
+    .avis-hero__title { font-size: 1.8rem; }
+    .avis-block { padding: 24px 20px; }
+    .avis-block__header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  }
+</style>

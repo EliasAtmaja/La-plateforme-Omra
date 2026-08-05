@@ -47,9 +47,13 @@ const guideCtaLabel = isFemaleGuide ? 'Je réserve ma guide' : 'Je réserve mon 
             <span>Type : <strong>{activity.type}</strong></span>
           </div>
         </div>
-        <div class="act-guide-note reveal">
-          <p class="act-guide-note__title">Votre guide, votre choix.</p>
-          <p class="act-guide-note__sub">Vous pourrez le s&eacute;lectionner en&nbsp;bas&nbsp;de&nbsp;page&nbsp;<span aria-hidden="true">&darr;</span></p>
+        <div class="act-cta__card reveal-scale">
+          <h2 class="act-cta__title">Int&eacute;ress&eacute;(e) par cette activit&eacute; ?</h2>
+          <p class="act-cta__text">R&eacute;servez votre guide et vivez cette exp&eacute;rience en toute s&eacute;r&eacute;nit&eacute;.</p>
+          <a href={getLocalePath(lang, `/guides/?activite=${activity.slug}`)} class="act-cta__btn">
+            {guideCtaLabel}
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
         </div>
       </div>
     </div>
@@ -94,21 +98,7 @@ const guideCtaLabel = isFemaleGuide ? 'Je réserve ma guide' : 'Je réserve mon 
   )}
 
 
-  <!-- CTA -->
-  <section class="act-cta">
-    <div class="act-container">
-      <div class="act-cta__card reveal-scale">
-        <h2 class="act-cta__title">Int&eacute;ress&eacute;(e) par cette activit&eacute; ?</h2>
-        <p class="act-cta__text">R&eacute;servez votre guide et vivez cette exp&eacute;rience en toute s&eacute;r&eacute;nit&eacute;.</p>
-        <a href={getLocalePath(lang, `/guides/?activite=${activity.slug}`)} class="act-cta__btn">
-          {guideCtaLabel}
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Infos supplémentaires (sous le bouton) -->
+  <!-- Infos supplémentaires -->
   {activity.extraInfo && (
     <section class="act-info">
       <div class="act-container">
@@ -250,31 +240,6 @@ const guideCtaLabel = isFemaleGuide ? 'Je réserve ma guide' : 'Je réserve mon 
   }
   .act-desc__meta-item svg { color: #B99752; flex-shrink: 0; }
   .act-desc__meta-item strong { color: #1C1C1A; font-weight: 600; }
-
-  /* ---- Guide note (non-cliquable) ---- */
-  .act-guide-note {
-    margin-top: 28px;
-    padding: 26px 28px;
-    text-align: center;
-    background: #FAF8F4;
-    border: 1px solid #E7DFC9;
-    border-radius: 16px;
-  }
-  .act-guide-note__title {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #14513A;
-    margin: 0 0 6px;
-  }
-  .act-guide-note__sub {
-    font-family: 'Jost', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 300;
-    color: #6B6B63;
-    margin: 0;
-  }
-  .act-guide-note__sub span { color: #B99752; font-weight: 500; }
 
   /* ============ TIMELINE ============ */
   .act-tl {
@@ -470,14 +435,11 @@ const guideCtaLabel = isFemaleGuide ? 'Je réserve ma guide' : 'Je réserve mon 
     margin: 0;
   }
 
-  /* ============ CTA ============ */
-  .act-cta {
-    padding: 64px 0 80px;
-    background: #FFFFFF;
-  }
+  /* ============ CTA (dans le bloc description) ============ */
   .act-cta__card {
     text-align: center;
-    padding: 48px 32px;
+    margin-top: 36px;
+    padding: 40px 32px;
     background: linear-gradient(135deg, #14513A 0%, #0C3A28 100%);
     border-radius: 16px;
   }
@@ -493,7 +455,9 @@ const guideCtaLabel = isFemaleGuide ? 'Je réserve ma guide' : 'Je réserve mon 
     font-size: 0.9rem;
     font-weight: 300;
     color: rgba(250,248,244,0.7);
-    margin: 0 0 28px;
+    /* margin auto : la règle globale `p { max-width: 70ch }` bride la boîte,
+       qui resterait sinon collée à gauche dans ce bloc centré. */
+    margin: 0 auto 28px;
   }
   .act-cta__btn {
     display: inline-flex;
@@ -535,8 +499,7 @@ const guideCtaLabel = isFemaleGuide ? 'Je réserve ma guide' : 'Je réserve mon 
     .act-info__heading { font-size: 1.4rem; }
     .act-info__item { flex-direction: column; gap: 4px; }
     .act-info__label { width: auto; }
-    .act-cta { padding: 40px 0 56px; }
-    .act-cta__card { padding: 36px 20px; }
+    .act-cta__card { padding: 32px 20px; margin-top: 28px; }
     .act-cta__title { font-size: 1.4rem; }
   }
 </style>

@@ -10,6 +10,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
 <script>
   import { supabase, mapGuide, mapReview, mapBooking, isAdmin, ALL_SLOTS } from '../../lib/supabase';
+  import { guideAssignedActivities, guideActivityLabel, ACTIVITY_SLOTS } from '../../data/guide-activities';
 
   const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
@@ -22,49 +23,60 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   // ---- Caches de données (chargés depuis Supabase au démarrage) ----
   let REVIEWS_CACHE: any[] = [];       // avis approuvés de ce guide
-  let AVAIL_CACHE: Record<string, string[]> = {};  // date -> créneaux disponibles
+  // activité -> date -> créneaux ouverts par le guide pour CETTE activité
+  let AVAIL_CACHE: Record<string, Record<string, string[]>> = {};
   let BOOKED_CACHE: Record<string, string[]> = {}; // date -> créneaux réservés ('*' = journée entière, ancien format)
   let BOOKINGS_CACHE: any[] = [];      // réservations complètes (mode guide/admin uniquement)
+  let ACTIVITIES: { slug: string; label: string }[] = [];
 
   function getReviews(): any[] { return REVIEWS_CACHE; }
   function getGuideBookings(_guideId: string): any[] { return BOOKINGS_CACHE; }
 
-  async function saveAvail(guideId: string, entries: Record<string, string[]>): Promise<boolean> {
+  /** Créneaux autorisés pour une activité (certaines n'ouvrent qu'une partie de la journée). */
+  function slotsOf(activitySlug: string): string[] {
+    return ACTIVITY_SLOTS[activitySlug] || ALL_SLOTS.slice();
+  }
+
+  async function saveAvail(guideId: string, activitySlug: string, entries: Record<string, string[]>): Promise<boolean> {
     const clean: Record<string, string[]> = {};
     Object.keys(entries).forEach(d => {
       if (entries[d] && entries[d].length > 0) clean[d] = entries[d];
     });
-    const rows = Object.keys(clean).map(d => ({ guide_id: guideId, date: d, slots: clean[d] }));
+    const rows = Object.keys(clean).map(d => ({
+      guide_id: guideId, activity_slug: activitySlug, date: d, slots: clean[d],
+    }));
 
     // 1. Upsert d'abord (aucune suppression tant que l'écriture n'a pas réussi)
     if (rows.length > 0) {
       const { error: upErr } = await supabase.from('availability')
-        .upsert(rows, { onConflict: 'guide_id,date' });
+        .upsert(rows, { onConflict: 'guide_id,activity_slug,date' });
       if (upErr) {
         alert(`L'enregistrement a échoué : ${upErr.message}\n\nVos disponibilités n'ont PAS été modifiées.`);
         return false;
       }
     }
 
-    // 2. Puis suppression des jours retirés uniquement
+    // 2. Puis suppression des jours retirés — pour cette activité uniquement
     const { data: existing, error: selErr } = await supabase.from('availability')
-      .select('date').eq('guide_id', guideId);
+      .select('date').eq('guide_id', guideId).eq('activity_slug', activitySlug);
     if (!selErr && existing) {
       const toDelete = existing.map((r: any) => r.date).filter((d: string) => !clean[d]);
       if (toDelete.length > 0) {
         const { error: delErr } = await supabase.from('availability')
-          .delete().eq('guide_id', guideId).in('date', toDelete);
+          .delete().eq('guide_id', guideId).eq('activity_slug', activitySlug).in('date', toDelete);
         if (delErr) {
           alert(`Certains jours n'ont pas pu être retirés : ${delErr.message}`);
         }
       }
     }
 
-    AVAIL_CACHE = clean;
+    AVAIL_CACHE[activitySlug] = clean;
     return true;
   }
 
-  // Créneaux encore libres pour une date (dispos moins réservés)
+  // Créneaux encore libres pour une date (dispos moins réservés).
+  // Une réservation bloque le créneau pour TOUTES les activités : le guide ne
+  // peut pas être à deux endroits en même temps.
   function freeSlotsAt(dateStr: string, avail: Record<string, string[]>): string[] {
     const av = avail[dateStr] || [];
     const bk = BOOKED_CACHE[dateStr] || [];
@@ -72,10 +84,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     return av.filter((s: string) => !bk.includes(s));
   }
 
-  var calMonth: number, calYear: number;
-  var calEditing = false;
-  var calDraft: Record<string, string[]> = {};
-  var editSelDate: string | null = null;
+  // Un état de calendrier indépendant par activité
+  interface CalState {
+    month: number; year: number;
+    editing: boolean;
+    draft: Record<string, string[]>;
+    selDate: string | null;
+  }
+  const CAL: Record<string, CalState> = {};
 
   const params = new URLSearchParams(window.location.search);
   const guideId = params.get('id');
@@ -104,18 +120,22 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       }
     }
 
+    ACTIVITIES = guideAssignedActivities(guide).map((a: any) => ({ slug: a.slug, label: a.label }));
+
     const [rRes, aRes, bdRes] = await Promise.all([
       supabase.from('reviews').select('*').eq('guide_id', guideId),
-      supabase.from('availability').select('date, slots').eq('guide_id', guideId),
+      supabase.from('availability').select('activity_slug, date, slots').eq('guide_id', guideId),
       supabase.from('booked_dates').select('date, slot').eq('guide_id', guideId),
     ]);
     REVIEWS_CACHE = (rRes.data || []).map(mapReview).filter((r: any) => r.status === 'approved');
     if (aRes.error && isGuideLogin) {
-      alert(`Erreur de chargement des disponibilités : ${aRes.error.message}\n\n(La migration SQL « créneaux » a-t-elle été exécutée dans Supabase ?)`);
+      alert(`Erreur de chargement des disponibilités : ${aRes.error.message}\n\n(La migration SQL « disponibilités par activité » a-t-elle été exécutée dans Supabase ?)`);
     }
     AVAIL_CACHE = {};
+    ACTIVITIES.forEach((a) => { AVAIL_CACHE[a.slug] = {}; });
     (aRes.data || []).forEach((r: any) => {
-      AVAIL_CACHE[r.date] = r.slots || ALL_SLOTS.slice();
+      const act = r.activity_slug || '';
+      (AVAIL_CACHE[act] = AVAIL_CACHE[act] || {})[r.date] = r.slots || ALL_SLOTS.slice();
     });
     BOOKED_CACHE = {};
     (bdRes.data || []).forEach((r: any) => {
@@ -158,10 +178,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       ? (guideReviews.reduce((s: number, r: any) => s + (r.stars || 5), 0) / guideReviews.length)
       : 0;
 
-    const dist: number[] = [0,0,0,0,0];
-    guideReviews.forEach((r: any) => { dist[(r.stars || 5) - 1]++; });
-    const maxDist = Math.max(...dist, 1);
-
     document.title = `${guide.firstName} ${guide.lastName} | La plateforme Omra`;
 
     const photoHtml = guide.photo
@@ -172,13 +188,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       const flag = LANG_FLAGS[l] || '🌐';
       return `<span class="gpr__lang-chip">${flag} ${esc(l)}</span>`;
     }).join('');
-
-    const includesItems = [
-      'Accompagnement personnalise',
-      'Itineraires sur mesure',
-      'Conseils & bonnes adresses',
-      'Support avant, pendant et apres',
-    ];
 
     const reviewsHtml = guideReviews.length === 0
       ? '<p class="gpr__no-reviews">Aucun avis pour le moment.</p>'
@@ -203,19 +212,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           `;
         }).join('');
 
-    const barsHtml = [5,4,3,2,1].map(n => {
-      const count = dist[n-1];
-      const pct = (count / maxDist) * 100;
-      return `
-        <div class="gpr__bar-row">
-          <span class="gpr__bar-label">${n} etoile${n>1?'s':''}</span>
-          <span class="gpr__bar-dot">●</span>
-          <div class="gpr__bar-track"><div class="gpr__bar-fill" style="width:${pct}%"></div></div>
-          <span class="gpr__bar-count">${count}</span>
-        </div>
-      `;
-    }).join('');
-
     section.innerHTML = `
       ${isGuideLogin ? `
       <div class="gpr__guide-bar">
@@ -238,9 +234,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C5 1.5 2.5 4 2.5 7c0 4 5.5 7.5 5.5 7.5s5.5-3.5 5.5-7.5c0-3-2.5-5.5-5.5-5.5z" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="7" r="2" stroke="currentColor" stroke-width="1.2"/></svg>
             ${esc(cityLabel)}
           </span>
-          <h1 class="gpr__name">${esc(guide.firstName)} ${esc(guide.lastName)}
-            <svg class="gpr__verified" width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#14513A"/><path d="M7.5 12.5l3 3 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </h1>
+          <h1 class="gpr__name">${esc(guide.firstName)} <span class="gpr__name-end">${esc(guide.lastName)}<img src="/assets/images/verified.png" alt="Guide vérifié" title="Guide vérifié" class="gpr__verified" /></span></h1>
           <p class="gpr__subtitle">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C5 1.5 2.5 4 2.5 7c0 4 5.5 7.5 5.5 7.5s5.5-3.5 5.5-7.5c0-3-2.5-5.5-5.5-5.5z" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="7" r="2" stroke="currentColor" stroke-width="1.2"/></svg>
             Guide certifié${guide.diploma ? `  &middot;  ${esc(guide.diploma)}` : ''}
@@ -273,90 +267,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </div>
         ` : ''}
 
-        ${guide.pricePerDay ? `
-        <!-- TARIFS -->
-        <div class="gpr__card gpr__card--price">
+        <!-- DISPONIBILITÉS PAR ACTIVITÉ -->
+        <div class="gpr__card gpr__card--acts">
           <div class="gpr__card-icon">
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M12 2v18M7.5 6.5h6.75a2.75 2.75 0 010 5.5H6.5h8.25a2.75 2.75 0 010 5.5H7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="4" width="16" height="15" rx="3" stroke="currentColor" stroke-width="1.4"/><path d="M3 9h16M7 2v4M15 2v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
           </div>
-          <h2 class="gpr__card-title">Tarifs</h2>
-          <div class="gpr__price-layout">
-            <div class="gpr__price-left">
-              <span class="gpr__price-amount">${esc(String(guide.pricePerDay))}<span class="gpr__price-currency">&euro;</span></span>
-              <span class="gpr__price-note">Frais inclus</span>
-            </div>
-            <div class="gpr__price-right">
-              ${includesItems.map(item => `
-                <div class="gpr__price-feat">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#EDF5F0"/><path d="M5 8.2l2 2 4-4" stroke="#14513A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  <span>${item}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        </div>
-        ` : ''}
-
-        <!-- CTA DISPONIBILITES -->
-        <div class="gpr__cta-card" id="cta-dispo">
-          <div class="gpr__cta-left">
-            <div class="gpr__cta-icon">
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="5" width="22" height="20" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M3 11h22M9 2v5M19 2v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="17" r="1.5" fill="currentColor"/><circle cx="14" cy="17" r="1.5" fill="currentColor"/><circle cx="18" cy="17" r="1.5" fill="currentColor"/></svg>
-            </div>
-            <div>
-              <h2 class="gpr__cta-title">Les disponibilités</h2>
-              <p class="gpr__cta-sub">Consultez les dates disponibles et réservez votre guide en quelques clics.</p>
-            </div>
-          </div>
-          <button type="button" class="gpr__cta-btn" id="scroll-to-cal">
-            Voir le calendrier
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
-
-        <!-- CALENDRIER (hidden par defaut, ouvert via CTA) -->
-        <div class="gpr__card gpr__card--cal is-hidden" id="cal-section">
-          <div class="gpr__card-header-row">
-            <h2 class="gpr__card-title">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="16" height="15" rx="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 8h16M6 1v4M14 1v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-              Calendrier
-            </h2>
-            ${isGuideLogin ? '<button type="button" class="gpr__cal-edit-btn" id="cal-edit-btn">Modifier</button>' : ''}
-          </div>
-          <div class="gpr__cal-nav">
-            <button type="button" class="gpr__cal-arrow" id="cal-prev">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <span class="gpr__cal-month" id="cal-month"></span>
-            <button type="button" class="gpr__cal-arrow" id="cal-next">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 4l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-          </div>
-          <div class="gpr__cal-weekdays">
-            <span>LUN</span><span>MAR</span><span>MER</span><span>JEU</span><span>VEN</span><span>SAM</span><span>DIM</span>
-          </div>
-          <div class="gpr__cal-grid" id="cal-grid"></div>
-          <div class="gpr__cal-legend">
-            <span class="gpr__cal-legend-item"><span class="gpr__cal-dot gpr__cal-dot--avail"></span> Disponible</span>
-            <span class="gpr__cal-legend-item"><span class="gpr__cal-dot gpr__cal-dot--busy"></span> Indisponible</span>
-            ${isGuideLogin ? '<span class="gpr__cal-legend-item"><span class="gpr__cal-dot gpr__cal-dot--booked"></span> Réservé</span>' : ''}
-          </div>
-          ${isGuideLogin ? `
-          <div class="gpr__slot-editor is-hidden" id="slot-editor">
-            <p class="gpr__slot-editor-title" id="slot-editor-title"></p>
-            <div class="gpr__slot-editor-chips">
-              ${ALL_SLOTS.map((s: string) => `<button type="button" class="gpr__slot-chip" data-eslot="${s}">${s}</button>`).join('')}
-            </div>
-            <button type="button" class="gpr__slot-dayoff" id="slot-dayoff">Rendre ce jour indisponible</button>
-          </div>
-          ` : ''}
-          <div class="gpr__cal-edit-tools is-hidden" id="cal-edit-tools">
-            <label class="gpr__check-all">
-              <input type="checkbox" id="check-all-month" />
-              <span>Cocher tout le mois</span>
-            </label>
-            <button type="button" class="gpr__cal-save-btn" id="cal-save-btn">Enregistrer</button>
-          </div>
+          <h2 class="gpr__card-title">Disponibilit&eacute;s</h2>
+          <p class="gpr__acts-hint">${isGuideLogin
+            ? 'Chaque activit&eacute; a son propre calendrier. Ouvrez-en une pour indiquer vos jours et vos cr&eacute;neaux.'
+            : 'Choisissez une activit&eacute; pour voir les dates disponibles.'}</p>
+          ${ACTIVITIES.length === 0
+            ? '<p class="gpr__no-reviews">Aucune activit&eacute; assign&eacute;e pour le moment.</p>'
+            : `<div class="gpr__acts">${ACTIVITIES.map(a => activityCalendarHtml(a)).join('')}</div>`}
         </div>
 
         ${isGuideLogin ? `
@@ -377,19 +299,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           </div>
           <h2 class="gpr__card-title">Moyenne des avis</h2>
           ${guideReviews.length > 0 ? `
-            <div class="gpr__rating-layout">
-              <div class="gpr__rating-left">
-                <div class="gpr__rating-big-star">
-                  <svg width="28" height="28" viewBox="0 0 20 20" fill="#D4A843"><path d="M10 1.5l2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6L5.1 16.7l.9-5.5-4-3.9 5.5-.8L10 1.5z"/></svg>
-                </div>
-                <span class="gpr__rating-num">${avgRating.toFixed(1)}</span>
-                <span class="gpr__rating-slash">/ 5</span>
-                <div class="gpr__rating-stars">${renderStarsHtml(avgRating)}</div>
-                <span class="gpr__rating-count">Basee sur ${guideReviews.length} avis</span>
+            <div class="gpr__rating-left">
+              <div class="gpr__rating-big-star">
+                <svg width="28" height="28" viewBox="0 0 20 20" fill="#D4A843"><path d="M10 1.5l2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6L5.1 16.7l.9-5.5-4-3.9 5.5-.8L10 1.5z"/></svg>
               </div>
-              <div class="gpr__rating-bars">
-                ${barsHtml}
-              </div>
+              <span class="gpr__rating-num">${avgRating.toFixed(1)}</span>
+              <span class="gpr__rating-slash">/ 5</span>
+              <div class="gpr__rating-stars">${renderStarsHtml(avgRating)}</div>
+              <span class="gpr__rating-count">Bas&eacute;e sur ${guideReviews.length} avis</span>
             </div>
           ` : '<p class="gpr__no-reviews">Aucun avis pour le moment.</p>'}
         </div>
@@ -404,25 +321,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             ${reviewsHtml}
           </div>
 
-          <!-- FORM -->
-          <div class="gpr__rv-form-wrap">
-            <h3 class="gpr__rv-form-title">Laisser un avis</h3>
-            <form class="gpr__rv-form" id="review-form">
-              <div class="gpr__rf-stars" id="rf-stars">
-                ${[1,2,3,4,5].map(n => `
-                  <button type="button" class="gpr__rf-star" data-star="${n}" aria-label="${n} etoile${n>1?'s':''}">
-                    <svg viewBox="0 0 20 20" width="32" height="32"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                  </button>
-                `).join('')}
-              </div>
-              <input type="text" name="reviewer-name" class="gpr__rf-input" placeholder="Votre nom" required />
-              <textarea name="reviewer-text" class="gpr__rf-textarea" rows="3" placeholder="Partagez votre experience..." required></textarea>
-              <button type="submit" class="gpr__rf-submit" id="rf-submit" disabled>Publier mon avis</button>
-              <div class="gpr__rf-success is-hidden" id="rf-success">
-                <p>Merci pour votre avis. Il sera pris en compte tr&egrave;s prochainement dans La plateforme Omra.</p>
-              </div>
-            </form>
-          </div>
         </div>
 
       </div>
@@ -453,9 +351,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       window.location.href = `/guides/profil/?id=${guide.id}`;
     });
 
-    try { initCalendar(guide); } catch(e) { console.error('Calendar init error:', e); }
-    try { initReviewForm(guide); } catch(e) { console.error('Review form init error:', e); }
-    try { initScrollBtn(); } catch(e) { console.error('Scroll btn init error:', e); }
+    try { initActivityCalendars(guide); } catch(e) { console.error('Calendar init error:', e); }
+
     try { initBookings(guide); } catch(e) { console.error('Bookings init error:', e); }
     try { initRefuseModal(guide); } catch(e) { console.error('Refuse modal init error:', e); }
   }
@@ -474,125 +371,223 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     return html;
   }
 
-  // ===== CALENDAR =====
-  function initCalendar(guide: any) {
+  // ═══════════════════════════════════════
+  //  CALENDRIERS PAR ACTIVITÉ
+  //  Chaque activité assignée au guide a son propre calendrier, son propre
+  //  état (mois affiché, mode édition, brouillon) et ses propres créneaux.
+  // ═══════════════════════════════════════
+
+  function activityCalendarHtml(act: { slug: string; label: string }): string {
+    const s = act.slug;
+    const slots = slotsOf(s);
+    return `
+      <div class="gpr__act" data-act="${s}">
+        <button type="button" class="gpr__act-head" data-act-toggle="${s}" aria-expanded="false">
+          <span class="gpr__act-text">
+            <span class="gpr__act-name">${esc(act.label)}</span>
+            <span class="gpr__act-meta" data-act-meta="${s}"></span>
+          </span>
+          <svg class="gpr__act-chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="gpr__act-panel is-hidden" data-act-panel="${s}">
+          <div class="gpr__cal-nav">
+            <button type="button" class="gpr__cal-arrow" data-cal-prev="${s}" aria-label="Mois pr&eacute;c&eacute;dent">
+              <svg width="17" height="17" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <span class="gpr__cal-month" data-cal-month="${s}"></span>
+            <button type="button" class="gpr__cal-arrow" data-cal-next="${s}" aria-label="Mois suivant">
+              <svg width="17" height="17" viewBox="0 0 18 18" fill="none"><path d="M7 4l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="gpr__cal-weekdays">
+            <span>LUN</span><span>MAR</span><span>MER</span><span>JEU</span><span>VEN</span><span>SAM</span><span>DIM</span>
+          </div>
+          <div class="gpr__cal-grid" data-cal-grid="${s}"></div>
+          <div class="gpr__cal-legend">
+            <span class="gpr__cal-legend-item"><span class="gpr__cal-dot gpr__cal-dot--avail"></span> Disponible</span>
+            <span class="gpr__cal-legend-item"><span class="gpr__cal-dot gpr__cal-dot--busy"></span> Indisponible</span>
+            ${isGuideLogin ? '<span class="gpr__cal-legend-item"><span class="gpr__cal-dot gpr__cal-dot--booked"></span> R&eacute;serv&eacute;</span>' : ''}
+          </div>
+          ${isGuideLogin ? `
+          <div class="gpr__slot-editor is-hidden" data-slot-editor="${s}">
+            <p class="gpr__slot-editor-title" data-slot-title="${s}"></p>
+            <div class="gpr__slot-editor-chips">
+              ${slots.map((x: string) => `<button type="button" class="gpr__slot-chip" data-eslot="${x}" data-eslot-act="${s}">${x}</button>`).join('')}
+            </div>
+            <button type="button" class="gpr__slot-dayoff" data-slot-dayoff="${s}">Rendre ce jour indisponible</button>
+          </div>
+          <button type="button" class="gpr__cal-edit-btn" data-cal-edit="${s}">Modifier mes disponibilit&eacute;s</button>
+          <div class="gpr__cal-edit-tools is-hidden" data-cal-tools="${s}">
+            <label class="gpr__check-all">
+              <input type="checkbox" data-check-all="${s}" />
+              <span>Cocher tout le mois</span>
+            </label>
+            <button type="button" class="gpr__cal-save-btn" data-cal-save="${s}">Enregistrer</button>
+          </div>
+          ` : ''}
+        </div>
+      </div>`;
+  }
+
+  function initActivityCalendars(guide: any) {
     const now = new Date();
-    calMonth = now.getMonth();
-    calYear = now.getFullYear();
-    calDraft = JSON.parse(JSON.stringify(AVAIL_CACHE));
-    renderCal(guide);
-    initSlotEditor(guide);
 
-    document.getElementById('cal-prev')?.addEventListener('click', () => {
-      calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
-      renderCal(guide);
-    });
-    document.getElementById('cal-next')?.addEventListener('click', () => {
-      calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
-      renderCal(guide);
-    });
+    ACTIVITIES.forEach((act) => {
+      const s = act.slug;
+      CAL[s] = { month: now.getMonth(), year: now.getFullYear(), editing: false, draft: {}, selDate: null };
+      renderCal(guide, s);
+      updateActMeta(s);
 
-    const editBtn = document.getElementById('cal-edit-btn');
-    const editTools = document.getElementById('cal-edit-tools');
-    const saveBtn = document.getElementById('cal-save-btn');
-    const checkAll = document.getElementById('check-all-month') as HTMLInputElement | null;
+      // --- Ouverture / fermeture de l'activité ---
+      const head = document.querySelector(`[data-act-toggle="${s}"]`);
+      const panel = document.querySelector(`[data-act-panel="${s}"]`);
+      head?.addEventListener('click', () => {
+        const willOpen = panel!.classList.contains('is-hidden');
+        panel!.classList.toggle('is-hidden', !willOpen);
+        head.classList.toggle('is-open', willOpen);
+        head.setAttribute('aria-expanded', String(willOpen));
+      });
 
-    if (editBtn && editTools && saveBtn) {
-      editBtn.addEventListener('click', () => {
-        calEditing = true;
-        calDraft = JSON.parse(JSON.stringify(AVAIL_CACHE));
-        editSelDate = null;
+      // --- Navigation entre les mois ---
+      document.querySelector(`[data-cal-prev="${s}"]`)?.addEventListener('click', () => {
+        const st = CAL[s];
+        st.month--; if (st.month < 0) { st.month = 11; st.year--; }
+        renderCal(guide, s);
+      });
+      document.querySelector(`[data-cal-next="${s}"]`)?.addEventListener('click', () => {
+        const st = CAL[s];
+        st.month++; if (st.month > 11) { st.month = 0; st.year++; }
+        renderCal(guide, s);
+      });
+
+      if (!isGuideLogin) return;
+
+      // --- Mode édition ---
+      const editBtn = document.querySelector(`[data-cal-edit="${s}"]`);
+      const tools = document.querySelector(`[data-cal-tools="${s}"]`);
+      const saveBtn = document.querySelector(`[data-cal-save="${s}"]`) as HTMLButtonElement | null;
+      const checkAll = document.querySelector(`[data-check-all="${s}"]`) as HTMLInputElement | null;
+
+      editBtn?.addEventListener('click', () => {
+        const st = CAL[s];
+        st.editing = true;
+        st.draft = JSON.parse(JSON.stringify(AVAIL_CACHE[s] || {}));
+        st.selDate = null;
         editBtn.classList.add('is-hidden');
-        editTools.classList.remove('is-hidden');
-        renderCal(guide);
-        renderSlotEditor(guide);
+        tools?.classList.remove('is-hidden');
+        renderCal(guide, s);
+        renderSlotEditor(guide, s);
       });
-      saveBtn.addEventListener('click', async () => {
-        (saveBtn as HTMLButtonElement).disabled = true;
+
+      saveBtn?.addEventListener('click', async () => {
+        const st = CAL[s];
+        saveBtn.disabled = true;
         saveBtn.textContent = 'Enregistrement...';
-        const ok = await saveAvail(guide.id, calDraft);
-        (saveBtn as HTMLButtonElement).disabled = false;
+        const ok = await saveAvail(guide.id, s, st.draft);
+        saveBtn.disabled = false;
         saveBtn.textContent = 'Enregistrer';
-        if (!ok) return; // erreur affichée, on reste en mode édition
-        calEditing = false;
-        editSelDate = null;
-        editBtn.classList.remove('is-hidden');
-        editTools.classList.add('is-hidden');
-        renderCal(guide);
-        renderSlotEditor(guide);
+        if (!ok) return; // erreur déjà affichée : on reste en mode édition
+        st.editing = false;
+        st.selDate = null;
+        editBtn?.classList.remove('is-hidden');
+        tools?.classList.add('is-hidden');
+        renderCal(guide, s);
+        renderSlotEditor(guide, s);
+        updateActMeta(s);
       });
-      if (checkAll) {
-        checkAll.addEventListener('change', () => {
-          const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-          const today = new Date(); today.setHours(0,0,0,0);
-          for (let d = 1; d <= daysInMonth; d++) {
-            const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            if (new Date(calYear, calMonth, d) < today) continue;
-            if (checkAll.checked) {
-              if (!calDraft[ds]) calDraft[ds] = ALL_SLOTS.slice();
-            } else {
-              delete calDraft[ds];
-            }
+
+      checkAll?.addEventListener('change', () => {
+        const st = CAL[s];
+        const daysInMonth = new Date(st.year, st.month + 1, 0).getDate();
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        for (let d = 1; d <= daysInMonth; d++) {
+          const ds = `${st.year}-${String(st.month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          if (new Date(st.year, st.month, d) < today) continue;
+          if (checkAll.checked) {
+            if (!st.draft[ds]) st.draft[ds] = slotsOf(s).slice();
+          } else {
+            delete st.draft[ds];
           }
-          editSelDate = null;
-          renderCal(guide);
-          renderSlotEditor(guide);
-        });
-      }
-    }
+        }
+        st.selDate = null;
+        renderCal(guide, s);
+        renderSlotEditor(guide, s);
+      });
+
+      initSlotEditor(guide, s);
+    });
+  }
+
+  /** Résumé affiché à droite du nom de l'activité (nombre de jours encore ouverts). */
+  function updateActMeta(slug: string) {
+    const el = document.querySelector(`[data-act-meta="${slug}"]`);
+    if (!el) return;
+    const avail = AVAIL_CACHE[slug] || {};
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let days = 0;
+    Object.keys(avail).forEach((d) => {
+      if (new Date(d + 'T00:00:00') < today) return;
+      if (freeSlotsAt(d, avail).length > 0) days++;
+    });
+    el.innerHTML = days > 0
+      ? `<span class="gpr__act-dot gpr__act-dot--on"></span>${days} jour${days > 1 ? 's' : ''} disponible${days > 1 ? 's' : ''}`
+      : '<span class="gpr__act-dot"></span>Aucune date ouverte';
   }
 
   // ===== ÉDITEUR DE CRÉNEAUX (mode guide) =====
-  function initSlotEditor(guide: any) {
-    const wrap = document.getElementById('slot-editor');
+  function initSlotEditor(guide: any, slug: string) {
+    const wrap = document.querySelector(`[data-slot-editor="${slug}"]`);
     if (!wrap) return;
 
-    wrap.querySelectorAll('[data-eslot]').forEach(chip => {
+    wrap.querySelectorAll('[data-eslot]').forEach((chip) => {
       chip.addEventListener('click', () => {
-        if (!editSelDate) return;
+        const st = CAL[slug];
+        if (!st.selDate) return;
         const s = (chip as HTMLElement).dataset.eslot!;
-        const booked = BOOKED_CACHE[editSelDate] || [];
-        if (booked.includes(s) || booked.includes('*')) return; // créneau déjà réservé : intouchable
-        const slots = calDraft[editSelDate] || [];
+        const booked = BOOKED_CACHE[st.selDate] || [];
+        if (booked.includes(s) || booked.includes('*')) return; // créneau réservé : intouchable
+        const slots = st.draft[st.selDate] || [];
         if (slots.includes(s)) {
-          calDraft[editSelDate] = slots.filter((x: string) => x !== s);
-          if (calDraft[editSelDate].length === 0) delete calDraft[editSelDate];
+          st.draft[st.selDate] = slots.filter((x: string) => x !== s);
+          if (st.draft[st.selDate].length === 0) delete st.draft[st.selDate];
         } else {
-          calDraft[editSelDate] = [...slots, s];
+          st.draft[st.selDate] = [...slots, s];
         }
-        renderCal(guide);
-        renderSlotEditor(guide);
+        renderCal(guide, slug);
+        renderSlotEditor(guide, slug);
       });
     });
 
-    document.getElementById('slot-dayoff')?.addEventListener('click', () => {
-      if (!editSelDate) return;
-      const booked = BOOKED_CACHE[editSelDate] || [];
+    document.querySelector(`[data-slot-dayoff="${slug}"]`)?.addEventListener('click', () => {
+      const st = CAL[slug];
+      if (!st.selDate) return;
+      const booked = BOOKED_CACHE[st.selDate] || [];
       if (booked.length > 0) {
         alert('Ce jour a déjà une réservation : signalez un empêchement depuis vos réservations.');
         return;
       }
-      delete calDraft[editSelDate];
-      editSelDate = null;
-      renderCal(guide);
-      renderSlotEditor(guide);
+      delete st.draft[st.selDate];
+      st.selDate = null;
+      renderCal(guide, slug);
+      renderSlotEditor(guide, slug);
     });
   }
 
-  function renderSlotEditor(guide: any) {
-    const wrap = document.getElementById('slot-editor');
-    const title = document.getElementById('slot-editor-title');
+  function renderSlotEditor(guide: any, slug: string) {
+    const wrap = document.querySelector(`[data-slot-editor="${slug}"]`);
+    const title = document.querySelector(`[data-slot-title="${slug}"]`);
     if (!wrap || !title) return;
-    if (!calEditing || !editSelDate) {
+    const st = CAL[slug];
+    if (!st.editing || !st.selDate) {
       wrap.classList.add('is-hidden');
       return;
     }
-    const [y, m, d] = editSelDate.split('-').map(Number);
+    const [y, m, d] = st.selDate.split('-').map(Number);
     title.textContent = `Créneaux du ${new Date(y, m - 1, d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}`;
 
-    const slots = calDraft[editSelDate] || [];
-    const booked = BOOKED_CACHE[editSelDate] || [];
-    wrap.querySelectorAll('[data-eslot]').forEach(chip => {
+    const slots = st.draft[st.selDate] || [];
+    const booked = BOOKED_CACHE[st.selDate] || [];
+    wrap.querySelectorAll('[data-eslot]').forEach((chip) => {
       const s = (chip as HTMLElement).dataset.eslot!;
       const isBooked = booked.includes(s) || booked.includes('*');
       chip.classList.toggle('is-on', slots.includes(s) || isBooked);
@@ -602,23 +597,25 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     wrap.classList.remove('is-hidden');
   }
 
-  function renderCal(guide: any) {
-    const grid = document.getElementById('cal-grid');
-    const label = document.getElementById('cal-month');
+  function renderCal(guide: any, slug: string) {
+    const grid = document.querySelector(`[data-cal-grid="${slug}"]`);
+    const label = document.querySelector(`[data-cal-month="${slug}"]`);
     if (!grid || !label) return;
-    label.textContent = `${MONTHS[calMonth]} ${calYear}`;
+    const st = CAL[slug];
+    label.textContent = `${MONTHS[st.month]} ${st.year}`;
 
-    const avail = calEditing ? calDraft : AVAIL_CACHE;
-    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const avail = st.editing ? st.draft : (AVAIL_CACHE[slug] || {});
+    const maxSlots = slotsOf(slug).length;
+    const firstDay = new Date(st.year, st.month, 1).getDay();
     const offset = firstDay === 0 ? 6 : firstDay - 1;
-    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-    const today = new Date(); today.setHours(0,0,0,0);
+    const daysInMonth = new Date(st.year, st.month + 1, 0).getDate();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
 
     let html = '';
     for (let i = 0; i < offset; i++) html += '<span class="gpr__cal-cell gpr__cal-cell--empty"></span>';
     for (let d = 1; d <= daysInMonth; d++) {
-      const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const isPast = new Date(calYear, calMonth, d) < today;
+      const ds = `${st.year}-${String(st.month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const isPast = new Date(st.year, st.month, d) < today;
       const daySlots = avail[ds] || [];
       const booked = BOOKED_CACHE[ds] || [];
       const hasBooking = booked.length > 0;
@@ -629,107 +626,45 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       else if (isGuideLogin && isFullyBooked) cls += ' gpr__cal-cell--booked';
       else if (free.length > 0) {
         cls += ' gpr__cal-cell--avail';
-        // Marqueur : jour partiellement dispo (créneaux retirés ou déjà réservés)
-        if (daySlots.length < ALL_SLOTS.length || hasBooking) cls += ' gpr__cal-cell--partial';
+        // Marqueur : jour partiellement ouvert (créneaux retirés ou déjà réservés)
+        if (daySlots.length < maxSlots || hasBooking) cls += ' gpr__cal-cell--partial';
       }
       else cls += ' gpr__cal-cell--busy';
-      if (calEditing && !isPast) cls += ' gpr__cal-cell--editable';
-      if (calEditing && editSelDate === ds) cls += ' gpr__cal-cell--editsel';
+      if (st.editing && !isPast) cls += ' gpr__cal-cell--editable';
+      if (st.editing && st.selDate === ds) cls += ' gpr__cal-cell--editsel';
       html += `<button type="button" class="${cls}" data-date="${ds}" ${isPast ? 'disabled' : ''}>${d}</button>`;
     }
     grid.innerHTML = html;
 
-    const checkAll = document.getElementById('check-all-month') as HTMLInputElement | null;
-    if (checkAll && calEditing) {
+    const checkAll = document.querySelector(`[data-check-all="${slug}"]`) as HTMLInputElement | null;
+    if (checkAll && st.editing) {
       let allChecked = true;
       for (let d = 1; d <= daysInMonth; d++) {
-        const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        if (new Date(calYear, calMonth, d) < today) continue;
+        const ds = `${st.year}-${String(st.month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        if (new Date(st.year, st.month, d) < today) continue;
         if (!avail[ds] || avail[ds].length === 0) { allChecked = false; break; }
       }
       checkAll.checked = allChecked;
     }
 
-    if (calEditing) {
-      grid.querySelectorAll('.gpr__cal-cell--editable').forEach(btn => {
+    if (st.editing) {
+      grid.querySelectorAll('.gpr__cal-cell--editable').forEach((btn) => {
         btn.addEventListener('click', () => {
           const ds = (btn as HTMLElement).dataset.date!;
-          if (editSelDate === ds) {
+          if (st.selDate === ds) {
             // Re-clic sur le même jour → on referme l'éditeur de créneaux
-            editSelDate = null;
+            st.selDate = null;
           } else {
-            // Jour indisponible → devient disponible avec ses 4 créneaux ;
-            // puis l'éditeur permet d'en retirer manuellement
-            if (!calDraft[ds]) calDraft[ds] = ALL_SLOTS.slice();
-            editSelDate = ds;
+            // Jour fermé → devient ouvert avec tous ses créneaux ;
+            // l'éditeur permet ensuite d'en retirer manuellement
+            if (!st.draft[ds]) st.draft[ds] = slotsOf(slug).slice();
+            st.selDate = ds;
           }
-          renderCal(guide);
-          renderSlotEditor(guide);
+          renderCal(guide, slug);
+          renderSlotEditor(guide, slug);
         });
       });
     }
-  }
-
-  // ===== REVIEW FORM =====
-  function initReviewForm(guide: any) {
-    let selectedStars = 0;
-    const starBtns = document.querySelectorAll('#rf-stars .gpr__rf-star');
-    const submitBtn = document.getElementById('rf-submit') as HTMLButtonElement;
-    const form = document.getElementById('review-form') as HTMLFormElement;
-
-    starBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        selectedStars = parseInt((btn as HTMLElement).dataset.star!);
-        starBtns.forEach((b, i) => b.classList.toggle('gpr__rf-star--active', i < selectedStars));
-        submitBtn.disabled = false;
-      });
-      btn.addEventListener('mouseenter', () => {
-        const hoverVal = parseInt((btn as HTMLElement).dataset.star!);
-        starBtns.forEach((b, i) => b.classList.toggle('gpr__rf-star--hover', i < hoverVal));
-      });
-      btn.addEventListener('mouseleave', () => {
-        starBtns.forEach(b => b.classList.remove('gpr__rf-star--hover'));
-      });
-    });
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (selectedStars === 0) return;
-      const name = (form.querySelector('[name="reviewer-name"]') as HTMLInputElement).value.trim();
-      const text = (form.querySelector('[name="reviewer-text"]') as HTMLTextAreaElement).value.trim();
-      if (!name || !text) return;
-
-      submitBtn.disabled = true;
-      const { error } = await supabase.from('reviews').insert({
-        guide_id: guide.id,
-        name, text,
-        stars: selectedStars,
-        service: `Guide - ${guide.firstName} ${guide.lastName}`,
-        status: 'pending',
-      });
-      submitBtn.disabled = false;
-      if (error) {
-        alert("Une erreur est survenue lors de l'envoi. Veuillez réessayer.");
-        return;
-      }
-      form.classList.add('is-hidden');
-      document.getElementById('rf-success')!.classList.remove('is-hidden');
-    });
-  }
-
-  function initScrollBtn() {
-    document.getElementById('scroll-to-cal')?.addEventListener('click', () => {
-      const calSection = document.getElementById('cal-section');
-      if (!calSection) return;
-      const isOpen = !calSection.classList.contains('is-hidden');
-      if (isOpen) {
-        // Re-clic → on referme le calendrier
-        calSection.classList.add('is-hidden');
-      } else {
-        calSection.classList.remove('is-hidden');
-        calSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    });
   }
 
   // ===== BOOKINGS LIST (guide mode) =====
@@ -741,32 +676,128 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   function renderBookings(guide: any, container: HTMLElement) {
     const bookings = getGuideBookings(guide.id);
-    if (bookings.length === 0) {
-      container.innerHTML = '<p class="gpr__no-reviews">Aucune réservation pour le moment.</p>';
+    const now = new Date();
+    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    const active = bookings.filter((b: any) => new Date(b.date + 'T23:59:59') > yesterday);
+    if (active.length === 0) {
+      container.innerHTML = '<p class="gpr__no-reviews">Aucune réservation active pour le moment.</p>';
       return;
     }
-    const sorted = bookings.sort((a: any, b: any) => a.date.localeCompare(b.date));
-    container.innerHTML = sorted.map((b: any) => {
-      const dateStr = new Date(b.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-      const isPending = b.status === 'pending-refusal';
+    const sorted = active.sort((a: any, b: any) => a.date.localeCompare(b.date));
+
+    // 1er niveau : l'activité — 2e niveau : le mois.
+    // Les réservations sans activité (anciennes, d'avant le classement par
+    // activité) ne sont plus affichées.
+    const byActivity: Record<string, any[]> = {};
+    for (const b of sorted) {
+      if (!b.activitySlug) continue;
+      (byActivity[b.activitySlug] = byActivity[b.activitySlug] || []).push(b);
+    }
+    // Les activités assignées d'abord (ordre de référence), puis les éventuelles autres
+    const actKeys = [
+      ...ACTIVITIES.map((a) => a.slug).filter((s) => byActivity[s]),
+      ...Object.keys(byActivity).filter((k) => !ACTIVITIES.some((a) => a.slug === k)),
+    ];
+
+    if (actKeys.length === 0) {
+      container.innerHTML = '<p class="gpr__no-reviews">Aucune réservation active pour le moment.</p>';
+      return;
+    }
+
+    container.innerHTML = actKeys.map((actKey, ai) => {
+      const actBookings = byActivity[actKey];
+      const actLabel = guideActivityLabel(actKey);
+      const actOpen = ai === 0;
       return `
-        <div class="gpr__booking ${isPending ? 'gpr__booking--pending' : ''}">
-          <div class="gpr__booking-date">
-            <span class="gpr__booking-dot ${isPending ? 'gpr__booking-dot--pending' : ''}"></span>
-            ${esc(dateStr)}
-            ${b.slot ? `<span class="gpr__booking-slot">${esc(b.slot)}</span>` : ''}
-            ${b.activityName ? `<span class="gpr__booking-activity">${esc(b.activityName)}</span>` : ''}
-            ${isPending ? '<span class="gpr__booking-pending-label">En attente de validation admin</span>' : ''}
+        <div class="gpr__bk-act">
+          <button type="button" class="gpr__bk-act-toggle ${actOpen ? 'is-open' : ''}" data-bk-act="${esc(actKey)}">
+            <span class="gpr__bk-act-label">${esc(String(actLabel))}</span>
+            <span class="gpr__bk-act-count">${actBookings.length}</span>
+            <svg class="gpr__bk-act-arrow" width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M4 5.5l3 3 3-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="gpr__bk-act-body ${actOpen ? '' : 'is-hidden'}" data-bk-act-body="${esc(actKey)}">
+            ${monthsHtml(actKey, actBookings)}
           </div>
-          <div class="gpr__booking-actions">
-            ${b.seen
-              ? `<span class="gpr__booking-seen"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Vu</span>`
-              : `<button type="button" class="gpr__booking-info" data-booking-id="${esc(b.id)}">Marquer comme pris en compte</button>`}
-            ${!isPending ? `<button type="button" class="gpr__booking-refuse" data-booking-id="${esc(b.id)}" data-booking-date="${esc(dateStr)}">Faire part d'un emp&ecirc;chement</button>` : ''}
+        </div>`;
+    }).join('');
+
+    function monthsHtml(actKey: string, list: any[]): string {
+      const months: Record<string, any[]> = {};
+      for (const b of list) {
+        const d = new Date(b.date + 'T00:00:00');
+        const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`;
+        const label = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        if (!months[key]) months[key] = [];
+        (months[key] as any).__label = label;
+        months[key].push(b);
+      }
+
+      const monthKeys = Object.keys(months).sort();
+      return monthKeys.map((mKey, i) => {
+      const key = `${actKey}|${mKey}`;
+      const arr = months[mKey];
+      const label = (arr as any).__label || mKey;
+      const capitalLabel = label.charAt(0).toUpperCase() + label.slice(1);
+      const isFirst = i === 0;
+      const items = arr.map((b: any) => {
+        const dateStr = new Date(b.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+        const isPending = b.status === 'pending-refusal';
+        return `
+          <div class="gpr__booking ${isPending ? 'gpr__booking--pending' : ''}">
+            <div class="gpr__booking-date">
+              <span class="gpr__booking-dot ${isPending ? 'gpr__booking-dot--pending' : ''}"></span>
+              ${esc(dateStr)}
+              ${b.slot ? `<span class="gpr__booking-slot">${esc(b.slot)}</span>` : ''}
+              ${isPending ? '<span class="gpr__booking-pending-label">En attente de validation admin</span>' : ''}
+            </div>
+            ${b.clientName ? `
+            <div class="gpr__booking-client">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="2.6" stroke="currentColor" stroke-width="1.3"/><path d="M2.8 13.5c0-2.7 2.3-4.8 5.2-4.8s5.2 2.1 5.2 4.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              ${esc(b.clientName)}
+            </div>` : ''}
+            <div class="gpr__booking-actions">
+              ${b.seen
+                ? `<span class="gpr__booking-seen"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Vu</span>`
+                : `<button type="button" class="gpr__booking-info" data-booking-id="${esc(b.id)}">Marquer comme pris en compte</button>`}
+              ${!isPending ? `<button type="button" class="gpr__booking-refuse" data-booking-id="${esc(b.id)}" data-booking-date="${esc(dateStr)}">Faire part d'un emp&ecirc;chement</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      return `
+        <div class="gpr__bk-month">
+          <button type="button" class="gpr__bk-month-toggle ${isFirst ? 'is-open' : ''}" data-bk-month="${esc(key)}">
+            <span class="gpr__bk-month-label">${esc(capitalLabel)}</span>
+            <span class="gpr__bk-month-count">${arr.length}</span>
+            <svg class="gpr__bk-month-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 5.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="gpr__bk-month-body ${isFirst ? '' : 'is-hidden'}" data-bk-body="${esc(key)}">
+            ${items}
           </div>
         </div>
       `;
-    }).join('');
+      }).join('');
+    }
+
+    container.querySelectorAll('.gpr__bk-act-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = (btn as HTMLElement).dataset.bkAct!;
+        const body = container.querySelector(`[data-bk-act-body="${CSS.escape(key)}"]`);
+        if (!body) return;
+        const isOpen = btn.classList.toggle('is-open');
+        body.classList.toggle('is-hidden', !isOpen);
+      });
+    });
+
+    container.querySelectorAll('.gpr__bk-month-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = (btn as HTMLElement).dataset.bkMonth!;
+        const body = container.querySelector(`[data-bk-body="${CSS.escape(key)}"]`);
+        if (!body) return;
+        const isOpen = btn.classList.toggle('is-open');
+        body.classList.toggle('is-hidden', !isOpen);
+      });
+    });
 
     container.querySelectorAll('.gpr__booking-info').forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -842,7 +873,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       modal.classList.add('is-hidden');
       const container = document.getElementById('bookings-list');
       if (container) renderBookings(guide, container);
-      renderCal(guide);
+      ACTIVITIES.forEach((a) => { renderCal(guide, a.slug); updateActMeta(a.slug); });
     });
   }
 </script>
@@ -962,10 +993,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 2.8rem; font-weight: 700; color: #1C1C1A;
     margin: 0 0 6px;
-    display: inline-flex; align-items: center; gap: 8px;
-    justify-content: center;
+    line-height: 1.15;
   }
-  .gpr__verified { flex-shrink: 0; }
+  /* Le nom de famille et sa pastille forment un bloc insécable : la pastille
+     ne peut jamais se retrouver seule sur la ligne suivante. */
+  .gpr__name-end { white-space: nowrap; }
+  /* Pastille « guide vérifié », juste après le nom */
+  .gpr__verified {
+    width: 0.42em; height: 0.42em;
+    margin-left: 0.22em;
+    vertical-align: baseline;
+    display: inline-block;
+    flex-shrink: 0;
+  }
 
   .gpr__subtitle {
     display: inline-flex; align-items: center; gap: 6px;
@@ -1051,50 +1091,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   }
 
   /* ═══════════════════════════════════════
-     TARIFS — premium split layout
-     ═══════════════════════════════════════ */
-  .gpr__price-layout {
-    display: flex; gap: 40px; align-items: center;
-    padding: 24px 28px;
-    background: #FAFAF7;
-    border-radius: 18px;
-    border: 1px solid #EBE8E0;
-  }
-  .gpr__price-left {
-    display: flex; flex-direction: column;
-    flex-shrink: 0;
-  }
-  .gpr__price-amount {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 3rem; font-weight: 700; color: #14513A;
-    line-height: 1;
-  }
-  .gpr__price-currency {
-    font-size: 2rem; font-weight: 600;
-  }
-  .gpr__price-per {
-    font-family: 'Jost', sans-serif;
-    font-size: 0.88rem; color: #9C9C93;
-    margin-top: 2px;
-  }
-  .gpr__price-note {
-    font-family: 'Jost', sans-serif;
-    font-size: 0.78rem; color: #B99752;
-    font-weight: 500; margin-top: 4px;
-  }
-  .gpr__price-right {
-    display: flex; flex-direction: column; gap: 10px;
-    border-left: 1px solid #EBE8E0;
-    padding-left: 32px;
-  }
-  .gpr__price-feat {
-    display: flex; align-items: center; gap: 10px;
-    font-family: 'Jost', sans-serif;
-    font-size: 0.85rem; color: #4A4A42;
-  }
-  .gpr__price-feat svg { flex-shrink: 0; }
-
-  /* ═══════════════════════════════════════
      CTA DISPONIBILITES — impossible to miss
      ═══════════════════════════════════════ */
   .gpr__cta-card {
@@ -1153,10 +1149,76 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   }
 
   /* ═══════════════════════════════════════
+     ACTIVITÉS — un calendrier par activité
+     ═══════════════════════════════════════ */
+  .gpr__acts-hint {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.82rem; font-weight: 300;
+    line-height: 1.6; color: #8E8E86;
+    margin: -6px 0 20px;
+  }
+  .gpr__acts {
+    border: 1px solid #EDEAE2;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #FFFFFF;
+  }
+  .gpr__act + .gpr__act { border-top: 1px solid #EDEAE2; }
+
+  .gpr__act-head {
+    width: 100%;
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 20px;
+    background: none; border: none;
+    text-align: left; cursor: pointer;
+    transition: background 0.18s ease;
+  }
+  .gpr__act-head:hover { background: #FAF9F5; }
+  .gpr__act-head.is-open { background: #FAF9F5; }
+  .gpr__act-text {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .gpr__act-name {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem; font-weight: 500;
+    color: #1C1C1A; letter-spacing: -0.005em;
+  }
+  .gpr__act-meta {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.74rem; font-weight: 300;
+    color: #9C9C93;
+  }
+  .gpr__act-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #D5D1C8; flex-shrink: 0;
+  }
+  .gpr__act-dot--on { background: #14513A; }
+  .gpr__act-chev {
+    flex-shrink: 0; color: #B5B5AE;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.18s;
+  }
+  .gpr__act-head.is-open .gpr__act-chev { transform: rotate(180deg); color: #14513A; }
+
+  .gpr__act-panel {
+    padding: 4px 20px 24px;
+    border-top: 1px solid #F1EEE7;
+    animation: actPanelIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .gpr__act-panel.is-hidden { display: none; }
+  @keyframes actPanelIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ═══════════════════════════════════════
      CALENDAR
      ═══════════════════════════════════════ */
   .gpr__cal-edit-btn {
-    padding: 8px 20px; border-radius: 12px;
+    display: block; width: 100%;
+    margin-top: 18px;
+    padding: 12px 20px; border-radius: 12px;
     border: 1.5px solid #14513A;
     background: transparent; color: #14513A;
     font-size: 0.78rem; font-weight: 600;
@@ -1164,6 +1226,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     cursor: pointer; transition: all 0.15s;
   }
   .gpr__cal-edit-btn:hover { background: #14513A; color: #FAF8F4; }
+  .gpr__cal-edit-btn.is-hidden { display: none !important; }
 
   .gpr__cal-nav {
     display: flex; align-items: center; justify-content: center;
@@ -1265,14 +1328,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   /* ═══════════════════════════════════════
      RATING — Airbnb style
      ═══════════════════════════════════════ */
-  .gpr__rating-layout {
-    display: flex; gap: 40px; align-items: flex-start;
-  }
   .gpr__rating-left {
     display: flex; flex-direction: column;
     align-items: center;
-    flex-shrink: 0;
-    min-width: 140px;
   }
   .gpr__rating-big-star {
     margin-bottom: 6px;
@@ -1292,40 +1350,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     font-family: 'Jost', sans-serif;
     font-size: 0.78rem; color: #9C9C93;
   }
-  .gpr__rating-bars {
-    flex: 1;
-    display: flex; flex-direction: column; gap: 8px;
-    padding-top: 8px;
-  }
-  .gpr__bar-row {
-    display: flex; align-items: center; gap: 10px;
-  }
-  .gpr__bar-label {
-    font-family: 'Jost', sans-serif;
-    font-size: 0.72rem; color: #9C9C93;
-    min-width: 58px; text-align: right;
-  }
-  .gpr__bar-dot {
-    font-size: 0.4rem; color: #D5D5D0;
-  }
-  .gpr__bar-track {
-    flex: 1; height: 8px;
-    background: #F0EFE9;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .gpr__bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #14513A, #B99752);
-    border-radius: 4px;
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .gpr__bar-count {
-    font-family: 'Jost', sans-serif;
-    font-size: 0.75rem; font-weight: 600;
-    color: #6B6B63; min-width: 24px;
-  }
-
   /* ═══════════════════════════════════════
      STARS
      ═══════════════════════════════════════ */
@@ -1453,7 +1477,83 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   /* ═══════════════════════════════════════
      BOOKINGS (guide mode)
+     Niveau 1 : l'activité — Niveau 2 : le mois
      ═══════════════════════════════════════ */
+  .gpr__bk-act {
+    border: 1px solid #EDEAE2;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #FFFFFF;
+  }
+  .gpr__bk-act + .gpr__bk-act { margin-top: 12px; }
+  .gpr__bk-act-toggle {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; padding: 17px 20px;
+    background: none; border: none;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem; font-weight: 500;
+    color: #1C1C1A; cursor: pointer;
+    text-align: left;
+    transition: background 0.18s ease;
+  }
+  .gpr__bk-act-toggle:hover, .gpr__bk-act-toggle.is-open { background: #FAF9F5; }
+  .gpr__bk-act-label { flex: 1; min-width: 0; }
+  .gpr__bk-act-count {
+    font-size: 0.72rem; font-weight: 600;
+    background: #EDF5F0; color: #14513A;
+    padding: 3px 11px; border-radius: 20px;
+    flex-shrink: 0;
+  }
+  .gpr__bk-act-arrow {
+    color: #B5B5AE; flex-shrink: 0;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.18s;
+  }
+  .gpr__bk-act-toggle.is-open .gpr__bk-act-arrow { transform: rotate(180deg); color: #14513A; }
+  .gpr__bk-act-body {
+    padding: 12px 14px 14px;
+    border-top: 1px solid #F1EEE7;
+  }
+  .gpr__bk-act-body.is-hidden { display: none; }
+
+  .gpr__bk-month {
+    margin-bottom: 8px;
+    border: 1px solid #ECE9E1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #FEFEFE;
+  }
+  .gpr__bk-month:last-child { margin-bottom: 0; }
+  .gpr__bk-month-toggle {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 14px 18px;
+    background: #FAF9F5; border: none;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.1rem; font-weight: 700;
+    color: #14513A; cursor: pointer;
+    text-align: left;
+    transition: background 0.2s;
+  }
+  .gpr__bk-month-toggle:hover { background: #F5F2EB; }
+  .gpr__bk-month-label { flex: 1; }
+  .gpr__bk-month-count {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.7rem; font-weight: 600;
+    background: #14513A; color: #FAF8F4;
+    padding: 2px 10px; border-radius: 20px;
+  }
+  .gpr__bk-month-arrow {
+    color: #9C9C93;
+    transition: transform 0.25s;
+    flex-shrink: 0;
+  }
+  .gpr__bk-month-toggle.is-open .gpr__bk-month-arrow {
+    transform: rotate(180deg);
+  }
+  .gpr__bk-month-body {
+    padding: 0 18px;
+  }
+  .gpr__bk-month-body.is-hidden { display: none; }
+
   .gpr__booking {
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 0; border-bottom: 1px solid #F3F0EA;
@@ -1494,6 +1594,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     font-size: 0.68rem; color: #E67E22; font-weight: 600;
     background: rgba(230,126,34,0.1); padding: 3px 10px; border-radius: 8px;
   }
+  /* Qui vient : nom saisi par le client au moment du paiement */
+  .gpr__booking-client {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem; font-weight: 500; color: #14513A;
+  }
+  .gpr__booking-client svg { color: #B99752; flex-shrink: 0; }
   .gpr__booking-actions { display: flex; gap: 8px; }
   .gpr__booking-info {
     padding: 7px 16px; border-radius: 10px;
@@ -1657,16 +1765,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     .gpr__name { font-size: 2rem; flex-wrap: wrap; }
     .gpr__card { padding: 28px 22px; border-radius: 20px; }
 
-    .gpr__price-layout {
-      flex-direction: column; gap: 20px;
-      padding: 20px;
-    }
-    .gpr__price-right {
-      border-left: none; padding-left: 0;
-      border-top: 1px solid #EBE8E0; padding-top: 18px;
-    }
-    .gpr__price-amount { font-size: 2.6rem; }
-
     .gpr__cta-card {
       flex-direction: column;
       text-align: center;
@@ -1677,14 +1775,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     }
     .gpr__cta-btn { width: 100%; justify-content: center; }
 
-    .gpr__rating-layout {
-      flex-direction: column; gap: 24px;
-    }
-    .gpr__rating-left {
-      flex-direction: row; gap: 16px;
-      align-items: center;
-      min-width: unset;
-    }
     .gpr__rating-num { font-size: 2.4rem; }
 
     .gpr__booking {

@@ -88,6 +88,8 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
   // Certaines activités imposent le genre du guide (bouton unique, non modifiable).
   const ACTIVITY_GENDER: Record<string, 'homme' | 'femme'> = {
     'guide-pmr-omra': 'homme',
+    'visite-historique-makkah': 'homme',
+    'visite-historique-medine': 'homme',
     'shopping-guide-medine': 'femme',
   };
   const forcedGender = ACTIVITY_GENDER[currentActivity] || '';
@@ -104,8 +106,16 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
   function guideGuidePrice(g: any): number {
     return guideBasePrice(g) + (groupApplies && groupTier === '7-10' ? (g?.supplement710 || 0) : 0);
   }
+  /**
+   * Frais de service : pourcentage du prix du guide pour l'activité choisie.
+   * Le prix variant d'une activité à l'autre, les frais varient aussi.
+   * Ex. guide à 20 % → Omra PMR (100 €) = 20 € ; Omra classique (50 €) = 10 €.
+   */
+  function guideServiceFee(g: any): number {
+    return Math.round(guideGuidePrice(g) * (g?.servicePercent || 0) / 100);
+  }
   function guideTotal(g: any): number {
-    return guideGuidePrice(g) + (g?.servicePrice || 0);
+    return guideGuidePrice(g) + guideServiceFee(g);
   }
 
   // Nom lisible de l'activité choisie (injecté côté serveur)
@@ -213,8 +223,8 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
   // ---- Données Supabase (chargées une fois, servies depuis un cache mémoire) ----
   let GUIDES: any[] = [];
   let REVIEWS: any[] = []; // avis approuvés uniquement (filtrés par RLS)
-  // guideId -> date -> créneaux disponibles / créneaux réservés
-  let AVAIL: Record<string, Record<string, string[]>> = {};
+  // guideId -> activité -> date -> créneaux disponibles ; guideId -> date -> créneaux réservés
+  let AVAIL: Record<string, Record<string, Record<string, string[]>>> = {};
   let BOOKED: Record<string, Record<string, string[]>> = {};
 
   function getGuides(): any[] { return GUIDES; }
@@ -222,9 +232,21 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
     return REVIEWS.filter((r: any) => r.guideId === guideId);
   }
 
+  // Créneaux ouverts par le guide pour l'activité en cours (ou toutes activités
+  // confondues quand on parcourt /guides/ sans activité précise).
+  function availSlotsFor(guideId: string, dateStr: string): string[] {
+    const byAct = AVAIL[guideId] || {};
+    if (currentActivity) return (byAct[currentActivity] || {})[dateStr] || [];
+    const union = new Set<string>();
+    Object.values(byAct).forEach((byDate: any) => {
+      (byDate[dateStr] || []).forEach((s: string) => union.add(s));
+    });
+    return [...union];
+  }
+
   // Créneaux encore réservables pour un guide à une date donnée
   function freeSlotsFor(guideId: string, dateStr: string): string[] {
-    const av = (AVAIL[guideId] || {})[dateStr];
+    const av = availSlotsFor(guideId, dateStr);
     if (!av || av.length === 0) return [];
     const bk = (BOOKED[guideId] || {})[dateStr] || [];
     if (bk.includes('*')) return []; // ancienne réservation « journée entière »
@@ -239,7 +261,9 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
   function ingestAvail(data: any) {
     AVAIL = {};
     (data || []).forEach((r: any) => {
-      (AVAIL[r.guide_id] = AVAIL[r.guide_id] || {})[r.date] = r.slots || ALL_SLOTS.slice();
+      const byAct = (AVAIL[r.guide_id] = AVAIL[r.guide_id] || {});
+      const act = r.activity_slug || '';
+      (byAct[act] = byAct[act] || {})[r.date] = r.slots || ALL_SLOTS.slice();
     });
   }
   function ingestBooked(data: any) {
@@ -254,7 +278,7 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
     const [gRes, rRes, aRes, bRes] = await Promise.all([
       supabase.from('guides').select('*').order('created_at'),
       supabase.from('reviews').select('*').not('guide_id', 'is', null),
-      supabase.from('availability').select('guide_id, date, slots'),
+      supabase.from('availability').select('guide_id, activity_slug, date, slots'),
       supabase.from('booked_dates').select('guide_id, date, slot'),
     ]);
     ingestGuides(gRes.data);
@@ -271,7 +295,7 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
     renderGuidesList();
     const [rRes, aRes, bRes] = await Promise.all([
       supabase.from('reviews').select('*').not('guide_id', 'is', null),
-      supabase.from('availability').select('guide_id, date, slots'),
+      supabase.from('availability').select('guide_id, activity_slug, date, slots'),
       supabase.from('booked_dates').select('guide_id, date, slot'),
     ]);
     ingestReviews(rRes.data);
@@ -391,7 +415,7 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
           <div class="gp-card__main">
             ${avatarHtml}
             <div class="gp-card__info">
-              <h2 class="gp-card__name">${esc(g.firstName)} ${esc(g.lastName)}</h2>
+              <h2 class="gp-card__name">${esc(g.firstName)} <span class="gp-name-end">${esc(g.lastName)}<img src="/assets/images/verified.png" alt="Guide vérifié" title="Guide vérifié" class="gp-verified" /></span></h2>
               ${g.diploma ? `<p class="gp-card__diploma">${esc(g.diploma)}</p>` : ''}
               ${langCodes.length ? `<div class="gp-card__langs">${langPills}</div>` : ''}
               ${ratingHtml}
@@ -422,7 +446,7 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
                       <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M10 18s6-5.2 6-9.5A6 6 0 0 0 4 8.5C4 12.8 10 18 10 18z" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="8.5" r="2" stroke="currentColor" stroke-width="1.6"/></svg>
                       ${esc(cityLabel.toUpperCase())}
                     </span>
-                    <h3 class="gp-profile__name">${esc(g.firstName)} ${esc(g.lastName)}</h3>
+                    <h3 class="gp-profile__name">${esc(g.firstName)} <span class="gp-name-end">${esc(g.lastName)}<img src="/assets/images/verified.png" alt="Guide vérifié" title="Guide vérifié" class="gp-verified" /></span></h3>
                     ${g.diploma ? `<p class="gp-profile__diploma">${esc(g.diploma)}</p>` : ''}
                     ${langsFull ? `<div class="gp-profile__langs">${langsFull}</div>` : ''}
                     ${g.description ? `<p class="gp-profile__desc">${esc(g.description)}</p>` : ''}
@@ -790,7 +814,7 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
       activityName: currentActivityName || '',
       groupLabel: groupApplies ? groupLabel() : '',
       price: guideTotal(guide),
-      servicePrice: guide?.servicePrice || 0,
+      servicePrice: guideServiceFee(guide),
       guidePrice: guideGuidePrice(guide),
     });
     localStorage.setItem('omra-cart', JSON.stringify(cart));
@@ -974,7 +998,10 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
   }
   .gp-hero__sub {
     font-family: 'Jost', sans-serif; font-size: 0.95rem; font-weight: 300;
-    color: rgba(250,248,244,0.65); margin: 0;
+    color: rgba(250,248,244,0.65);
+    /* margin auto : la règle globale `p { max-width: 70ch }` bride la boîte,
+       qui resterait sinon collée à gauche dans ce hero centré. */
+    margin: 0 auto;
   }
 
   /* ---- LIST ---- */
@@ -1041,6 +1068,18 @@ const activityMap: Record<string, string> = Object.fromEntries(activities.map(a 
     font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 1.3rem; font-weight: 700; color: #14513A;
     margin: 0 0 2px; line-height: 1.15;
+  }
+  /* Le nom de famille et sa pastille forment un bloc insécable : la pastille
+     ne peut jamais se retrouver seule sur la ligne suivante. */
+  .gp-name-end { white-space: nowrap; }
+  /* Pastille « guide vérifié », juste après le nom. Taille relative :
+     elle suit automatiquement la taille du nom. */
+  .gp-verified {
+    width: 0.72em; height: 0.72em;
+    margin-left: 0.3em;
+    vertical-align: baseline;
+    display: inline-block;
+    flex-shrink: 0;
   }
   .gp-card__diploma {
     font-family: 'Jost', sans-serif;

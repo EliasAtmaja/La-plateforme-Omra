@@ -135,10 +135,10 @@ const lang = getLangFromUrl(Astro.url);
         <div class="rj-success__icon">
           <svg viewBox="0 0 48 48" fill="none" width="48" height="48"><circle cx="24" cy="24" r="21" stroke="currentColor" stroke-width="2"/><path d="M15 24.5l6.5 6.5L33 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
-        <h3 class="rj-success__title">Candidature envoy&eacute;e !</h3>
+        <h3 class="rj-success__title">Merci pour votre int&eacute;r&ecirc;t !</h3>
         <p class="rj-success__text">
-          Merci pour votre int&eacute;r&ecirc;t ! Notre &eacute;quipe &eacute;tudiera votre candidature
-          et vous recontactera tr&egrave;s prochainement.
+          Votre candidature nous est bien parvenue. Notre &eacute;quipe l'analyse avec attention
+          et vous recontactera au plus vite. Un r&eacute;capitulatif vient de vous &ecirc;tre envoy&eacute; par e-mail.
         </p>
         <a href={getLocalePath(lang, '/')} class="rj-success__home">
           Retour &agrave; l'accueil
@@ -152,7 +152,7 @@ const lang = getLangFromUrl(Astro.url);
 </BaseLayout>
 
 <script>
-  import { supabase } from '../lib/supabase';
+  import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase';
 
   const form = document.getElementById('join-form') as HTMLFormElement | null;
   const success = document.getElementById('join-success');
@@ -168,27 +168,50 @@ const lang = getLangFromUrl(Astro.url);
       errorMsg?.classList.add('is-hidden');
 
       const submitBtn = form.querySelector('.rj-form__submit') as HTMLButtonElement;
+      const submitHtml = submitBtn.innerHTML;
       submitBtn.disabled = true;
+      submitBtn.classList.add('is-loading');
+      submitBtn.innerHTML = 'Envoi en cours<span class="rj-dots"><span>.</span><span>.</span><span>.</span></span>';
+      const restoreBtn = () => {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('is-loading');
+        submitBtn.innerHTML = submitHtml;
+      };
 
       const data = new FormData(form);
-      const { error } = await supabase.from('guide_applications').insert({
-        first_name: data.get('prenom'),
-        last_name: data.get('nom'),
-        email: data.get('email'),
-        phone: data.get('telephone'),
-        city: data.get('ville'),
-        languages: data.get('langues'),
-        experience: data.get('experience'),
-      });
-      submitBtn.disabled = false;
+      const application = {
+        first_name: String(data.get('prenom') || '').trim(),
+        last_name: String(data.get('nom') || '').trim(),
+        email: String(data.get('email') || '').trim(),
+        phone: String(data.get('telephone') || '').trim(),
+        city: String(data.get('ville') || ''),
+        languages: String(data.get('langues') || '').trim(),
+        experience: String(data.get('experience') || '').trim(),
+      };
+      const { error } = await supabase.from('guide_applications').insert(application);
 
       if (error) {
+        restoreBtn();
         if (errorMsg) {
-          errorMsg.textContent = "Une erreur est survenue. Veuillez réessayer.";
+          errorMsg.textContent = `L'envoi a échoué : ${error.message}`;
           errorMsg.classList.remove('is-hidden');
         }
         return;
       }
+
+      // Accusé de réception par email (best-effort : la candidature est déjà
+      // enregistrée, un échec d'envoi ne doit pas bloquer le candidat).
+      try {
+        await fetch(`${SUPABASE_URL}/functions/v1/send-application`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify(application),
+        });
+      } catch (_) { /* silencieux */ }
 
       form.classList.add('is-hidden');
       success.classList.remove('is-hidden');
@@ -396,6 +419,29 @@ const lang = getLangFromUrl(Astro.url);
   }
   .rj-form__submit svg { transition: transform 0.3s; }
   .rj-form__submit:hover svg { transform: translateX(4px); }
+  .rj-form__submit.is-loading {
+    cursor: wait;
+    opacity: 0.85;
+    transform: none;
+    box-shadow: none;
+  }
+  .rj-form__submit.is-loading:hover {
+    background: #14513A;
+    transform: none;
+    box-shadow: none;
+  }
+  /* Points de chargement : « Envoi en cours... » */
+  .rj-dots { display: inline-block; width: 1.1em; text-align: left; }
+  .rj-dots span {
+    opacity: 0;
+    animation: rjDot 1.2s infinite;
+  }
+  .rj-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .rj-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes rjDot {
+    0%, 60%, 100% { opacity: 0; }
+    30% { opacity: 1; }
+  }
 
   /* ---- SUCCÈS ---- */
   .rj-success {

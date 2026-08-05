@@ -2,7 +2,7 @@
 import '../styles/global.css';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
-import { getLangFromUrl, t } from '../i18n/ui';
+import { getLangFromUrl, getLocalePath, t } from '../i18n/ui';
 
 interface Props {
   title: string;
@@ -10,9 +10,12 @@ interface Props {
   cityTheme?: 'medina' | 'mecca';
   hasHero?: boolean;
   preloadImage?: string;
+  /** Visuel préchargé à partir de 1024px (quand le bureau a sa propre image) */
+  preloadImageDesktop?: string;
+  noindex?: boolean;
 }
 
-const { title, description, cityTheme, hasHero, preloadImage } = Astro.props;
+const { title, description, cityTheme, hasHero, preloadImage, preloadImageDesktop, noindex } = Astro.props;
 const lang = getLangFromUrl(Astro.url);
 const siteName = t(lang, 'site.name');
 const fullTitle = `${title} | ${siteName}`;
@@ -30,12 +33,22 @@ const metaDescription = description ?? t(lang, 'hero.subtitle');
     <meta property="og:description" content={metaDescription} />
     <meta property="og:type" content="website" />
     <link rel="canonical" href={Astro.url} />
-    <link rel="icon" type="image/png" href="/assets/images/logo-v2.png" />
+    <!-- Google exige un favicon CARRÉ dont la taille est un multiple de 48 px,
+         sinon il n'affiche aucun logo dans ses résultats de recherche. -->
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" href="/favicon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Jost:wght@300;400;500;600&display=swap" />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-    {preloadImage && <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />}
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    {preloadImage && (
+      preloadImageDesktop
+        ? <link rel="preload" as="image" href={preloadImage} media="(max-width: 1023px)" fetchpriority="high" />
+        : <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />
+    )}
+    {preloadImageDesktop && <link rel="preload" as="image" href={preloadImageDesktop} media="(min-width: 1024px)" fetchpriority="high" />}
   </head>
   <body class:list={[cityTheme && `city-${cityTheme}`, hasHero && 'has-hero']}>
     <Header transparent={hasHero} />
@@ -63,6 +76,28 @@ const metaDescription = description ?? t(lang, 'hero.subtitle');
         <polyline points="18 15 12 9 6 15"></polyline>
       </svg>
     </button>
+
+    <!-- Bannière consentement cookies -->
+    <div class="cookie-consent" id="cookie-consent" hidden>
+      <div class="cookie-consent__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/>
+          <circle cx="8.5" cy="10.5" r=".6" fill="currentColor"/>
+          <circle cx="11" cy="15" r=".6" fill="currentColor"/>
+          <circle cx="15" cy="13" r=".6" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="cookie-consent__body">
+        <p class="cookie-consent__text">
+          Nous utilisons des cookies pour am&eacute;liorer votre exp&eacute;rience et mesurer l'audience du site.
+          <a href={getLocalePath(lang, '/mentions-legales/')}>En savoir plus</a>
+        </p>
+        <div class="cookie-consent__actions">
+          <button type="button" class="cookie-consent__btn cookie-consent__btn--refuse" id="cookie-refuse">Refuser</button>
+          <button type="button" class="cookie-consent__btn cookie-consent__btn--accept" id="cookie-accept">Accepter</button>
+        </div>
+      </div>
+    </div>
 
     <style is:global>
       /* WhatsApp button */
@@ -139,6 +174,95 @@ const metaDescription = description ?? t(lang, 'hero.subtitle');
       .scroll-top:hover {
         background: var(--color-primary, #14513A);
       }
+
+      /* Consentement cookies */
+      .cookie-consent {
+        position: fixed;
+        bottom: 24px;
+        left: 24px;
+        z-index: 1000;
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        max-width: 360px;
+        padding: 18px 20px;
+        background: #FFFFFF;
+        border: 1px solid #ECE7DA;
+        border-radius: 16px;
+        box-shadow: 0 16px 44px rgba(8, 40, 24, 0.16);
+        animation: cookieRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .cookie-consent[hidden] { display: none; }
+      .cookie-consent__icon {
+        flex-shrink: 0;
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background: #EDF5F0;
+        color: #14513A;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .cookie-consent__text {
+        font-family: 'Jost', sans-serif;
+        font-size: 0.8rem;
+        font-weight: 300;
+        line-height: 1.5;
+        color: #4A4A42;
+        margin: 0 0 12px;
+      }
+      .cookie-consent__text a {
+        color: #14513A;
+        font-weight: 500;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+      .cookie-consent__text a:hover { color: #B99752; }
+      .cookie-consent__actions {
+        display: flex;
+        gap: 8px;
+      }
+      .cookie-consent__btn {
+        flex: 1;
+        padding: 9px 14px;
+        border-radius: 8px;
+        font-family: 'Jost', sans-serif;
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+      }
+      .cookie-consent__btn--refuse {
+        background: none;
+        border: 1px solid #DAD5C7;
+        color: #6B6B63;
+      }
+      .cookie-consent__btn--refuse:hover {
+        border-color: #B7B1A0;
+        color: #1C1C1A;
+      }
+      .cookie-consent__btn--accept {
+        background: linear-gradient(135deg, #14513A, #0C3A28);
+        border: 1px solid transparent;
+        color: #FAF8F4;
+      }
+      .cookie-consent__btn--accept:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(20, 81, 58, 0.28);
+      }
+      @keyframes cookieRise {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @media (max-width: 639px) {
+        .cookie-consent {
+          left: 12px; right: 12px; bottom: 12px;
+          max-width: none;
+          padding: 16px;
+        }
+      }
     </style>
 
     <script>
@@ -155,6 +279,23 @@ const metaDescription = description ?? t(lang, 'hero.subtitle');
         scrollBtn.addEventListener('click', () => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         });
+      }
+
+      // Consentement cookies
+      const cookieBanner = document.getElementById('cookie-consent');
+      if (cookieBanner) {
+        const choice = localStorage.getItem('omra-cookie-consent');
+        if (!choice) {
+          // léger délai pour laisser la page s'afficher d'abord
+          setTimeout(() => { cookieBanner.hidden = false; }, 800);
+        }
+        const close = (value: string) => {
+          localStorage.setItem('omra-cookie-consent', value);
+          cookieBanner.style.animation = 'cookieRise 0.35s cubic-bezier(0.16,1,0.3,1) reverse forwards';
+          setTimeout(() => { cookieBanner.hidden = true; }, 340);
+        };
+        document.getElementById('cookie-accept')?.addEventListener('click', () => close('accepted'));
+        document.getElementById('cookie-refuse')?.addEventListener('click', () => close('refused'));
       }
 
       // Scroll reveal observer

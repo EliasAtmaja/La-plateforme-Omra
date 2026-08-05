@@ -21,7 +21,7 @@ serve(async (req) => {
   }
 
   try {
-    const { bookingIds, items, callBooking, successUrl, cancelUrl } = await req.json();
+    const { bookingIds, items, callBooking, customer, successUrl, cancelUrl } = await req.json();
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -46,6 +46,8 @@ serve(async (req) => {
       const callSession = await stripe.checkout.sessions.create({
         payment_method_types: ['card', 'paypal'],
         mode: 'payment',
+        // Nom, e-mail et téléphone sont déjà saisis dans le formulaire de
+        // planification : inutile de les redemander à Stripe.
         customer_email: cb.email || undefined,
         line_items: [{
           price_data: {
@@ -162,26 +164,43 @@ serve(async (req) => {
       });
     }
 
+    // Nom, e-mail et téléphone sont collectés sur notre page panier (Stripe ne
+    // permet pas de réordonner ni de renommer ses propres champs). On les
+    // enregistre tout de suite sur la réservation, et on pré-remplit Stripe.
+    const buyerName = String(customer?.name || '').trim();
+    const buyerEmail = String(customer?.email || '').trim();
+    const buyerPhone = String(customer?.phone || '').trim();
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card', 'paypal'],
       mode: 'payment',
       line_items,
+      customer_email: buyerEmail || undefined,
       success_url: successUrl || 'https://www.laplateformeomra.com/paiement/confirmation/?session_id={CHECKOUT_SESSION_ID}',
       cancel_url: cancelUrl || 'https://www.laplateformeomra.com/guides/',
       metadata: {
         booking_ids: JSON.stringify(ids),
         item_details: JSON.stringify(itemDetails),
+        buyer_name: buyerName,
+        buyer_phone: buyerPhone,
       },
       payment_intent_data: {
         metadata: {
           booking_ids: JSON.stringify(ids),
+          buyer_name: buyerName,
+          buyer_phone: buyerPhone,
         },
       },
     });
 
     await supabase
       .from('bookings')
-      .update({ stripe_session_id: session.id })
+      .update({
+        stripe_session_id: session.id,
+        client_name: buyerName || null,
+        client_email: buyerEmail || null,
+        client_phone: buyerPhone || null,
+      })
       .in('id', ids);
 
     return new Response(

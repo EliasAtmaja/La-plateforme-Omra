@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Page de dépôt d'avis, volontairement non référencée
+Disallow: /avis/
+
+Sitemap: https://www.laplateformeomra.com/sitemap-index.xml

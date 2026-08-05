@@ -35,4 +35,6 @@ pexels-*.jpg
 rashed-mall-*.jpg
 shutterstock_*.jpg
 Jabal-Thawr.jpg
-Logo*.png
+# Ancré à la racine : sans le "/", cette règle excluait aussi
+# public/assets/images/logo-*.png, qui font partie du site.
+/Logo*.png

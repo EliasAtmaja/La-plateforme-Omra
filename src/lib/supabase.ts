@@ -47,7 +47,9 @@ export function mapGuide(row: any) {
     description: row.description || '',
     languages: row.languages || [],
     pricePerDay: row.price_per_day || 0,
-    servicePrice: row.service_price || 0,
+    // Frais de service : pourcentage appliqué au prix du guide pour
+    // l'activité choisie (le montant en euros est donc calculé, pas stocké).
+    servicePercent: row.service_percent || 0,
     supplement710: row.supplement_7_10 || 0,
     activityPrices: row.activity_prices || {},
     login: row.login || '',

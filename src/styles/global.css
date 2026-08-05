@@ -132,7 +132,9 @@ input, textarea, select {
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.22em;
-  margin-bottom: var(--space-3);
+  /* margin auto : la règle globale `p { max-width: 70ch }` bride la boîte,
+     qui resterait sinon collée à gauche dans une section centrée. */
+  margin: 0 auto var(--space-3);
 }
 
 .section__title {

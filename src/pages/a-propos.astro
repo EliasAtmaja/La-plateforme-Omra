@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Button from '../components/ui/Button.astro';
 import { getLangFromUrl, t, getLocalePath } from '../i18n/ui';
 
 const lang = getLangFromUrl(Astro.url);
@@ -54,11 +53,6 @@ const lang = getLangFromUrl(Astro.url);
         <p>Parce que votre temps dans les Lieux Saints est pr&eacute;cieux et sacr&eacute;, La Plateforme Omra met 10 ans d'expertise, une assistance d&eacute;di&eacute;e et les meilleurs profils locaux &agrave; votre service. Vivez votre s&eacute;jour avec intensit&eacute;, science et une tranquillit&eacute; d'esprit absolue.</p>
       </div>
 
-      <div class="about-cta">
-        <Button variant="primary" size="lg" href={getLocalePath(lang, '/guides/')}>
-          {t(lang, 'hero.cta')}
-        </Button>
-      </div>
     </div>
   </section>
 </BaseLayout>
@@ -127,11 +121,6 @@ const lang = getLangFromUrl(Astro.url);
     font-style: italic;
     color: var(--color-secondary);
     margin-bottom: 0;
-  }
-
-  .about-cta {
-    text-align: center;
-    padding-top: var(--space-8);
   }
 
   @media (max-width: 639px) {

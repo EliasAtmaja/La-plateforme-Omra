@@ -113,6 +113,9 @@ const lang = getLangFromUrl(Astro.url);
 
 <script>
   import { supabase } from '../../lib/supabase';
+  import { linkDateRange, checkDateRange } from '../../lib/date-range';
+
+  linkDateRange('vs-arrival', 'vs-departure');
 
   const form = document.getElementById('visa-form') as HTMLFormElement | null;
   const success = document.getElementById('visa-success');
@@ -146,12 +149,17 @@ const lang = getLangFromUrl(Astro.url);
         errorMsg?.classList.remove('is-hidden');
         return;
       }
+      const data = new FormData(form);
+      const dateErr = checkDateRange(String(data.get('arrival') || ''), String(data.get('departure') || ''));
+      if (dateErr && errorMsg) {
+        errorMsg.textContent = dateErr;
+        errorMsg.classList.remove('is-hidden');
+        return;
+      }
       errorMsg?.classList.add('is-hidden');
 
       const submitBtn = form.querySelector('.pl-form__submit') as HTMLButtonElement;
       submitBtn.disabled = true;
-
-      const data = new FormData(form);
       const { error } = await supabase.from('visa_requests').insert({
         visa_type: visaType,
         name: data.get('name'),

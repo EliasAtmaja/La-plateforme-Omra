@@ -134,16 +134,40 @@ import '../../../styles/global.css';
         </div>
       </section>
 
-      <!-- Appels réservés -->
+      <!-- Mes demandes : appels de planification, visas, candidatures guides -->
       <section class="adm-card">
         <div class="adm-card__head">
-          <h2 class="adm-card__title">Appels r&eacute;serv&eacute;s <span class="adm-card__count" id="call-bookings-count"></span></h2>
+          <h2 class="adm-card__title">Mes demandes</h2>
           <button class="adm-cal-toggle adm-cal-toggle--ghost" id="home-refresh">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:5px;"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Actualiser
           </button>
         </div>
-        <div class="adm-callbookings" id="call-bookings-list"></div>
+
+        <div class="adm-dtabs" role="tablist">
+          <button class="adm-dtab adm-dtab--active" data-dtab="calls">
+            Optimisation voyage <span class="adm-dtab__count" id="call-bookings-count"></span>
+          </button>
+          <button class="adm-dtab" data-dtab="visa">
+            Demandes de visa <span class="adm-dtab__count" id="visa-requests-count"></span>
+          </button>
+          <button class="adm-dtab" data-dtab="apply">
+            Devenir guide <span class="adm-dtab__count" id="applications-count"></span>
+          </button>
+        </div>
+
+        <div class="adm-callbookings" id="call-bookings-list" data-dpanel="calls"></div>
+        <div class="adm-callbookings is-hidden" id="visa-requests-list" data-dpanel="visa"></div>
+        <div class="adm-callbookings is-hidden" id="applications-list" data-dpanel="apply"></div>
+      </section>
+
+      <!-- Toutes les réservations d'accompagnement, tous guides et activités -->
+      <section class="adm-card">
+        <div class="adm-card__head">
+          <h2 class="adm-card__title">Toutes les r&eacute;servations <span class="adm-card__count" id="all-bookings-count"></span></h2>
+        </div>
+        <p class="adm-card__hint">Class&eacute;es par mois, puis par jour. Cliquez sur une r&eacute;servation pour voir les coordonn&eacute;es du client.</p>
+        <div id="all-bookings-list"></div>
       </section>
     </div>
 
@@ -275,15 +299,15 @@ import '../../../styles/global.css';
         </div>
         <div class="adm-form-row">
           <div class="adm-form-field">
-            <label>Prix du service (€)</label>
-            <input type="number" name="service_prix" min="0" required placeholder="30" />
+            <label>% frais de service</label>
+            <input type="number" name="service_percent" min="0" max="100" required placeholder="20" />
           </div>
           <div class="adm-form-field">
             <label>Suppl&eacute;ment si 7 &agrave; 10 personnes (€)</label>
             <input type="number" name="supplement_prix" min="0" placeholder="0" />
           </div>
         </div>
-        <span class="adm-form-hint" style="margin-top:-8px;">Le suppl&eacute;ment est ajout&eacute; au (prix du guide + prix du service) quand le client choisit un groupe de 7 &agrave; 10 personnes. Laisser &agrave; 0 si non applicable.</span>
+        <span class="adm-form-hint" style="margin-top:-8px;">Les frais de service sont un <strong>pourcentage du prix du guide</strong>, calcul&eacute; activit&eacute; par activit&eacute;. Ex. &agrave; 20&nbsp;%&nbsp;: une activit&eacute; &agrave; 100&nbsp;&euro; donne 20&nbsp;&euro; de frais, une activit&eacute; &agrave; 50&nbsp;&euro; en donne 10. Le suppl&eacute;ment 7-10 personnes s'ajoute au prix du guide avant ce calcul. Laisser &agrave; 0 si non applicable.</span>
         <div class="adm-form-field">
           <label>Expertise</label>
           <input type="text" name="diplome" placeholder="Licence en Histoire islamique" />
@@ -320,6 +344,7 @@ import '../../../styles/global.css';
 <script>
   import { createClient } from '@supabase/supabase-js';
   import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY, GUIDE_EMAIL_SUFFIX, isAdmin, mapGuide, mapBooking, mapReview } from '../../../lib/supabase';
+  import { GUIDE_ACTIVITIES } from '../../../data/guide-activities';
 
   // Client secondaire : sert uniquement à créer les comptes guides
   // sans écraser la session admin en cours.
@@ -334,27 +359,36 @@ import '../../../styles/global.css';
   let DB_GUIDES: any[] = [];
   let DB_BOOKINGS: any[] = [];
   let DB_REVIEWS: any[] = [];
-  let DB_AVAIL: Record<string, string[]> = {};
+  // guideId -> activité -> dates ouvertes
+  let DB_AVAIL: Record<string, Record<string, string[]>> = {};
   let DB_CALL_SLOTS: any[] = [];
   let DB_CALL_BOOKINGS: any[] = [];
+  let DB_VISA_REQUESTS: any[] = [];
+  let DB_APPLICATIONS: any[] = [];
   let RAW_BOOKINGS: any[] = [];
 
   async function loadAll() {
-    const [g, b, r, a, cs, cb] = await Promise.all([
+    const [g, b, r, a, cs, cb, vr, ga] = await Promise.all([
       supabase.from('guides').select('*').order('created_at'),
       supabase.from('bookings').select('*').order('date'),
       supabase.from('reviews').select('*').order('created_at', { ascending: false }),
-      supabase.from('availability').select('guide_id, date'),
+      supabase.from('availability').select('guide_id, activity_slug, date'),
       supabase.from('call_slots').select('*').order('date'),
       supabase.from('call_bookings').select('*').order('slot_date'),
+      supabase.from('visa_requests').select('*').order('created_at', { ascending: false }),
+      supabase.from('guide_applications').select('*').order('created_at', { ascending: false }),
     ]);
+    DB_VISA_REQUESTS = vr.data || [];
+    DB_APPLICATIONS = ga.data || [];
+    if (ga.error) console.warn('Candidatures indisponibles :', ga.error.message);
     DB_GUIDES = (g.data || []).map(mapGuide);
     DB_BOOKINGS = (b.data || []).map(mapBooking);
     RAW_BOOKINGS = b.data || [];
     DB_REVIEWS = (r.data || []).map(mapReview);
     DB_AVAIL = {};
     (a.data || []).forEach((row: any) => {
-      (DB_AVAIL[row.guide_id] = DB_AVAIL[row.guide_id] || []).push(row.date);
+      const byAct = (DB_AVAIL[row.guide_id] = DB_AVAIL[row.guide_id] || {});
+      (byAct[row.activity_slug || ''] = byAct[row.activity_slug || ''] || []).push(row.date);
     });
     DB_CALL_SLOTS = cs.data || [];
     DB_CALL_BOOKINGS = cb.data || [];
@@ -561,11 +595,38 @@ import '../../../styles/global.css';
   function getBookings(): any[] {
     return DB_BOOKINGS;
   }
-  function getAvail(guideId: string): string[] {
-    return DB_AVAIL[guideId] || [];
+  /** Dates ouvertes par un guide — pour une activité précise, ou toutes confondues. */
+  function getAvail(guideId: string, activitySlug?: string): string[] {
+    const byAct = DB_AVAIL[guideId] || {};
+    if (activitySlug) return byAct[activitySlug] || [];
+    return ([] as string[]).concat(...Object.values(byAct));
   }
 
   function escG(s: string) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  /**
+   * Regroupe des réservations par mois (clé triable AAAA-MM), du plus récent
+   * au plus ancien, et trie les réservations de chaque mois par date.
+   */
+  function groupBookingsByMonth(bookings: any[]): { key: string; label: string; items: any[] }[] {
+    const buckets: Record<string, any[]> = {};
+    for (const b of bookings) {
+      const d = String(b.date || '');
+      const key = d.length >= 7 ? d.slice(0, 7) : 'sans-date';
+      (buckets[key] = buckets[key] || []).push(b);
+    }
+    return Object.keys(buckets)
+      .sort((a, z) => z.localeCompare(a))
+      .map((key) => {
+        const items = buckets[key].sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+        let label = 'Sans date';
+        if (key !== 'sans-date') {
+          const [y, m] = key.split('-').map(Number);
+          label = `${admMonthNames[(m || 1) - 1]} ${y}`;
+        }
+        return { key, label, items };
+      });
+  }
 
   const admMonthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
   const admDayLabels = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
@@ -656,7 +717,7 @@ import '../../../styles/global.css';
 
     let bookingsPanelHtml = '';
     if (hasBookings) {
-      const rows = guideBookings.map((b: any) => {
+      const bookingRowHtml = (b: any) => {
         const dateStr = b.date ? new Date(b.date + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : b.dates || '';
         const statusLabel = b.status === 'pending-refusal'
           ? `<span class="adm-g__bk-status adm-g__bk-status--refused">Refus en attente</span>`
@@ -680,18 +741,36 @@ import '../../../styles/global.css';
             <div class="adm-g__bk-detail is-hidden">
               <div class="adm-g__bk-detail-grid">
                 <div class="adm-g__bk-detail-item">
-                  <span class="adm-g__bk-label">T&eacute;l&eacute;phone</span>
-                  <span class="adm-g__bk-value">${escG(b.clientPhone || 'Non renseigne')}</span>
+                  <span class="adm-g__bk-label">Nom &amp; pr&eacute;nom</span>
+                  <span class="adm-g__bk-value">${escG(b.clientName || 'Non renseigné')}</span>
                 </div>
                 <div class="adm-g__bk-detail-item">
-                  <span class="adm-g__bk-label">Email</span>
-                  <span class="adm-g__bk-value">${escG(b.clientEmail || 'Non renseigne')}</span>
+                  <span class="adm-g__bk-label">T&eacute;l&eacute;phone</span>
+                  <span class="adm-g__bk-value">${escG(b.clientPhone || 'Non renseigné')}</span>
+                </div>
+                <div class="adm-g__bk-detail-item">
+                  <span class="adm-g__bk-label">E-mail</span>
+                  <span class="adm-g__bk-value">${escG(b.clientEmail || 'Non renseigné')}</span>
                 </div>
               </div>
             </div>
           </div>
         `;
-      }).join('');
+      };
+
+      // Classées par mois, le mois le plus récent ouvert par défaut
+      const months = groupBookingsByMonth(guideBookings);
+      const rows = months.map((mo, i) => `
+        <div class="adm-bkmonth">
+          <button type="button" class="adm-bkmonth__toggle ${i === 0 ? 'is-open' : ''}" data-bkmonth-toggle>
+            <span class="adm-bkmonth__label">${escG(mo.label)}</span>
+            <span class="adm-bkmonth__count">${mo.items.length}</span>
+            <svg class="adm-bkmonth__arrow" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 5.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="adm-bkmonth__body ${i === 0 ? '' : 'is-hidden'}">
+            ${mo.items.map(bookingRowHtml).join('')}
+          </div>
+        </div>`).join('');
 
       bookingsPanelHtml = `
         <div class="adm-g__bookings is-hidden" id="bookings-${g.id}">
@@ -732,7 +811,7 @@ import '../../../styles/global.css';
           replacementCards = eligibleGuides.map((r: any) => {
             const rInitials = (r.firstName?.[0] || '') + (r.lastName?.[0] || '');
             const rLangs = (r.languages || []).join(', ');
-            const ogAvail = new Set(getAvail(r.id));
+            const ogAvail = new Set(getAvail(r.id, refBooking.activitySlug || undefined));
             const ogBooked = new Set(getBookings().filter((b: any) => b.guideId === r.id && b.status !== 'reassigned').map((b: any) => b.date));
             const isAvailable = refBooking.date ? (ogAvail.has(refBooking.date) && !ogBooked.has(refBooking.date)) : true;
             return `
@@ -865,7 +944,13 @@ import '../../../styles/global.css';
             <label>Identifiant</label>
             <input type="text" value="${escG(g.login || '')}" readonly />
           </div>
-          <p class="adm-g__creds-note">Le mot de passe est chiffr&eacute; et n'est plus visible.<br/>Pour le r&eacute;initialiser : Supabase &rarr; Authentication &rarr; Users.</p>
+        </div>
+        <div class="adm-g__creds-reset">
+          <div class="adm-g__creds-field">
+            <label>Nouveau mot de passe</label>
+            <input type="text" id="reset-pwd-${g.id}" placeholder="6 caractères min." autocomplete="off" />
+          </div>
+          <button type="button" class="adm-g__creds-save" data-reset-pwd="${g.id}" data-auth-id="${g.authUserId || ''}">R&eacute;initialiser</button>
         </div>
       </div>
     `;
@@ -873,6 +958,39 @@ import '../../../styles/global.css';
     // Wire up event handlers
     card.querySelector(`[data-open-creds="${g.id}"]`)!.addEventListener('click', () => {
       document.getElementById(`creds-${g.id}`)?.classList.toggle('is-hidden');
+    });
+    card.querySelector(`[data-reset-pwd="${g.id}"]`)?.addEventListener('click', async () => {
+      const btn = card.querySelector(`[data-reset-pwd="${g.id}"]`) as HTMLButtonElement;
+      const authId = btn.dataset.authId;
+      const input = document.getElementById(`reset-pwd-${g.id}`) as HTMLInputElement;
+      const newPwd = input.value.trim();
+      if (!newPwd || newPwd.length < 6) { alert('Le mot de passe doit contenir au moins 6 caractères.'); return; }
+      if (!authId) { alert('Erreur : identifiant Auth introuvable pour ce guide.'); return; }
+      btn.disabled = true;
+      btn.textContent = '...';
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/reset-guide-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+            'apikey': SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ authUserId: authId, newPassword: newPwd }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          alert('Mot de passe réinitialisé avec succès.');
+          input.value = '';
+        } else {
+          alert(data.error || 'Erreur lors de la réinitialisation.');
+        }
+      } catch {
+        alert('Erreur de connexion.');
+      }
+      btn.disabled = false;
+      btn.textContent = 'Réinitialiser';
     });
     card.querySelector(`[data-delete-guide="${g.id}"]`)!.addEventListener('click', async () => {
       if (!confirm(`Supprimer ${g.firstName} ${g.lastName} ?`)) return;
@@ -893,6 +1011,16 @@ import '../../../styles/global.css';
         document.getElementById(`bookings-${g.id}`)?.classList.toggle('is-hidden');
       });
     }
+
+    // Pliage / dépliage des mois de réservations
+    card.querySelectorAll('[data-bkmonth-toggle]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const body = btn.nextElementSibling as HTMLElement | null;
+        if (!body) return;
+        const isOpen = btn.classList.toggle('is-open');
+        body.classList.toggle('is-hidden', !isOpen);
+      });
+    });
 
     // Toggle booking detail rows
     card.querySelectorAll('[data-toggle-bk-detail]').forEach(btn => {
@@ -1041,16 +1169,7 @@ import '../../../styles/global.css';
   const addGuideForm = document.getElementById('add-guide-form') as HTMLFormElement;
 
   // ===== Prix du guide par activité (liste répétable) =====
-  // city: ville de l'activité ; gender: 'all' | 'homme' | 'femme' (qui peut la faire)
-  const GUIDE_ACTIVITIES = [
-    { slug: 'omra-classique', label: 'Omra Privé Premium', city: 'mecca', gender: 'all' },
-    { slug: 'guide-pmr-omra', label: 'Omra Privé Premium PMR', city: 'mecca', gender: 'homme' },
-    { slug: 'omra-masjid-aicha', label: 'Seconde Omra vers Masjid Aïcha', city: 'mecca', gender: 'all' },
-    { slug: 'visite-historique-makkah', label: 'Visite historique de Makkah', city: 'mecca', gender: 'all' },
-    { slug: 'visite-historique-medine', label: 'Visite historique de Médine', city: 'medina', gender: 'all' },
-    { slug: 'visite-masjid-nabawi', label: 'Visite du Masjid An-Nabawi', city: 'medina', gender: 'all' },
-    { slug: 'shopping-guide-medine', label: 'Orientation & Shopping Privilège (Femmes)', city: 'medina', gender: 'femme' },
-  ];
+  // Liste de référence partagée : src/data/guide-activities.ts
   const actPricesList = document.getElementById('act-prices-list')!;
 
   function currentVille(): string {
@@ -1133,7 +1252,7 @@ import '../../../styles/global.css';
     (addGuideForm.querySelector('[name="nom"]') as HTMLInputElement).value = guide.lastName || '';
     (addGuideForm.querySelector('[name="ville"]') as HTMLSelectElement).value = guide.city || '';
     (addGuideForm.querySelector('[name="gender"]') as HTMLSelectElement).value = guide.gender || 'homme';
-    (addGuideForm.querySelector('[name="service_prix"]') as HTMLInputElement).value = guide.servicePrice ? String(guide.servicePrice) : '';
+    (addGuideForm.querySelector('[name="service_percent"]') as HTMLInputElement).value = guide.servicePercent ? String(guide.servicePercent) : '';
     (addGuideForm.querySelector('[name="supplement_prix"]') as HTMLInputElement).value = guide.supplement710 ? String(guide.supplement710) : '';
     (addGuideForm.querySelector('[name="diplome"]') as HTMLInputElement).value = guide.diploma || '';
     (addGuideForm.querySelector('[name="langues"]') as HTMLInputElement).value = (guide.languages || []).join(', ');
@@ -1192,7 +1311,7 @@ import '../../../styles/global.css';
     const nom = (form.querySelector('[name="nom"]') as HTMLInputElement).value.trim();
     const ville = (form.querySelector('[name="ville"]') as HTMLSelectElement).value;
     const gender = (form.querySelector('[name="gender"]') as HTMLSelectElement).value;
-    const servicePrix = (form.querySelector('[name="service_prix"]') as HTMLInputElement).value;
+    const servicePercent = (form.querySelector('[name="service_percent"]') as HTMLInputElement).value;
     const supplementPrix = (form.querySelector('[name="supplement_prix"]') as HTMLInputElement).value;
     const diplome = (form.querySelector('[name="diplome"]') as HTMLInputElement).value.trim();
     const langues = (form.querySelector('[name="langues"]') as HTMLInputElement).value.trim();
@@ -1225,7 +1344,7 @@ import '../../../styles/global.css';
       description: description || null,
       languages: langues ? langues.split(',').map((l: string) => l.trim()).filter(Boolean) : [],
       price_per_day: minPrice, // prix « à partir de » (repli quand pas d'activité précise)
-      service_price: servicePrix ? parseInt(servicePrix) : 0,
+      service_percent: servicePercent ? parseInt(servicePercent) : 0,
       supplement_7_10: supplementPrix ? parseInt(supplementPrix) : 0,
       services: activitySlugs,
       activity_prices: activityPrices,
@@ -1612,53 +1731,286 @@ import '../../../styles/global.css';
       list.innerHTML = '<p class="adm-callbookings__empty">Aucun appel réservé pour le moment.</p>';
       return;
     }
-    list.innerHTML = paid.map((b: any) => {
-      const rows = [
-        ['Date de l\'appel', formatDayFr(b.slot_date)],
-        ['Heure', b.slot_time || '—'],
+    list.innerHTML = paid.map((b: any) => demandCardHtml({
+      title: b.name || 'Client',
+      meta: `Appel le ${formatDayFr(b.slot_date)}${b.slot_time ? ` à ${b.slot_time}` : ''}`,
+      tag: b.amount_paid ? fmtEuro(b.amount_paid) : 'Payé',
+      tone: 'green',
+      fields: [
         ['Nom & prénom', b.name || '—'],
-        ['Nombre de personnes', b.group_size ? String(b.group_size) : '—'],
-        ['Date d\'arrivée', b.arrival ? formatDayFr(b.arrival) : '—'],
-        ['Date de départ', b.departure ? formatDayFr(b.departure) : '—'],
         ['Téléphone', b.phone || '—'],
-        ['Email', b.email || '—'],
-        ['Billets d\'avion', b.has_tickets ? 'Oui, déjà réservés' : 'Non, pas encore'],
+        ['E-mail', b.email || '—'],
+        ['Nombre de personnes', b.group_size ? String(b.group_size) : '—'],
+        ["Date d'arrivée", b.arrival ? formatDayFr(b.arrival) : '—'],
+        ['Date de départ', b.departure ? formatDayFr(b.departure) : '—'],
+        ["Billets d'avion", b.has_tickets ? 'Oui, déjà réservés' : 'Non, pas encore'],
         ['Montant payé', b.amount_paid ? fmtEuro(b.amount_paid) : '—'],
-      ].map(([k, v]) => `
-        <div class="adm-cb__row"><span class="adm-cb__k">${escHtml(k)}</span><span class="adm-cb__v">${escHtml(v)}</span></div>`).join('');
-      return `
-        <div class="adm-cb" data-cb>
-          <button type="button" class="adm-cb__head" data-cb-toggle>
-            <span class="adm-cb__title">${escHtml(b.name || 'Client')}</span>
-            <span class="adm-cb__meta">${escHtml(formatDayFr(b.slot_date))} · ${escHtml(b.slot_time || '')}</span>
-            <svg class="adm-cb__chevron" width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <div class="adm-cb__body">${rows}</div>
-        </div>`;
+      ],
+    })).join('');
+  }
+
+  function initialsOf(name: string): string {
+    return (name || '?')
+      .trim().split(/\s+/).slice(0, 2)
+      .map((p) => p[0] || '').join('').toUpperCase() || '?';
+  }
+
+  /**
+   * Fiche de demande dépliable, partagée par les 3 onglets :
+   * pastille d'initiales + nom + méta, puis une grille de champs au dépliage.
+   */
+  function demandCardHtml(opts: {
+    title: string;
+    meta: string;
+    tag?: string;
+    tone?: 'green' | 'gold' | 'blue';
+    fields: [string, string][];
+    note?: { label: string; text: string };
+  }): string {
+    const { title, meta, tag, tone = 'green', fields, note } = opts;
+    const cells = fields
+      .filter(([, v]) => v && v !== '—')
+      .map(([k, v]) => `
+        <div class="adm-dcard__cell">
+          <span class="adm-dcard__k">${escHtml(k)}</span>
+          <span class="adm-dcard__v">${escHtml(v)}</span>
+        </div>`).join('');
+    const noteHtml = note && note.text
+      ? `<div class="adm-dcard__note">
+           <span class="adm-dcard__k">${escHtml(note.label)}</span>
+           <p>${escHtml(note.text)}</p>
+         </div>`
+      : '';
+    return `
+      <div class="adm-dcard" data-cb>
+        <button type="button" class="adm-dcard__head" data-cb-toggle>
+          <span class="adm-dcard__avatar adm-dcard__avatar--${tone}">${escHtml(initialsOf(title))}</span>
+          <span class="adm-dcard__id">
+            <span class="adm-dcard__name">${escHtml(title)}</span>
+            <span class="adm-dcard__meta">${escHtml(meta)}</span>
+          </span>
+          ${tag ? `<span class="adm-dcard__tag adm-dcard__tag--${tone}">${escHtml(tag)}</span>` : ''}
+          <svg class="adm-dcard__chevron" width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="adm-dcard__body">
+          <div class="adm-dcard__grid">${cells}</div>
+          ${noteHtml}
+        </div>
+      </div>`;
+  }
+
+  function renderVisaRequests() {
+    const list = document.getElementById('visa-requests-list');
+    const count = document.getElementById('visa-requests-count');
+    if (!list) return;
+    if (count) count.textContent = DB_VISA_REQUESTS.length ? String(DB_VISA_REQUESTS.length) : '';
+    if (DB_VISA_REQUESTS.length === 0) {
+      list.innerHTML = '<p class="adm-callbookings__empty">Aucune demande de visa pour le moment.</p>';
+      return;
+    }
+    list.innerHTML = DB_VISA_REQUESTS.map((v: any) => demandCardHtml({
+      title: v.name || 'Demandeur',
+      meta: `Reçue le ${formatDayFr(String(v.created_at || '').slice(0, 10))}`,
+      tag: v.visa_type || 'Visa',
+      tone: 'gold',
+      fields: [
+        ['Nom & prénom', v.name || '—'],
+        ['Type de visa', v.visa_type || '—'],
+        ['Pays', v.country || '—'],
+        ['N° de passeport', v.passport || '—'],
+        ['Type de passeport', v.passport_type || '—'],
+        ["Date d'arrivée", v.arrival ? formatDayFr(v.arrival) : '—'],
+        ['Date de départ', v.departure ? formatDayFr(v.departure) : '—'],
+      ],
+    })).join('');
+  }
+
+  function renderApplications() {
+    const list = document.getElementById('applications-list');
+    const count = document.getElementById('applications-count');
+    if (!list) return;
+    if (count) count.textContent = DB_APPLICATIONS.length ? String(DB_APPLICATIONS.length) : '';
+    if (DB_APPLICATIONS.length === 0) {
+      list.innerHTML = '<p class="adm-callbookings__empty">Aucune candidature pour le moment.</p>';
+      return;
+    }
+    list.innerHTML = DB_APPLICATIONS.map((a: any) => {
+      const city = a.city === 'mecca' ? 'Makkah' : a.city === 'medina' ? 'Médine' : (a.city || '—');
+      return demandCardHtml({
+        title: `${a.first_name || ''} ${a.last_name || ''}`.trim() || 'Candidat',
+        meta: `Reçue le ${formatDayFr(String(a.created_at || '').slice(0, 10))}`,
+        tag: city,
+        tone: 'blue',
+        fields: [
+          ['Nom & prénom', `${a.first_name || ''} ${a.last_name || ''}`.trim() || '—'],
+          ['E-mail', a.email || '—'],
+          ['Téléphone', a.phone || '—'],
+          ['Ville de résidence', city],
+          ['Langues parlées', a.languages || '—'],
+        ],
+        note: { label: 'Expérience', text: a.experience || '' },
+      });
     }).join('');
   }
 
-  document.getElementById('call-bookings-list')?.addEventListener('click', (e) => {
-    const head = (e.target as HTMLElement).closest('[data-cb-toggle]');
-    if (head) head.parentElement?.classList.toggle('adm-cb--open');
+  // Dépliage des fiches (les 3 onglets partagent le même markup)
+  document.querySelectorAll('[data-dpanel]').forEach((panel) => {
+    panel.addEventListener('click', (e) => {
+      const head = (e.target as HTMLElement).closest('[data-cb-toggle]');
+      if (head) head.parentElement?.classList.toggle('adm-dcard--open');
+    });
   });
+
+  // Bascule entre les 3 types de demandes
+  document.querySelectorAll('[data-dtab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const key = (btn as HTMLElement).dataset.dtab!;
+      document.querySelectorAll('[data-dtab]').forEach((b) =>
+        b.classList.toggle('adm-dtab--active', b === btn));
+      document.querySelectorAll('[data-dpanel]').forEach((p) =>
+        p.classList.toggle('is-hidden', (p as HTMLElement).dataset.dpanel !== key));
+    });
+  });
+
+  /**
+   * Toutes les réservations d'accompagnement, class&eacute;es
+   * activité → mois → réservation (dépliable sur les coordonnées client).
+   */
+  function renderAllBookings() {
+    const list = document.getElementById('all-bookings-list');
+    const count = document.getElementById('all-bookings-count');
+    if (!list) return;
+
+    const active = getBookings().filter((b: any) => b.status !== 'reassigned');
+    if (count) count.textContent = active.length ? String(active.length) : '';
+
+    const guideName = (id: string) => {
+      const g = getStoredGuides().find((x: any) => x.id === id);
+      return g ? `${g.firstName} ${g.lastName}` : 'Guide supprimé';
+    };
+
+    // Un seau par activité de référence, plus un seau de repli pour les
+    // réservations antérieures au classement par activité.
+    const byActivity: Record<string, any[]> = {};
+    for (const b of active) {
+      const key = b.activitySlug || '__sans';
+      (byActivity[key] = byActivity[key] || []).push(b);
+    }
+
+    const groups = GUIDE_ACTIVITIES.map((a) => ({
+      slug: a.slug,
+      label: a.label,
+      items: byActivity[a.slug] || [],
+    }));
+    if ((byActivity['__sans'] || []).length > 0) {
+      groups.push({ slug: '__sans', label: 'Activité non précisée', items: byActivity['__sans'] });
+    }
+
+    const bookingRow = (b: any) => {
+      const isRefusal = b.status === 'pending-refusal';
+      const dateStr = b.date ? formatDayFr(b.date) : '—';
+      return `
+        <div class="adm-abk" data-abk>
+          <button type="button" class="adm-abk__head" data-abk-toggle>
+            <span class="adm-abk__main">
+              <span class="adm-abk__activity">${escG(dateStr)}${b.slot ? ' &middot; ' + escG(b.slot) : ''}</span>
+              <span class="adm-abk__sub">${escG(guideName(b.guideId))} &mdash; ${escG(b.clientName || 'Client non renseigné')}</span>
+            </span>
+            ${isRefusal ? '<span class="adm-abk__flag">Refus en attente</span>' : ''}
+            ${b.seen ? '' : '<span class="adm-abk__flag adm-abk__flag--new">Non vu</span>'}
+            <svg class="adm-abk__chev" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 5.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="adm-abk__body">
+            <div class="adm-dcard__grid">
+              <div class="adm-dcard__cell"><span class="adm-dcard__k">Client</span><span class="adm-dcard__v">${escG(b.clientName || 'Non renseigné')}</span></div>
+              <div class="adm-dcard__cell"><span class="adm-dcard__k">Téléphone</span><span class="adm-dcard__v">${escG(b.clientPhone || 'Non renseigné')}</span></div>
+              <div class="adm-dcard__cell"><span class="adm-dcard__k">E-mail</span><span class="adm-dcard__v">${escG(b.clientEmail || 'Non renseigné')}</span></div>
+              <div class="adm-dcard__cell"><span class="adm-dcard__k">Guide</span><span class="adm-dcard__v">${escG(guideName(b.guideId))}</span></div>
+              <div class="adm-dcard__cell"><span class="adm-dcard__k">Date</span><span class="adm-dcard__v">${escG(dateStr)}</span></div>
+              <div class="adm-dcard__cell"><span class="adm-dcard__k">Créneau</span><span class="adm-dcard__v">${escG(b.slot || 'Journée')}</span></div>
+              ${isRefusal && b.refusalReason
+                ? `<div class="adm-dcard__cell adm-dcard__cell--full"><span class="adm-dcard__k">Motif du refus</span><span class="adm-dcard__v">${escG(b.refusalReason)}</span></div>`
+                : ''}
+            </div>
+          </div>
+        </div>`;
+    };
+
+    list.innerHTML = groups.map((grp) => {
+      const inner = grp.items.length === 0
+        ? '<p class="adm-callbookings__empty">Aucune réservation pour cette activité.</p>'
+        : groupBookingsByMonth(grp.items).map((mo, mi) => `
+            <div class="adm-bkmonth">
+              <button type="button" class="adm-bkmonth__toggle ${mi === 0 ? 'is-open' : ''}" data-bkmonth-toggle>
+                <span class="adm-bkmonth__label">${escG(mo.label)}</span>
+                <span class="adm-bkmonth__count">${mo.items.length}</span>
+                <svg class="adm-bkmonth__arrow" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 5.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="adm-bkmonth__body ${mi === 0 ? '' : 'is-hidden'}">
+                <div class="adm-abkday__rows">${mo.items.map(bookingRow).join('')}</div>
+              </div>
+            </div>`).join('');
+
+      return `
+        <div class="adm-actgrp">
+          <button type="button" class="adm-actgrp__head" data-actgrp-toggle>
+            <span class="adm-actgrp__name">${escG(grp.label)}</span>
+            <span class="adm-actgrp__count ${grp.items.length === 0 ? 'adm-actgrp__count--zero' : ''}">${grp.items.length}</span>
+            <svg class="adm-actgrp__chev" width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M4 5.5l3 3 3-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="adm-actgrp__body is-hidden">${inner}</div>
+        </div>`;
+    }).join('');
+
+    // Niveau 1 : l'activité
+    list.querySelectorAll('[data-actgrp-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const body = btn.nextElementSibling as HTMLElement | null;
+        if (!body) return;
+        const isOpen = btn.classList.toggle('is-open');
+        body.classList.toggle('is-hidden', !isOpen);
+      });
+    });
+    // Niveau 2 : le mois
+    list.querySelectorAll('[data-bkmonth-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const body = btn.nextElementSibling as HTMLElement | null;
+        if (!body) return;
+        const isOpen = btn.classList.toggle('is-open');
+        body.classList.toggle('is-hidden', !isOpen);
+      });
+    });
+    // Niveau 3 : les coordonnées du client
+    list.querySelectorAll('[data-abk-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        btn.parentElement?.classList.toggle('adm-abk--open');
+      });
+    });
+  }
 
   function renderHome() {
     renderStats();
     renderCallCal();
     renderCallBookings();
+    renderVisaRequests();
+    renderApplications();
+    renderAllBookings();
   }
 
   // Recharge les données « argent » et « appels » depuis la base (paiements récents)
   async function refreshHome() {
-    const [cs, cb, b] = await Promise.all([
+    const [cs, cb, b, vr, ga] = await Promise.all([
       supabase.from('call_slots').select('*').order('date'),
       supabase.from('call_bookings').select('*').order('slot_date'),
       supabase.from('bookings').select('*').order('date'),
+      supabase.from('visa_requests').select('*').order('created_at', { ascending: false }),
+      supabase.from('guide_applications').select('*').order('created_at', { ascending: false }),
     ]);
     if (cs.data) DB_CALL_SLOTS = cs.data;
     if (cb.data) DB_CALL_BOOKINGS = cb.data;
     if (b.data) { RAW_BOOKINGS = b.data; DB_BOOKINGS = b.data.map(mapBooking); }
+    if (vr.data) DB_VISA_REQUESTS = vr.data;
+    if (ga.data) DB_APPLICATIONS = ga.data;
     renderHome();
   }
 
@@ -2458,6 +2810,12 @@ import '../../../styles/global.css';
     cursor: pointer; font-family: inherit; transition: background 0.2s;
   }
   .adm-g__creds-save:hover { background: #1E6B4E; }
+  .adm-g__creds-save:disabled { opacity: 0.5; cursor: wait; }
+  .adm-g__creds-reset {
+    display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid #ECE9E1;
+  }
   .adm-g__creds-note {
     font-size: 0.72rem; color: #9C9C93; line-height: 1.6;
     margin: 0; align-self: center;
@@ -3090,7 +3448,220 @@ import '../../../styles/global.css';
   }
   .adm-dayeditor__addbtn:hover { background: #0C3A28; }
 
+  /* Onglets « Mes demandes » : appels / visas / candidatures guides */
+  .adm-dtabs {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #ECEAE3;
+  }
+  .adm-dtab {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 16px; border-radius: 999px;
+    border: 1px solid #E3E0D6; background: #FFFFFF;
+    font-family: 'Jost', sans-serif; font-size: 0.82rem; font-weight: 500;
+    color: #6B6B63; cursor: pointer;
+    transition: background 0.18s, border-color 0.18s, color 0.18s;
+  }
+  .adm-dtab:hover { border-color: #C9C4B4; color: #1C1C1A; }
+  .adm-dtab--active {
+    background: #14513A; border-color: #14513A; color: #FAF8F4;
+  }
+  .adm-dtab__count {
+    font-size: 0.72rem; font-weight: 600;
+    background: rgba(20,81,58,0.10); color: #14513A;
+    padding: 1px 8px; border-radius: 999px;
+  }
+  .adm-dtab__count:empty { display: none; }
+  .adm-dtab--active .adm-dtab__count {
+    background: rgba(250,248,244,0.22); color: #FAF8F4;
+  }
+  /* ---- Niveau 1 : l'activité ---- */
+  .adm-actgrp {
+    border: 1px solid #ECEAE3; border-radius: 14px;
+    background: #FFFFFF; overflow: hidden;
+    margin-bottom: 10px;
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .adm-actgrp:last-child { margin-bottom: 0; }
+  .adm-actgrp:hover { border-color: #DAD5C7; }
+  .adm-actgrp__head {
+    width: 100%; display: flex; align-items: center; gap: 12px;
+    padding: 16px 18px; background: none; border: none;
+    cursor: pointer; text-align: left;
+    transition: background 0.18s;
+  }
+  .adm-actgrp__head:hover, .adm-actgrp__head.is-open { background: #FAF9F5; }
+  .adm-actgrp__name {
+    flex: 1; min-width: 0;
+    font-family: 'Jost', sans-serif; font-size: 0.95rem; font-weight: 600; color: #1C1C1A;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .adm-actgrp__count {
+    flex-shrink: 0;
+    font-family: 'Jost', sans-serif; font-size: 0.74rem; font-weight: 600;
+    background: #EDF5F0; color: #14513A;
+    padding: 3px 12px; border-radius: 999px;
+  }
+  .adm-actgrp__count--zero { background: #F2F1EC; color: #A8A8A0; }
+  .adm-actgrp__chev { color: #B5B5AE; flex-shrink: 0; transition: transform 0.28s, color 0.18s; }
+  .adm-actgrp__head.is-open .adm-actgrp__chev { transform: rotate(180deg); color: #14513A; }
+  .adm-actgrp__body {
+    padding: 12px 16px 16px;
+    border-top: 1px solid #F1EEE7;
+  }
+  .adm-actgrp__body.is-hidden { display: none; }
+
+  /* ---- Regroupement par mois (réservations) ---- */
+  .adm-bkmonth { margin-bottom: 10px; }
+  .adm-bkmonth:last-child { margin-bottom: 0; }
+  .adm-bkmonth__toggle {
+    width: 100%; display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: #FAF8F4; border: 1px solid #ECEAE3; border-radius: 10px;
+    cursor: pointer; text-align: left;
+    transition: background 0.18s, border-color 0.18s;
+  }
+  .adm-bkmonth__toggle:hover { background: #F4F1E9; border-color: #DAD5C7; }
+  .adm-bkmonth__label {
+    flex: 1;
+    font-family: 'Jost', sans-serif; font-size: 0.88rem; font-weight: 600; color: #14513A;
+  }
+  .adm-bkmonth__count {
+    font-family: 'Jost', sans-serif; font-size: 0.72rem; font-weight: 600;
+    background: #14513A; color: #FAF8F4;
+    padding: 2px 10px; border-radius: 999px;
+  }
+  .adm-bkmonth__arrow { color: #9C9C93; flex-shrink: 0; transition: transform 0.25s; }
+  .adm-bkmonth__toggle.is-open .adm-bkmonth__arrow { transform: rotate(180deg); }
+  .adm-bkmonth__body { padding: 10px 0 4px; }
+  .adm-bkmonth__body.is-hidden { display: none; }
+
+  /* ---- Jour ---- */
+  .adm-abkday { margin-bottom: 14px; }
+  .adm-abkday:last-child { margin-bottom: 0; }
+  .adm-abkday__label {
+    font-family: 'Jost', sans-serif; font-size: 0.72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em; color: #9C9C93;
+    padding: 0 2px 7px;
+  }
+  .adm-abkday__rows { display: flex; flex-direction: column; gap: 6px; }
+
+  /* ---- Réservation ---- */
+  .adm-abk {
+    border: 1px solid #ECEAE3; border-radius: 10px;
+    background: #FFFFFF; overflow: hidden;
+    transition: border-color 0.18s;
+  }
+  .adm-abk:hover { border-color: #DAD5C7; }
+  .adm-abk__head {
+    width: 100%; display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px; background: none; border: none;
+    cursor: pointer; text-align: left;
+  }
+  .adm-abk__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .adm-abk__activity {
+    font-family: 'Jost', sans-serif; font-size: 0.86rem; font-weight: 600; color: #1C1C1A;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .adm-abk__sub {
+    font-family: 'Jost', sans-serif; font-size: 0.76rem; font-weight: 300; color: #8E8E86;
+  }
+  .adm-abk__flag {
+    flex-shrink: 0;
+    font-family: 'Jost', sans-serif; font-size: 0.68rem; font-weight: 600;
+    background: #FDF0E7; color: #C1682B;
+    padding: 3px 9px; border-radius: 999px;
+  }
+  .adm-abk__flag--new { background: #EDF5F0; color: #14513A; }
+  .adm-abk__chev { color: #B5B5AE; flex-shrink: 0; transition: transform 0.25s; }
+  .adm-abk--open .adm-abk__chev { transform: rotate(180deg); color: #14513A; }
+  .adm-abk__body { display: none; padding: 0 14px 14px; }
+  .adm-abk--open .adm-abk__body { display: block; }
+  .adm-dcard__cell--full { grid-column: 1 / -1; }
+
+  /* Fiche de demande (appel / visa / candidature) */
+  .adm-dcard {
+    border: 1px solid #ECEAE3; border-radius: 14px;
+    background: #FFFFFF; overflow: hidden;
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .adm-dcard:hover { border-color: #DAD5C7; box-shadow: 0 4px 16px rgba(28,28,26,0.05); }
+  .adm-dcard--open { border-color: #DAD5C7; }
+  .adm-dcard__head {
+    width: 100%; display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; background: none; border: none;
+    cursor: pointer; text-align: left;
+  }
+  .adm-dcard__avatar {
+    width: 40px; height: 40px; flex-shrink: 0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Jost', sans-serif; font-size: 0.8rem; font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .adm-dcard__avatar--green { background: #EDF5F0; color: #14513A; }
+  .adm-dcard__avatar--gold  { background: #F7F1E3; color: #9A7C3F; }
+  .adm-dcard__avatar--blue  { background: #EAF0F6; color: #2F5A86; }
+  .adm-dcard__id {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .adm-dcard__name {
+    font-family: 'Jost', sans-serif; font-size: 0.92rem; font-weight: 600; color: #1C1C1A;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .adm-dcard__meta {
+    font-family: 'Jost', sans-serif; font-size: 0.76rem; font-weight: 300; color: #8E8E86;
+  }
+  .adm-dcard__tag {
+    flex-shrink: 0;
+    padding: 4px 11px; border-radius: 999px;
+    font-family: 'Jost', sans-serif; font-size: 0.72rem; font-weight: 500;
+    max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .adm-dcard__tag--green { background: #EDF5F0; color: #14513A; }
+  .adm-dcard__tag--gold  { background: #F7F1E3; color: #9A7C3F; }
+  .adm-dcard__tag--blue  { background: #EAF0F6; color: #2F5A86; }
+  .adm-dcard__chevron { color: #B5B5AE; flex-shrink: 0; transition: transform 0.25s, color 0.18s; }
+  .adm-dcard--open .adm-dcard__chevron { transform: rotate(180deg); color: #14513A; }
+  .adm-dcard__body { display: none; padding: 4px 16px 18px; }
+  .adm-dcard--open .adm-dcard__body { display: block; }
+  .adm-dcard__grid {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    background: #ECEAE3;
+    border: 1px solid #ECEAE3; border-radius: 10px; overflow: hidden;
+  }
+  .adm-dcard__cell {
+    display: flex; flex-direction: column; gap: 3px;
+    padding: 11px 14px; background: #FCFBF8;
+    min-width: 0;
+  }
+  .adm-dcard__k {
+    font-family: 'Jost', sans-serif; font-size: 0.68rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em; color: #9C9C93;
+  }
+  .adm-dcard__v {
+    font-family: 'Jost', sans-serif; font-size: 0.88rem; font-weight: 500; color: #1C1C1A;
+    overflow-wrap: anywhere;
+  }
+  .adm-dcard__note {
+    margin-top: 12px; padding: 14px;
+    background: #FCFBF8; border: 1px solid #ECEAE3; border-radius: 10px;
+  }
+  .adm-dcard__note p {
+    margin: 6px 0 0;
+    font-family: 'Jost', sans-serif; font-size: 0.88rem; font-weight: 300;
+    line-height: 1.65; color: #1C1C1A; white-space: pre-wrap;
+  }
+  @media (max-width: 639px) {
+    .adm-dcard__grid { grid-template-columns: 1fr; }
+    .adm-dcard__tag { display: none; }
+  }
+
   .adm-callbookings { display: flex; flex-direction: column; gap: 10px; }
+  .adm-callbookings.is-hidden { display: none; }
   .adm-callbookings__empty {
     font-family: 'Jost', sans-serif; font-size: 0.85rem; font-weight: 300; color: #9C9C93;
     text-align: center; padding: 20px 0;
